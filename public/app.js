@@ -11,6 +11,7 @@ const menuOverlay = document.querySelector('#menu-overlay');
 
 function setMenu(open) {
   if (!sideMenu || !menuOverlay || !menuToggle) return;
+  sideMenu.hidden = !open;
   sideMenu.classList.toggle('is-open', open);
   sideMenu.setAttribute('aria-hidden', String(!open));
   menuToggle.setAttribute('aria-expanded', String(open));
@@ -22,6 +23,7 @@ menuToggle?.addEventListener('click', () => setMenu(!sideMenu.classList.contains
 menuClose?.addEventListener('click', () => setMenu(false));
 menuOverlay?.addEventListener('click', () => setMenu(false));
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setMenu(false); });
+setMenu(false);
 
 function showDashboard(user) {
   loginView.hidden = true;
@@ -72,4 +74,4 @@ const guestCart = JSON.parse(localStorage.getItem('crv5_guest_cart') || '[]');
 if (cartCount) cartCount.textContent = guestCart.reduce((total, item) => total + (item.cantidad || 0), 0);
 if (cartSummary && guestCart.length) cartSummary.textContent = `${guestCart.length} producto${guestCart.length === 1 ? '' : 's'} en tu selección.`;
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });

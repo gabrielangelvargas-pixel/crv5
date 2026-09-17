@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crv5-shell-v2';
+const CACHE_NAME = 'crv5-shell-v3';
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
@@ -18,7 +18,7 @@ self.addEventListener('install', (event) => {
     '/icons/crv4-512.png',
     '/icons/favicon-32.png',
     '/icons/apple-touch-icon.png',
-  ])));
+  ])).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('fetch', (event) => {
