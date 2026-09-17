@@ -61,6 +61,7 @@ input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13, 119, 113
 .menu-button[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
 .menu-button[aria-expanded="true"] span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 .wordmark { display: flex; align-items: center; gap: 10px; color: var(--ink); font-size: 15px; font-weight: 800; text-decoration: none; }
+.app-icon-small { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 4px; object-fit: cover; }
 .wordmark em { color: var(--muted); font-style: normal; font-weight: 500; }
 .public-nav { display: flex; align-items: center; gap: 28px; }
 .public-nav a, .public-footer a, .text-link, .site-footer a { color: var(--ink); font-size: 13px; text-decoration: none; }
