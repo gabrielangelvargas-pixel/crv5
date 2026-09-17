@@ -52,7 +52,14 @@ input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13, 119, 113
 .module-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
 .card-arrow { position: absolute; right: 17px; bottom: 16px; color: var(--coral); font-size: 18px; }
 .public-page { background: var(--paper); }
-.public-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px clamp(24px, 6vw, 88px); border-bottom: 1px solid var(--line); }
+.public-header { position: fixed; z-index: 20; top: 0; right: 0; left: 0; display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 90px; padding: 18px clamp(24px, 6vw, 88px); background: rgba(251, 250, 247, .97); border-bottom: 1px solid var(--line); }
+.public-page main, .catalog-page main { padding-top: 90px; }
+.header-start { display: flex; align-items: center; gap: 20px; }
+.menu-button { display: inline-flex; flex-direction: column; justify-content: center; gap: 4px; width: 36px; height: 36px; padding: 8px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 4px; }
+.menu-button span { display: block; width: 18px; height: 2px; background: currentColor; transition: transform .2s, opacity .2s; }
+.menu-button[aria-expanded="true"] span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.menu-button[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.menu-button[aria-expanded="true"] span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 .wordmark { display: flex; align-items: center; gap: 10px; color: var(--ink); font-size: 15px; font-weight: 800; text-decoration: none; }
 .wordmark em { color: var(--muted); font-style: normal; font-weight: 500; }
 .public-nav { display: flex; align-items: center; gap: 28px; }
@@ -61,6 +68,17 @@ input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13, 119, 113
 .nav-login, .secondary-button { display: inline-flex; align-items: center; gap: 16px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 4px; font-weight: 800 !important; }
 .cart-link { color: var(--teal); font-size: 13px; font-weight: 800; text-decoration: none; }
 .cart-link span { display: inline-grid; place-items: center; min-width: 22px; height: 22px; margin-left: 5px; color: #fff; background: var(--coral); border-radius: 50%; font-size: 11px; }
+.menu-overlay { position: fixed; z-index: 29; inset: 0; background: rgba(23, 59, 63, .24); }
+.side-menu { position: fixed; z-index: 30; top: 0; bottom: 0; left: 0; display: flex; flex-direction: column; width: min(360px, 88vw); padding: 28px; background: var(--paper); box-shadow: 12px 0 35px rgba(23, 59, 63, .12); transform: translateX(-100%); transition: transform .25s ease; }
+.side-menu.is-open { transform: translateX(0); }
+.side-menu-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 25px; border-bottom: 1px solid var(--line); }
+.close-menu { width: 34px; height: 34px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 4px; font-size: 24px; line-height: 1; }
+.side-nav { display: grid; gap: 3px; padding-top: 28px; }
+.side-nav a { display: flex; align-items: center; justify-content: space-between; padding: 14px 10px; color: var(--ink); border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 700; text-decoration: none; }
+.side-nav a:hover { color: var(--teal); }
+.side-nav span { color: var(--coral); font-size: 18px; }
+.side-menu-foot { display: grid; gap: 10px; margin-top: auto; padding-top: 24px; color: var(--muted); border-top: 1px solid var(--line); font-size: 12px; }
+.side-menu-foot a { color: var(--teal); font-weight: 800; text-decoration: none; }
 .hero-section { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 42%); min-height: 570px; border-bottom: 1px solid var(--line); }
 .hero-copy { align-self: center; max-width: 680px; padding: 76px clamp(24px, 8vw, 120px); }
 .hero-copy h1 { max-width: 620px; margin: 18px 0; font-size: clamp(46px, 7vw, 92px); line-height: .98; letter-spacing: 0; }
@@ -97,4 +115,4 @@ input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13, 119, 113
 .catalog-empty p { max-width: 520px; margin: 0 0 30px; color: var(--muted); font-size: 17px; line-height: 1.6; }
 .catalog-empty .primary-button { margin-top: 0; }
 @media (max-width: 760px) { .app-shell { display: block; } .brand-panel { display: none; } .content-panel { min-height: 100vh; padding: 24px; } .mobile-brand { display: flex; } .login-wrap, .dashboard { width: 100%; margin: auto 0; padding: 52px 0 30px; } .module-grid { grid-template-columns: 1fr; } .module-card { min-height: 116px; } .site-footer { padding-top: 20px; } }
-@media (max-width: 760px) { .public-header { flex-wrap: wrap; padding: 18px 20px; } .public-nav { order: 3; width: 100%; justify-content: space-between; gap: 10px; } .public-nav a { font-size: 12px; } .hero-section { display: block; min-height: 0; } .hero-copy { padding: 64px 24px 58px; } .hero-copy h1 { font-size: 52px; } .hero-lead { font-size: 16px; } .hero-still { min-height: 270px; } .benefits-section, .about-section { padding: 62px 24px; } .section-heading, .about-section, .cart-strip { display: block; } .section-heading h2 { margin-top: 16px; } .benefit-grid { grid-template-columns: 1fr; margin-top: 36px; } .benefit-grid article { min-height: 150px; } .benefit-grid h3 { margin-top: 22px; } .about-section > div:last-child { display: block; margin-top: 28px; } .about-section .text-link { margin-top: 24px; } .cart-strip { padding: 42px 24px; } .cart-strip .secondary-button { display: inline-flex; margin-top: 25px; } .public-footer { flex-direction: column; padding: 22px 24px; } }
+@media (max-width: 760px) { .public-header { height: 74px; padding: 14px 20px; } .public-page main, .catalog-page main { padding-top: 74px; } .header-start { gap: 12px; } .public-nav { display: none; } .cart-link { font-size: 12px; } .hero-section { display: block; min-height: 0; } .hero-copy { padding: 64px 24px 58px; } .hero-copy h1 { font-size: 52px; } .hero-lead { font-size: 16px; } .hero-still { min-height: 270px; } .benefits-section, .about-section { padding: 62px 24px; } .section-heading, .about-section, .cart-strip { display: block; } .section-heading h2 { margin-top: 16px; } .benefit-grid { grid-template-columns: 1fr; margin-top: 36px; } .benefit-grid article { min-height: 150px; } .benefit-grid h3 { margin-top: 22px; } .about-section > div:last-child { display: block; margin-top: 28px; } .about-section .text-link { margin-top: 24px; } .cart-strip { padding: 42px 24px; } .cart-strip .secondary-button { display: inline-flex; margin-top: 25px; } .public-footer { flex-direction: column; padding: 22px 24px; } }

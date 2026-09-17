@@ -4,6 +4,24 @@ const loginForm = document.querySelector('#login-form');
 const loginMessage = document.querySelector('#login-message');
 const userName = document.querySelector('#user-name');
 const logoutButton = document.querySelector('#logout-button');
+const menuToggle = document.querySelector('#menu-toggle');
+const menuClose = document.querySelector('#menu-close');
+const sideMenu = document.querySelector('#side-menu');
+const menuOverlay = document.querySelector('#menu-overlay');
+
+function setMenu(open) {
+  if (!sideMenu || !menuOverlay || !menuToggle) return;
+  sideMenu.classList.toggle('is-open', open);
+  sideMenu.setAttribute('aria-hidden', String(!open));
+  menuToggle.setAttribute('aria-expanded', String(open));
+  menuToggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+  menuOverlay.hidden = !open;
+}
+
+menuToggle?.addEventListener('click', () => setMenu(!sideMenu.classList.contains('is-open')));
+menuClose?.addEventListener('click', () => setMenu(false));
+menuOverlay?.addEventListener('click', () => setMenu(false));
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setMenu(false); });
 
 function showDashboard(user) {
   loginView.hidden = true;
