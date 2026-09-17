@@ -8,7 +8,7 @@ const logoutButton = document.querySelector('#logout-button');
 function showDashboard(user) {
   loginView.hidden = true;
   dashboardView.hidden = false;
-  userName.textContent = user.nombre || user.usuario;
+  if (userName) userName.textContent = user.nombre || user.usuario;
 }
 
 async function getSession() {
@@ -16,7 +16,7 @@ async function getSession() {
   if (response.ok) showDashboard((await response.json()).usuario);
 }
 
-loginForm.addEventListener('submit', async (event) => {
+loginForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
   loginMessage.textContent = '';
   const submitButton = loginForm.querySelector('button');
@@ -39,13 +39,19 @@ loginForm.addEventListener('submit', async (event) => {
   }
 });
 
-logoutButton.addEventListener('click', async () => {
+logoutButton?.addEventListener('click', async () => {
   await fetch('/api/auth/logout', { method: 'POST' });
   dashboardView.hidden = true;
   loginView.hidden = false;
   loginForm.querySelector('#usuario').focus();
 });
 
-getSession().catch(() => {});
+if (loginForm) getSession().catch(() => {});
+
+const cartCount = document.querySelector('#cart-count');
+const cartSummary = document.querySelector('#cart-summary');
+const guestCart = JSON.parse(localStorage.getItem('crv5_guest_cart') || '[]');
+if (cartCount) cartCount.textContent = guestCart.reduce((total, item) => total + (item.cantidad || 0), 0);
+if (cartSummary && guestCart.length) cartSummary.textContent = `${guestCart.length} producto${guestCart.length === 1 ? '' : 's'} en tu selección.`;
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
