@@ -37,7 +37,11 @@ function showDashboard(user) {
 function showStaffNavigation(user) {
   const isStaff = user && !user.roles.includes('cliente');
   if (staffNav) staffNav.hidden = !isStaff;
-  if (staffMenuLink) staffMenuLink.hidden = !isStaff;
+  if (staffMenuLink) {
+    staffMenuLink.hidden = !isStaff;
+    staffMenuLink.href = '/login';
+    staffMenuLink.innerHTML = 'Panel de administración <span>→</span>';
+  }
   if (staffMenuLabel) staffMenuLabel.textContent = user?.nombre || user?.usuario || 'CRV4 Mayorista';
 }
 
