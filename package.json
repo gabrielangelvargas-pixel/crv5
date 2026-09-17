@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/config/env.js && node --check src/config/database.js && node --check src/routes/health.routes.js"
+    "db:migrate": "node scripts/migrate.js",
+    "check": "node --check src/server.js && node --check src/config/env.js && node --check src/config/database.js && node --check src/routes/health.routes.js && node --check scripts/migrate.js"
   },
   "engines": {
     "node": ">=20"

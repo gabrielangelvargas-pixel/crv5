@@ -9,7 +9,7 @@ Base de la plataforma web progresiva para CRV4 Mayorista.
 3. Ejecutar `npm run dev`.
 4. Abrir `http://localhost:3000` y comprobar `http://localhost:3000/api/health`.
 
-La conexion MySQL queda preparada, pero no se ejecutan migraciones ni se usan credenciales reales en esta fase.
+Para crear o actualizar las tablas, ejecutar `npm run db:migrate` con las variables MySQL configuradas.
 
 ## Flujo Git y Hostinger
 
@@ -19,3 +19,7 @@ La conexion MySQL queda preparada, pero no se ejecutan migraciones ni se usan cr
 - Cuando la version este validada, se integra `staging` en `main` y se cambia la rama de despliegue del sitio publico.
 
 En Hostinger, crear primero un sitio temporal o subdominio de desarrollo, seleccionar la aplicacion Node.js y conectar el repositorio GitHub `gabrielangelvargas-pixel/crv5` usando la rama `staging`. El comando de inicio es `npm start`, el puerto debe ser el asignado por Hostinger y las variables de `.env.example` deben cargarse en el panel, nunca en Git.
+
+## Migraciones en Hostinger
+
+Las migraciones se ejecutan una vez contra la base MySQL de Hostinger desde un entorno con acceso a esas variables. La tabla `schema_migrations` registra cada archivo aplicado y evita repetirlo.
