@@ -9,6 +9,7 @@ import pinoHttp from 'pino-http';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { env } from './config/env.js';
+import { authRouter } from './routes/auth.routes.js';
 import { healthRouter } from './routes/health.routes.js';
 
 const logger = pino({ level: env.NODE_ENV === 'production' ? 'info' : 'debug' });
@@ -27,6 +28,7 @@ app.use(cookieParser());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false }));
 
 app.use('/api', healthRouter);
+app.use('/api/auth', authRouter);
 app.use(express.static(publicDirectory, { extensions: ['html'] }));
 
 app.use((_request, response) => {
