@@ -1,4 +1,5 @@
-const CACHE_NAME = 'crv5-shell-v4';
+const CACHE_NAME = 'crv5-shell-v5';
+const NETWORK_FIRST_PATHS = new Set(['/', '/app.js', '/styles.css', '/manifest.webmanifest', '/rubros', '/catalogo', '/login']);
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
@@ -23,12 +24,14 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method === 'GET') {
-    if (event.request.mode === 'navigate') {
+    const requestUrl = new URL(event.request.url);
+    const isNetworkFirst = event.request.mode === 'navigate' || NETWORK_FIRST_PATHS.has(requestUrl.pathname);
+    if (isNetworkFirst) {
       event.respondWith(fetch(event.request).then((response) => {
         const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put('/', copy));
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         return response;
-      }).catch(() => caches.match('/')));
+      }).catch(() => caches.match(event.request).then((cached) => cached || caches.match('/'))));
       return;
     }
     event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
