@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crv5-shell-v3';
+const CACHE_NAME = 'crv5-shell-v4';
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(

@@ -8,6 +8,9 @@ const menuToggle = document.querySelector('#menu-toggle');
 const menuClose = document.querySelector('#menu-close');
 const sideMenu = document.querySelector('#side-menu');
 const menuOverlay = document.querySelector('#menu-overlay');
+const staffNav = document.querySelector('#staff-nav');
+const staffMenuLink = document.querySelector('#staff-menu-link');
+const staffMenuLabel = document.querySelector('#staff-menu-label');
 
 function setMenu(open) {
   if (!sideMenu || !menuOverlay || !menuToggle) return;
@@ -31,9 +34,22 @@ function showDashboard(user) {
   if (userName) userName.textContent = user.nombre || user.usuario;
 }
 
+function showStaffNavigation(user) {
+  const isStaff = user && !user.roles.includes('cliente');
+  if (staffNav) staffNav.hidden = !isStaff;
+  if (staffMenuLink) staffMenuLink.hidden = !isStaff;
+  if (staffMenuLabel) staffMenuLabel.textContent = user?.nombre || user?.usuario || 'CRV4 Mayorista';
+}
+
 async function getSession() {
   const response = await fetch('/api/auth/me');
-  if (response.ok) showDashboard((await response.json()).usuario);
+  if (response.ok) {
+    const user = (await response.json()).usuario;
+    showStaffNavigation(user);
+    if (loginForm) showDashboard(user);
+  } else {
+    showStaffNavigation(null);
+  }
 }
 
 loginForm?.addEventListener('submit', async (event) => {
@@ -51,6 +67,7 @@ loginForm?.addEventListener('submit', async (event) => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'No se pudo iniciar sesión.');
     loginForm.reset();
+    showStaffNavigation(result.usuario);
     showDashboard(result.usuario);
   } catch (error) {
     loginMessage.textContent = error.message;
@@ -66,7 +83,7 @@ logoutButton?.addEventListener('click', async () => {
   loginForm.querySelector('#usuario').focus();
 });
 
-if (loginForm) getSession().catch(() => {});
+getSession().catch(() => showStaffNavigation(null));
 
 const cartCount = document.querySelector('#cart-count');
 const cartSummary = document.querySelector('#cart-summary');
@@ -75,3 +92,39 @@ if (cartCount) cartCount.textContent = guestCart.reduce((total, item) => total +
 if (cartSummary && guestCart.length) cartSummary.textContent = `${guestCart.length} producto${guestCart.length === 1 ? '' : 's'} en tu selección.`;
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+
+const rubrosTable = document.querySelector('#rubros-table-body');
+const rubroForm = document.querySelector('#rubro-form');
+const rubroMessage = document.querySelector('#rubro-message');
+
+async function loadRubros() {
+  if (!rubrosTable) return;
+  const response = await fetch('/api/rubros');
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'No se pudieron cargar los rubros.');
+  rubrosTable.innerHTML = result.rubros.length
+    ? result.rubros.map((rubro) => `<tr><td>${rubro.orden}</td><td><strong>${rubro.nombre}</strong><small>${rubro.codigo}</small></td><td>${rubro.slug}</td><td><span class="table-status ${rubro.activo ? '' : 'is-inactive'}">${rubro.activo ? 'Activo' : 'Inactivo'}</span></td></tr>`).join('')
+    : '<tr><td colspan="4" class="table-empty">Todavía no hay rubros cargados.</td></tr>';
+}
+
+rubroForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  rubroMessage.textContent = '';
+  const submitButton = rubroForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  try {
+    const data = Object.fromEntries(new FormData(rubroForm));
+    const response = await fetch('/api/rubros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'No se pudo crear el rubro.');
+    rubroForm.reset();
+    rubroMessage.textContent = 'Rubro creado correctamente.';
+    await loadRubros();
+  } catch (error) {
+    rubroMessage.textContent = error.message;
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+loadRubros().catch((error) => { if (rubroMessage) rubroMessage.textContent = error.message; });
