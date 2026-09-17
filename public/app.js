@@ -96,15 +96,23 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js', { u
 const rubrosTable = document.querySelector('#rubros-table-body');
 const rubroForm = document.querySelector('#rubro-form');
 const rubroMessage = document.querySelector('#rubro-message');
+const rubroParent = document.querySelector('#id_rubro_padre');
 
 async function loadRubros() {
   if (!rubrosTable) return;
   const response = await fetch('/api/rubros');
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'No se pudieron cargar los rubros.');
+  const rubrosById = new Map(result.rubros.map((rubro) => [String(rubro.id), rubro.nombre]));
+  if (rubroParent) {
+    rubroParent.innerHTML = '<option value="">Sin rubro padre</option>';
+    result.rubros.filter((rubro) => rubro.activo).forEach((rubro) => {
+      rubroParent.insertAdjacentHTML('beforeend', `<option value="${rubro.id}">${rubro.nombre}</option>`);
+    });
+  }
   rubrosTable.innerHTML = result.rubros.length
-    ? result.rubros.map((rubro) => `<tr><td>${rubro.orden}</td><td><strong>${rubro.nombre}</strong><small>${rubro.codigo}</small></td><td>${rubro.slug}</td><td><span class="table-status ${rubro.activo ? '' : 'is-inactive'}">${rubro.activo ? 'Activo' : 'Inactivo'}</span></td></tr>`).join('')
-    : '<tr><td colspan="4" class="table-empty">Todavía no hay rubros cargados.</td></tr>';
+    ? result.rubros.map((rubro) => `<tr><td>${rubro.orden}</td><td><strong>${rubro.nombre}</strong><small>${rubro.codigo}</small></td><td>${rubro.id_rubro_padre ? rubrosById.get(String(rubro.id_rubro_padre)) || 'No encontrado' : 'Principal'}</td><td>${rubro.slug}</td><td><span class="table-status ${rubro.activo ? '' : 'is-inactive'}">${rubro.activo ? 'Activo' : 'Inactivo'}</span></td></tr>`).join('')
+    : '<tr><td colspan="5" class="table-empty">Todavía no hay rubros cargados.</td></tr>';
 }
 
 rubroForm?.addEventListener('submit', async (event) => {
