@@ -1,0 +1,10 @@
+{
+  "name": "CRV5",
+  "short_name": "CRV5",
+  "lang": "es",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f766e",
+  "icons": []
+}
