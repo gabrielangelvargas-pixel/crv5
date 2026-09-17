@@ -2,9 +2,25 @@
   "name": "CRV5",
   "short_name": "CRV5",
   "lang": "es",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0f766e",
-  "icons": []
+  "description": "Gestión comercial para CRV4 Mayorista.",
+  "icons": [
+    {
+      "src": "/icons/crv4-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/crv4-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
