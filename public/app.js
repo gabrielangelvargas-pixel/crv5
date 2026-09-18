@@ -12,6 +12,7 @@ const staffNav = document.querySelector('#staff-nav');
 const staffMenuLink = document.querySelector('#staff-menu-link');
 const staffMenuLabel = document.querySelector('#staff-menu-label');
 const publicRubrosMenu = document.querySelector('.public-page .side-nav, .catalog-page .side-nav');
+const homeGallery = document.querySelector('.hero-still');
 
 function setMenu(open) {
   if (!sideMenu || !menuOverlay || !menuToggle) return;
@@ -33,6 +34,10 @@ function showDashboard(user) {
   loginView.hidden = true;
   dashboardView.hidden = false;
   if (userName) userName.textContent = user.nombre || user.usuario;
+}
+
+if (homeGallery) {
+  homeGallery.innerHTML = '<div class="hero-gallery"><figure class="gallery-main"><img src="/images/local-1.jpg" alt="Interior del local CRV4 Mayorista" /><figcaption>Variedad para tu negocio</figcaption></figure><div class="gallery-side"><figure><img src="/images/local-2.jpg" alt="Exhibición de productos en el local" loading="lazy" /></figure><figure><img src="/images/local-3.jpg" alt="Sector de accesorios y bijouterie" loading="lazy" /></figure></div></div>';
 }
 
 function showStaffNavigation(user) {
