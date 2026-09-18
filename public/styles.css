@@ -65,7 +65,7 @@ select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13, 119, 11
 .wordmark { display: flex; align-items: center; gap: 10px; color: var(--ink); font-size: 15px; font-weight: 800; text-decoration: none; }
 .app-icon-small { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 4px; object-fit: cover; }
 .wordmark em { color: var(--muted); font-style: normal; font-weight: 500; }
-.public-nav { display: flex; align-items: center; gap: 28px; }
+.public-nav { display: none; }
 .public-nav a, .public-footer a, .text-link, .site-footer a { color: var(--ink); font-size: 13px; text-decoration: none; }
 .public-nav a:hover, .text-link:hover, .public-footer a:hover { color: var(--teal); }
 .nav-login, .secondary-button { display: inline-flex; align-items: center; gap: 16px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 4px; font-weight: 800 !important; }
