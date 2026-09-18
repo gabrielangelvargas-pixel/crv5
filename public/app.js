@@ -11,6 +11,7 @@ const menuOverlay = document.querySelector('#menu-overlay');
 const staffNav = document.querySelector('#staff-nav');
 const staffMenuLink = document.querySelector('#staff-menu-link');
 const staffMenuLabel = document.querySelector('#staff-menu-label');
+const publicRubrosMenu = document.querySelector('.public-page .side-nav, .catalog-page .side-nav');
 
 function setMenu(open) {
   if (!sideMenu || !menuOverlay || !menuToggle) return;
@@ -35,13 +36,8 @@ function showDashboard(user) {
 }
 
 function showStaffNavigation(user) {
-  const isStaff = user && !user.roles.includes('cliente');
-  if (staffNav) staffNav.hidden = !isStaff;
-  if (staffMenuLink) {
-    staffMenuLink.hidden = !isStaff;
-    staffMenuLink.href = '/login';
-    staffMenuLink.innerHTML = 'Panel de administración <span>→</span>';
-  }
+  if (staffNav) staffNav.hidden = true;
+  if (staffMenuLink) staffMenuLink.hidden = true;
   if (staffMenuLabel) staffMenuLabel.textContent = user?.nombre || user?.usuario || 'CRV4 Mayorista';
 }
 
@@ -140,3 +136,36 @@ rubroForm?.addEventListener('submit', async (event) => {
 });
 
 loadRubros().catch((error) => { if (rubroMessage) rubroMessage.textContent = error.message; });
+
+async function loadPublicRubrosMenu() {
+  if (!publicRubrosMenu) return;
+  const response = await fetch('/api/catalogo/rubros');
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'No se pudieron cargar los rubros.');
+  publicRubrosMenu.innerHTML = result.rubros.length
+    ? result.rubros.map((rubro) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}">${rubro.nombre}<span>→</span></a>`).join('')
+    : '<p class="menu-empty">Todavía no hay rubros publicados.</p>';
+}
+
+async function loadCatalogRubro() {
+  const catalogHeading = document.querySelector('#catalog-heading');
+  if (!catalogHeading) return;
+  const slug = new URLSearchParams(window.location.search).get('rubro');
+  if (!slug) return;
+  const response = await fetch(`/api/catalogo/rubros/${encodeURIComponent(slug)}`);
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'No se pudo cargar el rubro.');
+  catalogHeading.textContent = result.rubro.nombre;
+  document.querySelector('#catalog-description').textContent = result.rubro.descripcion || 'Explorá la selección disponible en este rubro.';
+  const children = document.querySelector('#catalog-children');
+  children.innerHTML = result.hijos.length
+    ? result.hijos.map((hijo) => `<a class="catalog-child" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}"><strong>${hijo.nombre}</strong><span>→</span></a>`).join('')
+    : '<p class="catalog-empty-note">Este rubro todavía no tiene subrubros.</p>';
+  document.querySelector('#catalog-products').innerHTML = '<p class="catalog-empty-note">Todavía no hay productos publicados en este rubro.</p>';
+}
+
+loadPublicRubrosMenu().catch(() => {});
+loadCatalogRubro().catch((error) => {
+  const message = document.querySelector('#catalog-message');
+  if (message) message.textContent = error.message;
+});

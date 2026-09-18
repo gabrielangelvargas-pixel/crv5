@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { env } from './config/env.js';
 import { authRouter } from './routes/auth.routes.js';
+import { catalogoRouter } from './routes/catalogo.routes.js';
 import { healthRouter } from './routes/health.routes.js';
 import { rubrosRouter } from './routes/rubros.routes.js';
 
@@ -30,6 +31,7 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, standardHeaders: 'draf
 
 app.use('/api', healthRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/catalogo', catalogoRouter);
 app.use('/api/rubros', rubrosRouter);
 app.use(express.static(publicDirectory, { extensions: ['html'] }));
 
