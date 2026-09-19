@@ -1,14 +1,15 @@
 {
-  "name": "CRV5",
-  "short_name": "CRV5",
+  "name": "CRV4 Mayorista",
+  "short_name": "CRV4",
   "lang": "es",
   "id": "/",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0f766e",
-  "description": "Gestión comercial para CRV4 Mayorista.",
+  "background_color": "#f4f0e8",
+  "theme_color": "#f4f0e8",
+  "orientation": "portrait-primary",
+  "description": "Catálogo mayorista de CRV4 para comercios y emprendedores.",
   "icons": [
     {
       "src": "/icons/crv4-logo-final-192.png",

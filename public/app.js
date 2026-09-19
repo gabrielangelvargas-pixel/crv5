@@ -158,7 +158,9 @@ const guestCart = JSON.parse(localStorage.getItem('crv5_guest_cart') || '[]');
 if (cartCount) cartCount.textContent = guestCart.reduce((total, item) => total + (item.cantidad || 0), 0);
 if (cartSummary && guestCart.length) cartSummary.textContent = `${guestCart.length} producto${guestCart.length === 1 ? '' : 's'} en tu selección.`;
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((registration) => registration.update()).catch(() => {});
+}
 
 const rubrosTable = document.querySelector('#rubros-table-body');
 const rubroForm = document.querySelector('#rubro-form');

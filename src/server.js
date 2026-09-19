@@ -33,7 +33,15 @@ app.use('/api', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/catalogo', catalogoRouter);
 app.use('/api/rubros', rubrosRouter);
-app.use(express.static(publicDirectory, { extensions: ['html'] }));
+app.use(express.static(publicDirectory, {
+  extensions: ['html'],
+  setHeaders(response, filePath) {
+    const fileName = path.basename(filePath);
+    if (['sw.js', 'manifest.webmanifest', 'app.js', 'styles.css'].includes(fileName)) {
+      response.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  },
+}));
 
 app.use((_request, response) => {
   response.status(404).json({ error: 'Recurso no encontrado' });
