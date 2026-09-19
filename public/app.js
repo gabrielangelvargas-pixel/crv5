@@ -78,7 +78,7 @@ if (homeGallery) {
     const popularRubros = document.createElement('section');
     popularRubros.className = 'popular-rubros';
     popularRubros.setAttribute('aria-labelledby', 'popular-rubros-title');
-    popularRubros.innerHTML = '<p class="eyebrow">Catálogo</p><h2 id="popular-rubros-title">Rubros más vistos</h2><div id="popular-rubros-grid" class="popular-rubros-grid"><p class="catalog-empty-note">Cargando rubros...</p></div>';
+    popularRubros.innerHTML = '<p class="eyebrow" id="popular-rubros-title">Rubros más vistos</p><div id="popular-rubros-grid" class="popular-rubros-grid"><p class="catalog-empty-note">Cargando rubros...</p></div>';
     heroSection.insertBefore(popularRubros, heroCopy);
   }
 }
