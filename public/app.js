@@ -48,7 +48,9 @@ if (homeGallery) {
   const moveMobileSlide = (index) => {
     if (window.matchMedia('(max-width: 760px)').matches) {
       mobileSlide = Math.min(index, mobileSlides.length - 1);
-      mobileSlides[mobileSlide].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+      const targetSlide = mobileSlides[mobileSlide];
+      const targetLeft = targetSlide.getBoundingClientRect().left - heroSlider.getBoundingClientRect().left + heroSlider.scrollLeft;
+      heroSlider.scrollTo({ left: targetLeft, behavior: 'smooth' });
     }
   };
   let scrollResetTimer;
