@@ -11,6 +11,7 @@ const menuOverlay = document.querySelector('#menu-overlay');
 const staffNav = document.querySelector('#staff-nav');
 const staffMenuLink = document.querySelector('#staff-menu-link');
 const staffMenuLabel = document.querySelector('#staff-menu-label');
+const profileLinks = document.querySelectorAll('.profile-link');
 const publicRubrosMenu = document.querySelector('.public-page .side-nav, .catalog-page .side-nav');
 const homeGallery = document.querySelector('.hero-still');
 const homeOfferSlot = document.querySelector('#home-offer-slot');
@@ -96,6 +97,11 @@ function showStaffNavigation(user) {
   if (staffNav) staffNav.hidden = true;
   if (staffMenuLink) staffMenuLink.hidden = true;
   if (staffMenuLabel) staffMenuLabel.textContent = user?.nombre || user?.usuario || 'CRV4 Mayorista';
+  profileLinks.forEach((link) => {
+    const signedIn = Boolean(user);
+    link.setAttribute('aria-label', signedIn ? 'Abrir mi perfil' : 'Iniciar sesión');
+    link.setAttribute('title', signedIn ? 'Abrir mi perfil' : 'Iniciar sesión');
+  });
 }
 
 async function getSession() {
@@ -229,15 +235,13 @@ async function loadCatalogRubro() {
   const catalogDescription = document.querySelector('#catalog-description');
   const catalogChildren = document.querySelector('#catalog-children');
   const catalogProducts = document.querySelector('#catalog-products');
-  if (!catalogBrowser || !catalogDescription) return;
+  if (!catalogBrowser) return;
   const slug = new URLSearchParams(window.location.search).get('rubro');
   if (!slug) {
-    catalogDescription.textContent = 'Seleccioná una categoría para ver sus subrubros y productos.';
     catalogChildren.innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro desde el menú.</p>';
     catalogProducts.innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro para ver sus productos.</p>';
     return;
   }
-  catalogDescription.textContent = 'Cargando rubro...';
   catalogChildren.innerHTML = '<p class="catalog-empty-note">Cargando subrubros...</p>';
   catalogProducts.innerHTML = '<p class="catalog-empty-note">Cargando productos...</p>';
   const response = await fetch(`/api/catalogo/rubros/${encodeURIComponent(slug)}`, { cache: 'no-store' });
@@ -248,7 +252,6 @@ async function loadCatalogRubro() {
     catalogCover.innerHTML = `<img src="${coverImage}" alt="Portada de ${result.rubro.nombre}" />`;
     catalogCover.setAttribute('aria-hidden', 'false');
   }
-  catalogDescription.textContent = result.rubro.descripcion || 'Explorá la selección disponible en este rubro.';
   catalogChildren.innerHTML = result.hijos.length
     ? result.hijos.map((hijo) => `<a class="catalog-child" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}"><strong>${hijo.nombre}</strong><span>→</span></a>`).join('')
     : '<p class="catalog-empty-note">Este rubro todavía no tiene subrubros.</p>';
