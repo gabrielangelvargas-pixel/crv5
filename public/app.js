@@ -191,12 +191,13 @@ async function loadPublicRubrosMenu() {
   const response = await fetch('/api/catalogo/rubros');
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'No se pudieron cargar los rubros.');
-  publicRubrosMenu.innerHTML = result.rubros.length
-    ? result.rubros.map((rubro) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}">${rubro.nombre}<span>→</span></a>`).join('')
+  const rubrosUnicos = result.rubros.filter((rubro, index, rubros) => rubros.findIndex((item) => item.nombre.toLocaleLowerCase() === rubro.nombre.toLocaleLowerCase()) === index);
+  publicRubrosMenu.innerHTML = rubrosUnicos.length
+    ? rubrosUnicos.map((rubro) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}">${rubro.nombre}<span>→</span></a>`).join('')
     : '<p class="menu-empty">Todavía no hay rubros publicados.</p>';
   if (popularRubrosGrid) {
-    popularRubrosGrid.innerHTML = result.rubros.length
-      ? result.rubros.slice(0, 4).map((rubro, index) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}"><span class="popular-rubro-order">0${index + 1}</span><strong>${rubro.nombre}</strong><span aria-hidden="true">→</span></a>`).join('')
+    popularRubrosGrid.innerHTML = rubrosUnicos.length
+      ? rubrosUnicos.slice(0, 4).map((rubro, index) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}"><span class="popular-rubro-order">0${index + 1}</span><strong>${rubro.nombre}</strong><span aria-hidden="true">→</span></a>`).join('')
       : '<p class="catalog-empty-note">Todavía no hay rubros publicados.</p>';
   }
 }
