@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crv5-shell-v8';
+const CACHE_NAME = 'crv5-shell-v9';
 const NETWORK_FIRST_PATHS = new Set(['/', '/app.js', '/styles.css', '/manifest.webmanifest', '/rubros', '/catalogo', '/login']);
 
 self.addEventListener('activate', (event) => {
@@ -19,6 +19,10 @@ self.addEventListener('install', (event) => {
     '/icons/crv4-512.png',
     '/icons/favicon-32.png',
     '/icons/apple-touch-icon.png',
+    '/images/rubros/acero-quirurgico.png',
+    '/images/rubros/bazar.png',
+    '/images/rubros/marroquineria.png',
+    '/images/rubros/plata-900.png',
   ])).then(() => self.skipWaiting()));
 });
 
