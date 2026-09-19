@@ -16,12 +16,6 @@ const publicRubrosMenu = document.querySelector('.public-page .side-nav, .catalo
 const homeGallery = document.querySelector('.hero-still');
 const homeOfferSlot = document.querySelector('#home-offer-slot');
 const registerForm = document.querySelector('#register-form');
-const launchSplash = document.querySelector('#launch-splash');
-
-if (launchSplash) {
-  window.setTimeout(() => launchSplash.classList.add('is-hidden'), 850);
-  window.setTimeout(() => launchSplash.remove(), 1250);
-}
 
 if (loginMessage && new URLSearchParams(window.location.search).get('registro') === 'ok') {
   loginMessage.textContent = 'Cuenta creada correctamente. Ya podés ingresar.';
