@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crv5-shell-v17';
+const CACHE_NAME = 'crv5-shell-v18';
 const NETWORK_FIRST_PATHS = new Set(['/', '/app.js', '/styles.css', '/manifest.webmanifest', '/rubros', '/catalogo', '/login']);
 
 self.addEventListener('activate', (event) => {
@@ -17,7 +17,6 @@ self.addEventListener('install', (event) => {
     '/manifest.webmanifest',
     '/icons/crv4-192.png',
     '/icons/crv4-512.png',
-    '/icons/crv4-logo.svg',
     '/icons/favicon-32.png',
     '/icons/apple-touch-icon.png',
     '/images/rubros/acero-quirurgico.png',
