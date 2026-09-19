@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { Router } from 'express';
 import { database } from '../config/database.js';
 import { env } from '../config/env.js';
-import { verifyPassword } from '../utils/password.js';
+import { hashPassword, verifyPassword } from '../utils/password.js';
 
 const SESSION_COOKIE = 'crv5_session';
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
@@ -60,6 +60,46 @@ authRouter.post('/login', async (request, response, next) => {
     });
   } catch (error) {
     return next(error);
+  }
+});
+
+authRouter.post('/register', async (request, response, next) => {
+  const { nombre, usuario, clave } = request.body ?? {};
+  const cleanName = typeof nombre === 'string' ? nombre.trim() : '';
+  const cleanUser = typeof usuario === 'string' ? usuario.trim().toLowerCase() : '';
+
+  if (cleanName.length < 2 || cleanName.length > 100) {
+    return response.status(400).json({ error: 'Ingresá un nombre válido.' });
+  }
+  if (!/^[a-z0-9._-]{3,80}$/.test(cleanUser)) {
+    return response.status(400).json({ error: 'El usuario debe tener entre 3 y 80 caracteres: letras, números, punto, guion o guion bajo.' });
+  }
+  if (typeof clave !== 'string' || clave.length < 8 || clave.length > 128) {
+    return response.status(400).json({ error: 'La clave debe tener entre 8 y 128 caracteres.' });
+  }
+
+  let connection;
+  try {
+    connection = await database.getConnection();
+    await connection.beginTransaction();
+    const [roleRows] = await connection.query('SELECT id FROM roles WHERE codigo = ? AND activo = TRUE LIMIT 1', ['cliente']);
+    if (!roleRows[0]) throw new Error('El rol cliente no está configurado.');
+    const [userResult] = await connection.query(
+      'INSERT INTO usuarios (nombre, usuario, clave_hash, activo) VALUES (?, ?, ?, TRUE)',
+      [cleanName, cleanUser, hashPassword(clave)],
+    );
+    await connection.query(
+      'INSERT INTO usuarios_roles (id_usuario, id_rol, activo) VALUES (?, ?, TRUE)',
+      [userResult.insertId, roleRows[0].id],
+    );
+    await connection.commit();
+    return response.status(201).json({ usuario: { id: userResult.insertId, nombre: cleanName, usuario: cleanUser } });
+  } catch (error) {
+    if (connection) await connection.rollback();
+    if (error.code === 'ER_DUP_ENTRY') return response.status(409).json({ error: 'Ese nombre de usuario ya está registrado.' });
+    return next(error);
+  } finally {
+    connection?.release();
   }
 });
 

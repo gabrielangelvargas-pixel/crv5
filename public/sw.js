@@ -1,5 +1,5 @@
-const CACHE_NAME = 'crv5-shell-v29';
-const NETWORK_FIRST_PATHS = new Set(['/', '/index.html', '/app.js', '/styles.css', '/manifest.webmanifest', '/rubros', '/catalogo', '/login']);
+const CACHE_NAME = 'crv5-shell-v30';
+const NETWORK_FIRST_PATHS = new Set(['/', '/index.html', '/app.js', '/styles.css', '/manifest.webmanifest', '/rubros', '/catalogo', '/login', '/register']);
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(

@@ -15,6 +15,12 @@ const profileLinks = document.querySelectorAll('.profile-link');
 const publicRubrosMenu = document.querySelector('.public-page .side-nav, .catalog-page .side-nav');
 const homeGallery = document.querySelector('.hero-still');
 const homeOfferSlot = document.querySelector('#home-offer-slot');
+const registerForm = document.querySelector('#register-form');
+
+if (loginMessage && new URLSearchParams(window.location.search).get('registro') === 'ok') {
+  loginMessage.textContent = 'Cuenta creada correctamente. Ya podés ingresar.';
+  loginMessage.style.color = 'var(--teal)';
+}
 
 function setMenu(open) {
   if (!sideMenu || !menuOverlay || !menuToggle) return;
@@ -145,6 +151,57 @@ logoutButton?.addEventListener('click', async () => {
   loginView.hidden = false;
   loginForm.querySelector('#usuario').focus();
 });
+
+if (registerForm) {
+  const steps = [...registerForm.querySelectorAll('.wizard-step')];
+  const indicators = [...document.querySelectorAll('[data-step-indicator]')];
+  const message = document.querySelector('#register-message');
+  let currentStep = 1;
+
+  const showStep = (step) => {
+    currentStep = step;
+    steps.forEach((section) => {
+      const active = Number(section.dataset.step) === step;
+      section.hidden = !active;
+      section.classList.toggle('is-active', active);
+    });
+    indicators.forEach((indicator) => indicator.classList.toggle('is-active', Number(indicator.dataset.stepIndicator) <= step));
+    message.textContent = '';
+  };
+
+  registerForm.querySelectorAll('.wizard-next').forEach((button) => button.addEventListener('click', () => {
+    const activeStep = steps.find((section) => Number(section.dataset.step) === currentStep);
+    const fields = [...activeStep.querySelectorAll('input')];
+    if (!fields.every((field) => field.reportValidity())) return;
+    if (currentStep === 2) {
+      registerForm.querySelector('[data-summary="nombre"]').textContent = registerForm.elements.nombre.value.trim();
+      registerForm.querySelector('[data-summary="usuario"]').textContent = registerForm.elements.usuario.value.trim().toLowerCase();
+    }
+    showStep(Math.min(currentStep + 1, steps.length));
+  }));
+  registerForm.querySelectorAll('.wizard-back').forEach((button) => button.addEventListener('click', () => showStep(Math.max(currentStep - 1, 1))));
+  registerForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    message.textContent = '';
+    const submitButton = registerForm.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: registerForm.elements.nombre.value, usuario: registerForm.elements.usuario.value, clave: registerForm.elements.clave.value }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'No se pudo crear la cuenta.');
+      window.location.href = '/login?registro=ok';
+    } catch (error) {
+      message.textContent = error.message;
+      showStep(2);
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+}
 
 getSession().catch(() => showStaffNavigation(null));
 
