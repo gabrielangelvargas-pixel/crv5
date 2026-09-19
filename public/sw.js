@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crv5-shell-v34';
+const CACHE_NAME = 'crv5-shell-v35';
 const NETWORK_FIRST_PATHS = new Set(['/', '/index.html', '/app.js', '/styles.css', '/manifest.webmanifest', '/rubros', '/catalogo', '/login', '/register']);
 
 self.addEventListener('activate', (event) => {
@@ -14,6 +14,8 @@ self.addEventListener('install', (event) => {
     '/',
     '/styles.css',
     '/app.js',
+    '/vendor/bootstrap/bootstrap.min.css',
+    '/vendor/bootstrap/bootstrap.bundle.min.js',
     '/manifest.webmanifest',
     '/icons/crv4-logo-final-192.png',
     '/icons/crv4-logo-final-512.png',

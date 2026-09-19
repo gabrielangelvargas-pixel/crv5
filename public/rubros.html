@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#f4f0e8" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-logo1.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="stylesheet" href="/vendor/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="/styles.css" />
     <title>Rubros | CRV4 Mayorista</title>
   </head>
@@ -15,6 +16,6 @@
     <main class="admin-content"><div class="admin-heading"><div><p class="eyebrow">Módulo de administración</p><h1>Rubros</h1><p>Organizá las categorías que van a ordenar el catálogo público.</p></div><a class="secondary-button" href="/login">Volver al panel <span aria-hidden="true">→</span></a></div>
       <section class="admin-layout"><form class="admin-form" id="rubro-form"><div class="section-kicker">Nuevo rubro</div><label for="codigo">Código</label><input id="codigo" name="codigo" required placeholder="bijouterie" /><label for="slug">Slug</label><input id="slug" name="slug" required placeholder="bijouterie" /><label for="nombre">Nombre</label><input id="nombre" name="nombre" required placeholder="Bijouterie" /><label for="id_rubro_padre">Rubro padre</label><select id="id_rubro_padre" name="id_rubro_padre"><option value="">Sin rubro padre</option></select><label for="descripcion">Descripción</label><textarea id="descripcion" name="descripcion" rows="4" placeholder="Descripción breve del rubro"></textarea><label for="imagen">Imagen</label><input id="imagen" name="imagen" type="url" placeholder="https://..." /><label for="orden">Orden</label><input id="orden" name="orden" type="number" min="0" value="0" /><button class="primary-button" type="submit"><span>Crear rubro</span><span aria-hidden="true">→</span></button><p class="form-message" id="rubro-message" role="status" aria-live="polite"></p></form>
         <section class="admin-list"><div class="list-heading"><div><div class="section-kicker">Catálogo</div><h2>Rubros cargados</h2></div><span class="list-note">Orden de publicación</span></div><div class="table-wrap"><table><thead><tr><th>Orden</th><th>Nombre</th><th>Rubro padre</th><th>Slug</th><th>Estado</th></tr></thead><tbody id="rubros-table-body"><tr><td colspan="5" class="table-empty">Cargando rubros...</td></tr></tbody></table></div></section></section>
-    </main><script src="/app.js" type="module"></script>
+    </main><script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script><script src="/app.js" type="module"></script>
   </body>
 </html>
