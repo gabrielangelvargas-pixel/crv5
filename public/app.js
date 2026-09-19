@@ -201,7 +201,7 @@ async function loadPublicRubrosMenu() {
     : '<p class="menu-empty">Todavía no hay rubros publicados.</p>';
   if (popularRubrosGrid) {
     popularRubrosGrid.innerHTML = rubrosUnicos.length
-      ? rubrosUnicos.slice(0, 4).map((rubro, index) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}">${rubro.imagen ? `<img src="${rubro.imagen}" alt="" loading="lazy" />` : ''}<span class="popular-rubro-content"><span class="popular-rubro-order">0${index + 1}</span><strong>${rubro.nombre}</strong><span aria-hidden="true">→</span></span></a>`).join('')
+      ? rubrosUnicos.slice(0, 4).map((rubro) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}">${rubro.imagen ? `<img src="${rubro.imagen}" alt="" loading="lazy" />` : ''}<span class="popular-rubro-content"><strong>${rubro.nombre}</strong></span></a>`).join('')
       : '<p class="catalog-empty-note">Todavía no hay rubros publicados.</p>';
   }
 }
