@@ -42,7 +42,8 @@ if (homeGallery) {
   let mobileSlide = 0;
   const moveMobileSlide = (index) => {
     if (window.matchMedia('(max-width: 760px)').matches) {
-      mobileSlide = (index + mobileSlides.length) % mobileSlides.length;
+      if (index >= mobileSlides.length) return;
+      mobileSlide = index;
       mobileSlides[mobileSlide].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
     }
   };
