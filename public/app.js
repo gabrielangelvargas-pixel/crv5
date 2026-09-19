@@ -42,12 +42,22 @@ if (homeGallery) {
   let mobileSlide = 0;
   const moveMobileSlide = (index) => {
     if (window.matchMedia('(max-width: 760px)').matches) {
-      if (index >= mobileSlides.length) return;
-      mobileSlide = index;
-      mobileSlides[mobileSlide].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+      const wrapped = index >= mobileSlides.length;
+      mobileSlide = wrapped ? 0 : index;
+      mobileSlides[mobileSlide].scrollIntoView({ behavior: wrapped ? 'auto' : 'smooth', block: 'nearest', inline: 'start' });
     }
   };
   if (mobileSlides.length > 1) window.setInterval(() => moveMobileSlide(mobileSlide + 1), 5000);
+
+  const heroSection = homeGallery.closest('.hero-section');
+  const heroCopy = heroSection?.querySelector('.hero-copy');
+  if (heroSection && heroCopy) {
+    const mobileBenefits = document.createElement('section');
+    mobileBenefits.className = 'mobile-benefits';
+    mobileBenefits.setAttribute('aria-label', 'Beneficios de compra');
+    mobileBenefits.innerHTML = '<article><strong>$70.000</strong><span>Mínimo de compra</span></article><article><strong>Pago simple</strong><span>Tarjetas, transferencia y efectivo</span></article><article><strong>Todo el país</strong><span>Envíos a destinos nacionales</span></article><article><strong>Atención cercana</strong><span>Te acompañamos en cada pedido</span></article>';
+    heroSection.insertBefore(mobileBenefits, heroCopy);
+  }
 }
 
 function showStaffNavigation(user) {
