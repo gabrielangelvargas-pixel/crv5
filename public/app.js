@@ -38,15 +38,31 @@ function showDashboard(user) {
 
 if (homeGallery) {
   homeGallery.innerHTML = '<div class="hero-gallery"><figure class="gallery-main"><img src="/images/local-1.jpg" alt="Interior del local CRV4 Mayorista" /><figcaption>Variedad para tu negocio</figcaption></figure><div class="gallery-side"><figure><img src="/images/local-2.jpg" alt="Exhibición de productos en el local" loading="lazy" /></figure><figure><img src="/images/local-3.jpg" alt="Sector de accesorios y bijouterie" loading="lazy" /></figure></div></div>';
-  const mobileSlides = homeGallery.querySelectorAll('.hero-gallery > figure, .hero-gallery > .gallery-side > figure');
+  const heroSlider = homeGallery.querySelector('.hero-gallery');
+  const firstSlide = heroSlider.querySelector('.gallery-main').cloneNode(true);
+  firstSlide.className = 'gallery-clone';
+  firstSlide.setAttribute('aria-hidden', 'true');
+  heroSlider.appendChild(firstSlide);
+  const mobileSlides = heroSlider.querySelectorAll('figure');
   let mobileSlide = 0;
   const moveMobileSlide = (index) => {
     if (window.matchMedia('(max-width: 760px)').matches) {
-      const wrapped = index >= mobileSlides.length;
-      mobileSlide = wrapped ? 0 : index;
-      mobileSlides[mobileSlide].scrollIntoView({ behavior: wrapped ? 'auto' : 'smooth', block: 'nearest', inline: 'start' });
+      mobileSlide = Math.min(index, mobileSlides.length - 1);
+      mobileSlides[mobileSlide].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
     }
   };
+  let scrollResetTimer;
+  heroSlider.addEventListener('scroll', () => {
+    window.clearTimeout(scrollResetTimer);
+    scrollResetTimer = window.setTimeout(() => {
+      const nearestSlide = Math.round(heroSlider.scrollLeft / heroSlider.clientWidth);
+      mobileSlide = nearestSlide;
+      if (nearestSlide === mobileSlides.length - 1) {
+        heroSlider.scrollTo({ left: 0, behavior: 'auto' });
+        mobileSlide = 0;
+      }
+    }, 140);
+  }, { passive: true });
   if (mobileSlides.length > 1) window.setInterval(() => moveMobileSlide(mobileSlide + 1), 5000);
 
   const heroSection = homeGallery.closest('.hero-section');
@@ -55,7 +71,7 @@ if (homeGallery) {
     const mobileBenefits = document.createElement('section');
     mobileBenefits.className = 'mobile-benefits';
     mobileBenefits.setAttribute('aria-label', 'Beneficios de compra');
-    mobileBenefits.innerHTML = '<article><strong>$70.000</strong><span>Mínimo de compra</span></article><article><strong>Pago simple</strong><span>Tarjetas, transferencia y efectivo</span></article><article><strong>Todo el país</strong><span>Envíos a destinos nacionales</span></article><article><strong>Atención cercana</strong><span>Te acompañamos en cada pedido</span></article>';
+    mobileBenefits.innerHTML = '<article><span class="benefit-icon" aria-hidden="true">◈</span><strong>$70.000</strong><span>Mínimo de compra</span></article><article><span class="benefit-icon" aria-hidden="true">▣</span><strong>Pago simple</strong><span>Tarjetas, transferencia y efectivo</span></article><article><span class="benefit-icon" aria-hidden="true">▰</span><strong>Todo el país</strong><span>Envíos a destinos nacionales</span></article><article><span class="benefit-icon" aria-hidden="true">✦</span><strong>Atención cercana</strong><span>Te acompañamos en cada pedido</span></article>';
     heroSection.insertBefore(mobileBenefits, heroCopy);
   }
 }
