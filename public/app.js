@@ -209,7 +209,7 @@ loadRubros().catch((error) => { if (rubroMessage) rubroMessage.textContent = err
 async function loadPublicRubrosMenu() {
   if (!publicRubrosMenu) return;
   const popularRubrosGrid = document.querySelector('#popular-rubros-grid');
-  const response = await fetch('/api/catalogo/rubros');
+  const response = await fetch('/api/catalogo/rubros', { cache: 'no-store' });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'No se pudieron cargar los rubros.');
   const rubrosUnicos = result.rubros.filter((rubro, index, rubros) => rubros.findIndex((item) => item.nombre.toLocaleLowerCase() === rubro.nombre.toLocaleLowerCase()) === index);
@@ -227,27 +227,32 @@ async function loadCatalogRubro() {
   const catalogBrowser = document.querySelector('.catalog-browser');
   const catalogCover = document.querySelector('#catalog-cover');
   const catalogDescription = document.querySelector('#catalog-description');
+  const catalogChildren = document.querySelector('#catalog-children');
+  const catalogProducts = document.querySelector('#catalog-products');
   if (!catalogBrowser || !catalogDescription) return;
   const slug = new URLSearchParams(window.location.search).get('rubro');
   if (!slug) {
     catalogDescription.textContent = 'Seleccioná una categoría para ver sus subrubros y productos.';
-    document.querySelector('#catalog-children').innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro desde el menú.</p>';
-    document.querySelector('#catalog-products').innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro para ver sus productos.</p>';
+    catalogChildren.innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro desde el menú.</p>';
+    catalogProducts.innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro para ver sus productos.</p>';
     return;
   }
-  const response = await fetch(`/api/catalogo/rubros/${encodeURIComponent(slug)}`);
+  catalogDescription.textContent = 'Cargando rubro...';
+  catalogChildren.innerHTML = '<p class="catalog-empty-note">Cargando subrubros...</p>';
+  catalogProducts.innerHTML = '<p class="catalog-empty-note">Cargando productos...</p>';
+  const response = await fetch(`/api/catalogo/rubros/${encodeURIComponent(slug)}`, { cache: 'no-store' });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'No se pudo cargar el rubro.');
-  if (catalogCover && result.rubro.imagen) {
-    catalogCover.innerHTML = `<img src="${result.rubro.imagen}" alt="Portada de ${result.rubro.nombre}" />`;
+  const coverImage = result.rubro.imagen || `/images/rubros/${result.rubro.slug}.png`;
+  if (catalogCover && coverImage) {
+    catalogCover.innerHTML = `<img src="${coverImage}" alt="Portada de ${result.rubro.nombre}" />`;
     catalogCover.setAttribute('aria-hidden', 'false');
   }
   catalogDescription.textContent = result.rubro.descripcion || 'Explorá la selección disponible en este rubro.';
-  const children = document.querySelector('#catalog-children');
-  children.innerHTML = result.hijos.length
+  catalogChildren.innerHTML = result.hijos.length
     ? result.hijos.map((hijo) => `<a class="catalog-child" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}"><strong>${hijo.nombre}</strong><span>→</span></a>`).join('')
     : '<p class="catalog-empty-note">Este rubro todavía no tiene subrubros.</p>';
-  document.querySelector('#catalog-products').innerHTML = '<p class="catalog-empty-note">Todavía no hay productos publicados en este rubro.</p>';
+  catalogProducts.innerHTML = '<p class="catalog-empty-note">Todavía no hay productos publicados en este rubro.</p>';
 }
 
 loadPublicRubrosMenu().catch(() => {});
