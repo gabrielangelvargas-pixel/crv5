@@ -37,7 +37,7 @@ function showDashboard(user) {
 }
 
 if (homeGallery) {
-  homeGallery.innerHTML = '<div class="hero-gallery"><figure class="gallery-main"><img src="/images/local-1.jpg" alt="Interior del local CRV4 Mayorista" /><figcaption>Variedad para tu negocio</figcaption></figure><div class="gallery-side"><figure><img src="/images/local-2.jpg" alt="Exhibición de productos en el local" loading="lazy" /></figure><figure><img src="/images/local-3.jpg" alt="Sector de accesorios y bijouterie" loading="lazy" /></figure></div></div>';
+  homeGallery.innerHTML = '<div class="hero-gallery"><figure class="gallery-main"><img src="/images/local-1.jpg" alt="Interior del local CRV4 Mayorista" /></figure><div class="gallery-side"><figure><img src="/images/local-2.jpg" alt="Exhibición de productos en el local" loading="lazy" /></figure><figure><img src="/images/local-3.jpg" alt="Sector de accesorios y bijouterie" loading="lazy" /></figure></div></div>';
   const heroSlider = homeGallery.querySelector('.hero-gallery');
   const firstSlide = heroSlider.querySelector('.gallery-main').cloneNode(true);
   firstSlide.className = 'gallery-clone';
@@ -75,6 +75,11 @@ if (homeGallery) {
     mobileBenefits.setAttribute('aria-label', 'Beneficios de compra');
     mobileBenefits.innerHTML = '<article><span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span><strong>Compra mayorista</strong><span>Mínimo de inversión $70.000</span></article><article><span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg></span><strong>Medios de pago</strong><span>Tarjetas, transferencias, efectivo</span></article><article><span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6h11v11H3z"/><path d="M14 10h4l3 3v4h-7z"/><path d="M7 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm11 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg></span><strong>Envíos al país</strong><span>Despachos rápidos y seguros. Seguimientos.</span></article><article><span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 13a8 8 0 0 1 16 0"/><path d="M4 13v3a2 2 0 0 0 2 2h1v-5H4Zm16 0v3a2 2 0 0 1-2 2h-1v-5h3Z"/><path d="M15 20h-3a2 2 0 0 1-2-2"/></svg></span><strong>Atención cercana</strong><span>Te asesoramos y te guiamos en cada pedido.</span></article>';
     heroSection.insertBefore(mobileBenefits, heroCopy);
+    const popularRubros = document.createElement('section');
+    popularRubros.className = 'popular-rubros';
+    popularRubros.setAttribute('aria-labelledby', 'popular-rubros-title');
+    popularRubros.innerHTML = '<p class="eyebrow">Catálogo</p><h2 id="popular-rubros-title">Rubros más vistos</h2><div id="popular-rubros-grid" class="popular-rubros-grid"><p class="catalog-empty-note">Cargando rubros...</p></div>';
+    heroSection.insertBefore(popularRubros, heroCopy);
   }
 }
 
@@ -182,12 +187,18 @@ loadRubros().catch((error) => { if (rubroMessage) rubroMessage.textContent = err
 
 async function loadPublicRubrosMenu() {
   if (!publicRubrosMenu) return;
+  const popularRubrosGrid = document.querySelector('#popular-rubros-grid');
   const response = await fetch('/api/catalogo/rubros');
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'No se pudieron cargar los rubros.');
   publicRubrosMenu.innerHTML = result.rubros.length
     ? result.rubros.map((rubro) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}">${rubro.nombre}<span>→</span></a>`).join('')
     : '<p class="menu-empty">Todavía no hay rubros publicados.</p>';
+  if (popularRubrosGrid) {
+    popularRubrosGrid.innerHTML = result.rubros.length
+      ? result.rubros.slice(0, 4).map((rubro, index) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}"><span class="popular-rubro-order">0${index + 1}</span><strong>${rubro.nombre}</strong><span aria-hidden="true">→</span></a>`).join('')
+      : '<p class="catalog-empty-note">Todavía no hay rubros publicados.</p>';
+  }
 }
 
 async function loadCatalogRubro() {
