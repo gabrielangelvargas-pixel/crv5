@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crv5-shell-v7';
+const CACHE_NAME = 'crv5-shell-v8';
 const NETWORK_FIRST_PATHS = new Set(['/', '/app.js', '/styles.css', '/manifest.webmanifest', '/rubros', '/catalogo', '/login']);
 
 self.addEventListener('activate', (event) => {
