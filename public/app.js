@@ -224,13 +224,26 @@ async function loadPublicRubrosMenu() {
 async function loadCatalogRubro() {
   const catalogHeading = document.querySelector('#catalog-heading');
   if (!catalogHeading) return;
+  const catalogBrowser = document.querySelector('.catalog-browser');
+  const catalogCover = document.querySelector('#catalog-cover');
+  const catalogDescription = document.querySelector('#catalog-description');
   const slug = new URLSearchParams(window.location.search).get('rubro');
-  if (!slug) return;
+  if (!slug) {
+    catalogHeading.textContent = 'Elegí un rubro';
+    catalogDescription.textContent = 'Seleccioná una categoría para ver sus subrubros y productos.';
+    document.querySelector('#catalog-children').innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro desde el menú.</p>';
+    document.querySelector('#catalog-products').innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro para ver sus productos.</p>';
+    return;
+  }
   const response = await fetch(`/api/catalogo/rubros/${encodeURIComponent(slug)}`);
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'No se pudo cargar el rubro.');
+  if (catalogCover && result.rubro.imagen) {
+    catalogCover.innerHTML = `<img src="${result.rubro.imagen}" alt="Portada de ${result.rubro.nombre}" />`;
+    catalogCover.setAttribute('aria-hidden', 'false');
+  }
   catalogHeading.textContent = result.rubro.nombre;
-  document.querySelector('#catalog-description').textContent = result.rubro.descripcion || 'Explorá la selección disponible en este rubro.';
+  catalogDescription.textContent = result.rubro.descripcion || 'Explorá la selección disponible en este rubro.';
   const children = document.querySelector('#catalog-children');
   children.innerHTML = result.hijos.length
     ? result.hijos.map((hijo) => `<a class="catalog-child" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}"><strong>${hijo.nombre}</strong><span>→</span></a>`).join('')

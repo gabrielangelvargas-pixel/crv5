@@ -151,6 +151,9 @@ select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13, 119, 11
 .catalog-intro { max-width: 700px; padding-bottom: 42px; border-bottom: 1px solid var(--line); }
 .catalog-intro h1 { margin: 16px 0 12px; font-size: clamp(42px, 7vw, 78px); line-height: 1; }
 .catalog-intro p:not(.eyebrow):not(.form-message) { margin: 0; color: var(--muted); font-size: 17px; line-height: 1.6; }
+.catalog-cover { display: none; margin-top: 22px; overflow: hidden; border-radius: 8px; }
+.catalog-cover[aria-hidden="false"] { display: block; }
+.catalog-cover img { display: block; width: 100%; aspect-ratio: 1.91 / 1; object-fit: cover; }
 .catalog-section { padding: 38px 0; border-bottom: 1px solid var(--line); }
 .catalog-children { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
 .catalog-child { display: flex; align-items: center; justify-content: space-between; min-height: 74px; padding: 16px; color: var(--ink); background: var(--paper); border: 1px solid var(--line); text-decoration: none; }
