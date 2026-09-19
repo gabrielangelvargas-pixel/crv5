@@ -82,7 +82,7 @@ if (homeGallery) {
     const popularRubros = document.createElement('section');
     popularRubros.className = 'popular-rubros';
     popularRubros.setAttribute('aria-labelledby', 'popular-rubros-title');
-    popularRubros.innerHTML = '<p class="eyebrow" id="popular-rubros-title">Rubros más vistos</p><div id="popular-rubros-grid" class="popular-rubros-grid"><p class="catalog-empty-note">Cargando rubros...</p></div>';
+    popularRubros.innerHTML = '<p class="eyebrow" id="popular-rubros-title">Rubros más vistos</p><div id="popular-rubros-grid" class="popular-rubros-grid"><p class="catalog-empty-note">Cargando rubros...</p></div><a class="popular-offer" href="/catalogo?rubro=ofertas" aria-label="Ver ofertas"><img src="/images/rubros/oferta.png" alt="Ofertas" loading="lazy" /></a>';
     heroSection.insertBefore(popularRubros, heroCopy);
   }
 }

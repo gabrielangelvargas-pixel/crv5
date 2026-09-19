@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crv5-shell-v10';
+const CACHE_NAME = 'crv5-shell-v11';
 const NETWORK_FIRST_PATHS = new Set(['/', '/app.js', '/styles.css', '/manifest.webmanifest', '/rubros', '/catalogo', '/login']);
 
 self.addEventListener('activate', (event) => {
@@ -23,6 +23,7 @@ self.addEventListener('install', (event) => {
     '/images/rubros/bazar.png',
     '/images/rubros/marroquineria.png',
     '/images/rubros/plata-900.png',
+    '/images/rubros/oferta.png',
   ])).then(() => self.skipWaiting()));
 });
 
