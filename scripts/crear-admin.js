@@ -66,7 +66,7 @@ try {
 
   const [userResult] = await connection.query(
     'INSERT INTO usuarios (nombre, usuario, clave_hash, activo) VALUES (?, ?, ?, TRUE)',
-    [nombre, usuario, hashPassword(clave)],
+    [nombre, usuario, await hashPassword(clave)],
   );
   await connection.query(
     'INSERT INTO usuarios_roles (id_usuario, id_rol, activo) VALUES (?, ?, TRUE)',

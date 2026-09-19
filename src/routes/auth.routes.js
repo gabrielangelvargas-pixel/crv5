@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { database } from '../config/database.js';
 import { env } from '../config/env.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
@@ -7,6 +8,22 @@ import { hashPassword, verifyPassword } from '../utils/password.js';
 const SESSION_COOKIE = 'crv5_session';
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
 export const authRouter = Router();
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos. Probá nuevamente en unos minutos.' },
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Se alcanzó el límite de registros. Probá nuevamente más tarde.' },
+});
 
 function cookieOptions() {
   return {
@@ -22,7 +39,7 @@ function sessionTokenHash(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-authRouter.post('/login', async (request, response, next) => {
+authRouter.post('/login', loginLimiter, async (request, response, next) => {
   const { usuario, clave } = request.body ?? {};
   if (typeof usuario !== 'string' || typeof clave !== 'string' || !usuario.trim() || !clave) {
     return response.status(400).json({ error: 'Ingresá usuario y clave.' });
@@ -41,7 +58,7 @@ authRouter.post('/login', async (request, response, next) => {
     `, [usuario.trim()]);
     const user = rows[0];
 
-    if (!user || !user.activo || !verifyPassword(clave, user.clave_hash)) {
+    if (!user || !user.activo || !(await verifyPassword(clave, user.clave_hash))) {
       return response.status(401).json({ error: 'Usuario o clave incorrectos.' });
     }
 
@@ -63,7 +80,7 @@ authRouter.post('/login', async (request, response, next) => {
   }
 });
 
-authRouter.post('/register', async (request, response, next) => {
+authRouter.post('/register', registerLimiter, async (request, response, next) => {
   const { nombre, usuario, clave } = request.body ?? {};
   const cleanName = typeof nombre === 'string' ? nombre.trim() : '';
   const cleanUser = typeof usuario === 'string' ? usuario.trim().toLowerCase() : '';
@@ -86,7 +103,7 @@ authRouter.post('/register', async (request, response, next) => {
     if (!roleRows[0]) throw new Error('El rol cliente no está configurado.');
     const [userResult] = await connection.query(
       'INSERT INTO usuarios (nombre, usuario, clave_hash, activo) VALUES (?, ?, ?, TRUE)',
-      [cleanName, cleanUser, hashPassword(clave)],
+      [cleanName, cleanUser, await hashPassword(clave)],
     );
     await connection.query(
       'INSERT INTO usuarios_roles (id_usuario, id_rol, activo) VALUES (?, ?, TRUE)',
