@@ -192,3 +192,4 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
 @media (max-width: 760px) { .public-footer { grid-template-columns: 1fr; gap: 22px; padding: 30px 24px; } .footer-whatsapp, .footer-brand { justify-self: start; } }
 @media (max-width: 760px) { .public-page .hero-copy, .public-page .about-section, .public-page .cart-strip { display: none; } }
 @media (max-width: 760px) { .popular-rubros { padding-bottom: 16px; } .mobile-benefits + .popular-rubros { padding-top: 24px; } .footer-location { font-size: 17px; } .footer-location strong { font-size: 20px; } .footer-whatsapp { justify-self: start; font-size: 18px; } .footer-brand { font-size: 16px; } .footer-brand small { font-size: 13px; } }
+.app-icon-small, .footer-brand img { content: url('/icons/crv4-logo-final-192.png'); }
