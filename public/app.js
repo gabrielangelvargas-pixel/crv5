@@ -292,7 +292,7 @@ async function loadCatalogRubro() {
   const catalogDescription = document.querySelector('#catalog-description');
   const catalogChildren = document.querySelector('#catalog-children');
   const catalogProducts = document.querySelector('#catalog-products');
-  const catalogPlaceholder = '/images/og-crv4-mayorista.png';
+  const catalogPlaceholder = '<div class="catalog-placeholder" aria-label="Imagen no disponible"><span>Imagen no disponible</span></div>';
   if (!catalogBrowser) return;
   const slug = new URLSearchParams(window.location.search).get('rubro');
   if (!slug) {
@@ -305,15 +305,19 @@ async function loadCatalogRubro() {
   const response = await fetch(`/api/catalogo/rubros/${encodeURIComponent(slug)}`, { cache: 'no-store' });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'No se pudo cargar el rubro.');
-  const coverImage = result.rubro.imagen || catalogPlaceholder;
-  if (catalogCover && coverImage) {
-    catalogCover.innerHTML = `<img src="${coverImage}" alt="Portada de ${result.rubro.nombre}" onerror="this.onerror=null;this.src='${catalogPlaceholder}'" />`;
+  const coverImage = result.rubro.imagen;
+  if (catalogCover) {
+    catalogCover.innerHTML = coverImage
+      ? `<img src="${coverImage}" alt="Portada de ${result.rubro.nombre}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'catalog-placeholder',textContent:'Imagen no disponible'}))" />`
+      : catalogPlaceholder;
     catalogCover.setAttribute('aria-hidden', 'false');
   }
   catalogChildren.innerHTML = result.hijos.length
     ? result.hijos.map((hijo) => {
-      const image = hijo.imagen || catalogPlaceholder;
-      return `<a class="catalog-child" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}"><img src="${image}" alt="Portada de ${hijo.nombre}" loading="lazy" onerror="this.onerror=null;this.src='${catalogPlaceholder}'" /><span class="catalog-child-content"><strong>${hijo.nombre}</strong></span></a>`;
+      const image = hijo.imagen
+        ? `<img src="${hijo.imagen}" alt="Portada de ${hijo.nombre}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'catalog-placeholder',textContent:'Imagen no disponible'}))" />`
+        : catalogPlaceholder;
+      return `<a class="catalog-child" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}">${image}<span class="catalog-child-content"><strong>${hijo.nombre}</strong></span></a>`;
     }).join('')
     : '<p class="catalog-empty-note">Este rubro todavía no tiene subrubros.</p>';
   catalogProducts.innerHTML = '<p class="catalog-empty-note">Todavía no hay productos publicados en este rubro.</p>';
