@@ -77,7 +77,7 @@ if (homeGallery) {
     const informationTitle = document.createElement('p');
     informationTitle.className = 'eyebrow mobile-information-title';
     informationTitle.textContent = 'Información';
-    heroSection.insertBefore(informationTitle, mobileBenefits);
+    heroSection.insertBefore(informationTitle, heroCopy);
     heroSection.insertBefore(mobileBenefits, heroCopy);
     const popularRubros = document.createElement('section');
     popularRubros.className = 'popular-rubros';
