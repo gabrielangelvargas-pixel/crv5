@@ -38,6 +38,15 @@ function showDashboard(user) {
 
 if (homeGallery) {
   homeGallery.innerHTML = '<div class="hero-gallery"><figure class="gallery-main"><img src="/images/local-1.jpg" alt="Interior del local CRV4 Mayorista" /><figcaption>Variedad para tu negocio</figcaption></figure><div class="gallery-side"><figure><img src="/images/local-2.jpg" alt="Exhibición de productos en el local" loading="lazy" /></figure><figure><img src="/images/local-3.jpg" alt="Sector de accesorios y bijouterie" loading="lazy" /></figure></div></div>';
+  const mobileSlides = homeGallery.querySelectorAll('.hero-gallery > figure, .hero-gallery > .gallery-side > figure');
+  let mobileSlide = 0;
+  const moveMobileSlide = (index) => {
+    if (window.matchMedia('(max-width: 760px)').matches) {
+      mobileSlide = (index + mobileSlides.length) % mobileSlides.length;
+      mobileSlides[mobileSlide].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    }
+  };
+  if (mobileSlides.length > 1) window.setInterval(() => moveMobileSlide(mobileSlide + 1), 5000);
 }
 
 function showStaffNavigation(user) {
