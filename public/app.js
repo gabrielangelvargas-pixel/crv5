@@ -317,7 +317,7 @@ async function loadCatalogRubro() {
       const image = hijo.imagen
         ? `<img src="${hijo.imagen}" alt="Portada de ${hijo.nombre}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'catalog-placeholder',textContent:'Imagen no disponible'}))" />`
         : catalogPlaceholder;
-      return `<a class="catalog-child" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}">${image}<span class="catalog-child-content"><strong>${hijo.nombre}</strong></span></a>`;
+      return `<a class="catalog-child flex-shrink-0" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}">${image}<span class="catalog-child-content"><strong>${hijo.nombre}</strong></span></a>`;
     }).join('')
     : '<p class="catalog-empty-note">Este rubro todavía no tiene subrubros.</p>';
   catalogProducts.innerHTML = '<p class="catalog-empty-note">Todavía no hay productos publicados en este rubro.</p>';
