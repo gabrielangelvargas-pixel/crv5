@@ -101,6 +101,7 @@ select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13, 119, 11
 .gallery-side figure:last-child img { object-position: 45% center; }
 .gallery-clone { display: none; }
 .mobile-benefits { display: none; }
+.mobile-benefits strong { font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .hero-still::before { display: none; }
 .still-label { position: absolute; z-index: 2; top: 14%; left: 15%; color: var(--ink); font-size: 13px; line-height: 1.1; }
 .still-label strong { font-size: 42px; letter-spacing: .04em; }
