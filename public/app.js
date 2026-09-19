@@ -310,7 +310,10 @@ async function loadCatalogRubro() {
     catalogCover.setAttribute('aria-hidden', 'false');
   }
   catalogChildren.innerHTML = result.hijos.length
-    ? result.hijos.map((hijo) => `<a class="catalog-child" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}"><strong>${hijo.nombre}</strong><span>→</span></a>`).join('')
+    ? result.hijos.map((hijo) => {
+      const image = hijo.imagen || `/images/rubros/${hijo.slug}.png`;
+      return `<a class="catalog-child" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}"><img src="${image}" alt="Portada de ${hijo.nombre}" loading="lazy" /><span class="catalog-child-content"><strong>${hijo.nombre}</strong><span aria-hidden="true">→</span></span></a>`;
+    }).join('')
     : '<p class="catalog-empty-note">Este rubro todavía no tiene subrubros.</p>';
   catalogProducts.innerHTML = '<p class="catalog-empty-note">Todavía no hay productos publicados en este rubro.</p>';
 }
