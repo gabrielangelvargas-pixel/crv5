@@ -6,9 +6,11 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import pino from 'pino';
 import pinoHttp from 'pino-http';
+import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { env } from './config/env.js';
+import { database } from './config/database.js';
 import { authRouter } from './routes/auth.routes.js';
 import { catalogoRouter } from './routes/catalogo.routes.js';
 import { healthRouter } from './routes/health.routes.js';
@@ -33,6 +35,54 @@ app.use('/api', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/catalogo', catalogoRouter);
 app.use('/api/rubros', rubrosRouter);
+
+app.get('/catalogo', async (request, response, next) => {
+  try {
+    let html = await fs.readFile(path.join(publicDirectory, 'catalogo.html'), 'utf8');
+    const slug = typeof request.query.rubro === 'string' ? request.query.rubro.trim() : '';
+    const baseUrl = `${request.protocol}://${request.get('host')}`;
+    let metadata = {
+      title: 'Catálogo mayorista | CRV4',
+      description: 'Explorá rubros y categorías de productos mayoristas para tu negocio.',
+      image: `${baseUrl}/images/og-crv4-mayorista.png`,
+      imageAlt: 'CRV4 Mayorista',
+      url: `${baseUrl}/catalogo`,
+    };
+
+    if (slug) {
+      const [rows] = await database.query(
+        'SELECT nombre, descripcion, imagen FROM rubros WHERE slug = ? AND activo = TRUE LIMIT 1',
+        [slug],
+      );
+      if (rows[0]) {
+        metadata = {
+          title: `${rows[0].nombre} | CRV4 Mayorista`,
+          description: rows[0].descripcion || `Explorá productos mayoristas de ${rows[0].nombre}.`,
+          image: rows[0].imagen?.startsWith('http') ? rows[0].imagen : `${baseUrl}${rows[0].imagen || `/images/rubros/${slug}.png`}`,
+          imageAlt: rows[0].nombre,
+          url: `${baseUrl}/catalogo?rubro=${encodeURIComponent(slug)}`,
+        };
+      }
+    }
+
+    const escapeAttribute = (value) => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const replaceMeta = (source, attribute, name, value) => source.replace(new RegExp(`(<meta\\s+${attribute}="${name}"\\s+content=")[^"]*(")`, 'i'), `$1${escapeAttribute(value)}$2`);
+    html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeAttribute(metadata.title)}</title>`);
+    html = replaceMeta(html, 'name', 'description', metadata.description);
+    html = replaceMeta(html, 'property', 'og:title', metadata.title);
+    html = replaceMeta(html, 'property', 'og:description', metadata.description);
+    html = replaceMeta(html, 'property', 'og:url', metadata.url);
+    html = replaceMeta(html, 'property', 'og:image', metadata.image);
+    html = replaceMeta(html, 'property', 'og:image:alt', metadata.imageAlt);
+    html = replaceMeta(html, 'name', 'twitter:title', metadata.title);
+    html = replaceMeta(html, 'name', 'twitter:description', metadata.description);
+    html = replaceMeta(html, 'name', 'twitter:image', metadata.image);
+    return response.type('html').send(html);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 app.use(express.static(publicDirectory, {
   extensions: ['html'],
   setHeaders(response, filePath) {
