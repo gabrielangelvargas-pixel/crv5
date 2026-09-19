@@ -55,22 +55,32 @@ app.get('/catalogo', async (request, response, next) => {
         [slug],
       );
       if (rows[0]) {
-        const storedImage = rows[0].imagen || `/images/rubros/${slug}.png`;
-        let socialImage = storedImage;
+        const defaultImage = `${baseUrl}/images/og-crv4-mayorista.png`;
+        const storedImage = typeof rows[0].imagen === 'string' ? rows[0].imagen.trim() : '';
+        let socialImage = defaultImage;
         if (storedImage.startsWith('/')) {
-          const socialFile = path.basename(storedImage).replace(/\.[^.]+$/, '.jpg');
-          const socialPath = path.join(publicDirectory, 'images', 'social', socialFile);
+          const originalPath = path.join(publicDirectory, storedImage.replace(/^\/+/, ''));
           try {
-            await fs.access(socialPath);
-            socialImage = `/images/social/${socialFile}`;
+            await fs.access(originalPath);
+            socialImage = `${baseUrl}${storedImage}`;
+            const socialFile = path.basename(storedImage).replace(/\.[^.]+$/, '.jpg');
+            const socialPath = path.join(publicDirectory, 'images', 'social', socialFile);
+            try {
+              await fs.access(socialPath);
+              socialImage = `${baseUrl}/images/social/${socialFile}`;
+            } catch {
+              // Use the original portada when an optimized social image is unavailable.
+            }
           } catch {
-            // Keep the original database image when no optimized preview exists.
+            // Use the institutional image when the assigned portada is unavailable.
           }
+        } else if (/^https?:\/\//i.test(storedImage)) {
+          socialImage = storedImage;
         }
         metadata = {
           title: rows[0].nombre,
           description: rows[0].descripcion || `Explorá productos mayoristas de ${rows[0].nombre}.`,
-          image: socialImage.startsWith('http') ? socialImage : `${baseUrl}${socialImage}`,
+          image: socialImage,
           imageAlt: rows[0].nombre,
           url: `${baseUrl}/catalogo?rubro=${encodeURIComponent(slug)}`,
         };
