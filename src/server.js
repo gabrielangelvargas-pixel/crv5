@@ -55,10 +55,22 @@ app.get('/catalogo', async (request, response, next) => {
         [slug],
       );
       if (rows[0]) {
+        const storedImage = rows[0].imagen || `/images/rubros/${slug}.png`;
+        let socialImage = storedImage;
+        if (storedImage.startsWith('/')) {
+          const socialFile = path.basename(storedImage).replace(/\.[^.]+$/, '.jpg');
+          const socialPath = path.join(publicDirectory, 'images', 'social', socialFile);
+          try {
+            await fs.access(socialPath);
+            socialImage = `/images/social/${socialFile}`;
+          } catch {
+            // Keep the original database image when no optimized preview exists.
+          }
+        }
         metadata = {
           title: `${rows[0].nombre} | CRV4 Mayorista`,
           description: rows[0].descripcion || `Explorá productos mayoristas de ${rows[0].nombre}.`,
-          image: rows[0].imagen?.startsWith('http') ? rows[0].imagen : `${baseUrl}${rows[0].imagen || `/images/rubros/${slug}.png`}`,
+          image: socialImage.startsWith('http') ? socialImage : `${baseUrl}${socialImage}`,
           imageAlt: rows[0].nombre,
           url: `${baseUrl}/catalogo?rubro=${encodeURIComponent(slug)}`,
         };
