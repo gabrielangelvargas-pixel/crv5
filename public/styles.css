@@ -190,3 +190,4 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
 @media (max-width: 760px) { .catalog-browser { min-height: calc(100vh - 74px); padding: 112px 20px 50px; } .catalog-children { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .popular-rubros-grid a { grid-template-rows: auto auto; min-height: 0; } .popular-rubros-grid a > img { height: auto; aspect-ratio: 1.91 / 1; object-fit: cover; } .popular-rubro-content { min-height: 66px; } .popular-offer img { height: auto; aspect-ratio: 1.91 / 1; object-fit: cover; } }
 @media (max-width: 760px) { .public-footer { grid-template-columns: 1fr; gap: 22px; padding: 30px 24px; } .footer-whatsapp, .footer-brand { justify-self: start; } }
+@media (max-width: 760px) { .public-page .hero-copy, .public-page .about-section, .public-page .cart-strip { display: none; } }
