@@ -144,6 +144,16 @@ getSession().catch(() => showStaffNavigation(null));
 
 const cartCount = document.querySelector('#cart-count');
 const cartSummary = document.querySelector('#cart-summary');
+const footerWhatsapp = document.querySelector('.footer-whatsapp');
+const footerBrand = document.querySelector('.footer-brand');
+if (footerWhatsapp) {
+  footerWhatsapp.href = 'https://wa.me/5493814458274';
+  footerWhatsapp.setAttribute('aria-label', 'Contactar a Diseño GAV por WhatsApp al +54 9 381 445 8274');
+  footerWhatsapp.querySelector('span').textContent = '+54 9 381 445 8274';
+}
+if (footerBrand) {
+  footerBrand.querySelector('span').innerHTML = '2026<br /><a class="gav-link" href="https://wa.me/5493814458274" target="_blank" rel="noreferrer">Diseño GAV</a>';
+}
 const guestCart = JSON.parse(localStorage.getItem('crv5_guest_cart') || '[]');
 if (cartCount) cartCount.textContent = guestCart.reduce((total, item) => total + (item.cantidad || 0), 0);
 if (cartSummary && guestCart.length) cartSummary.textContent = `${guestCart.length} producto${guestCart.length === 1 ? '' : 's'} en tu selección.`;
