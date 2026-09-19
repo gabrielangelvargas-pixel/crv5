@@ -222,14 +222,12 @@ async function loadPublicRubrosMenu() {
 }
 
 async function loadCatalogRubro() {
-  const catalogHeading = document.querySelector('#catalog-heading');
-  if (!catalogHeading) return;
   const catalogBrowser = document.querySelector('.catalog-browser');
   const catalogCover = document.querySelector('#catalog-cover');
   const catalogDescription = document.querySelector('#catalog-description');
+  if (!catalogBrowser || !catalogDescription) return;
   const slug = new URLSearchParams(window.location.search).get('rubro');
   if (!slug) {
-    catalogHeading.textContent = 'Elegí un rubro';
     catalogDescription.textContent = 'Seleccioná una categoría para ver sus subrubros y productos.';
     document.querySelector('#catalog-children').innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro desde el menú.</p>';
     document.querySelector('#catalog-products').innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro para ver sus productos.</p>';
@@ -242,7 +240,6 @@ async function loadCatalogRubro() {
     catalogCover.innerHTML = `<img src="${result.rubro.imagen}" alt="Portada de ${result.rubro.nombre}" />`;
     catalogCover.setAttribute('aria-hidden', 'false');
   }
-  catalogHeading.textContent = result.rubro.nombre;
   catalogDescription.textContent = result.rubro.descripcion || 'Explorá la selección disponible en este rubro.';
   const children = document.querySelector('#catalog-children');
   children.innerHTML = result.hijos.length
