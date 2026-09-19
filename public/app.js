@@ -147,9 +147,9 @@ const cartSummary = document.querySelector('#cart-summary');
 const footerWhatsapp = document.querySelector('.footer-whatsapp');
 const footerBrand = document.querySelector('.footer-brand');
 if (footerWhatsapp) {
-  footerWhatsapp.href = 'https://wa.me/5493814458274';
-  footerWhatsapp.setAttribute('aria-label', 'Contactar a Diseño GAV por WhatsApp al +54 9 381 445 8274');
-  footerWhatsapp.querySelector('span').textContent = '+54 9 381 445 8274';
+  footerWhatsapp.href = 'https://wa.me/542644823420';
+  footerWhatsapp.setAttribute('aria-label', 'Contactar al local por WhatsApp al +54 264 482 3420');
+  footerWhatsapp.querySelector('span').textContent = '+54 264 482 3420';
 }
 if (footerBrand) {
   footerBrand.querySelector('span').innerHTML = '2026<br /><a class="gav-link" href="https://wa.me/5493814458274" target="_blank" rel="noreferrer">Diseño GAV</a>';
