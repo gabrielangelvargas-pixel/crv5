@@ -68,7 +68,7 @@ app.get('/catalogo', async (request, response, next) => {
           }
         }
         metadata = {
-          title: `${rows[0].nombre} | CRV4 Mayorista`,
+          title: rows[0].nombre,
           description: rows[0].descripcion || `Explorá productos mayoristas de ${rows[0].nombre}.`,
           image: socialImage.startsWith('http') ? socialImage : `${baseUrl}${socialImage}`,
           imageAlt: rows[0].nombre,
