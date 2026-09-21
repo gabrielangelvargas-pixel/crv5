@@ -245,12 +245,12 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
 .public-page .local-title { display: block; margin: 0 0 22px; padding: 0; font-size: 15px; }
 .public-page .hero-gallery { min-height: 430px; }
 .public-page .gallery-main { min-height: 430px; }
-.public-page .mobile-information-title { display: block; margin: 0; padding: 42px 0 0; font-size: 15px; background: var(--paper); }
-.public-page .mobile-benefits { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 18px 0 38px; background: var(--paper); }
+.public-page .mobile-information-title { display: block; order: 2; margin: 0; padding: 42px 0 0; font-size: 15px; background: var(--paper); }
+.public-page .mobile-benefits { display: grid; order: 3; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 18px 0 38px; background: var(--paper); }
 .public-page .mobile-benefits article { display: grid; gap: 8px; min-height: 180px; padding: 20px 18px; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(23, 59, 63, .07); }
 .public-page .mobile-benefits strong { color: var(--ink); font-size: 15px; }
 .public-page .mobile-benefits span:not(.benefit-icon) { color: var(--muted); font-size: 13px; line-height: 1.4; }
-.public-page .popular-rubros { display: block; padding: 34px 0 28px; border-top: 1px solid var(--line); background: var(--paper); }
+.public-page .popular-rubros { display: block; order: 4; padding: 34px 0 28px; border-top: 1px solid var(--line); background: var(--paper); }
 .public-page .popular-rubros-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
 .public-page .popular-rubros-grid a { display: grid; grid-template-rows: auto 1fr; min-height: 210px; padding: 0; overflow: hidden; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(23, 59, 63, .07); text-decoration: none; }
 .public-page .popular-rubros-grid a > img { width: 100%; aspect-ratio: 1.91 / 1; object-fit: cover; }
