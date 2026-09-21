@@ -279,3 +279,18 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
   .public-page .popular-rubro-content { min-height: 66px; padding: 12px; }
   .public-page .home-offer-slot { padding: 0 14px 44px; }
 }
+
+/* Use one restrained, full-width gallery slider on laptop and desktop too. */
+@media (min-width: 992px) {
+  .public-page main { max-width: 1240px; margin: 0 auto; }
+  .public-page .hero-still { max-width: 1120px; margin: 0 auto; padding-right: 32px; padding-left: 32px; }
+  .public-page .hero-gallery { display: flex; height: auto; min-height: 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .public-page .hero-gallery::-webkit-scrollbar { display: none; }
+  .public-page .hero-gallery > figure, .public-page .hero-gallery > .gallery-side > figure { flex: 0 0 100%; height: clamp(360px, 42vw, 560px); min-height: 0; scroll-snap-align: start; }
+  .public-page .gallery-side { display: contents; }
+  .public-page .mobile-information-title, .public-page .mobile-benefits, .public-page .popular-rubros, .public-page .home-offer-slot { max-width: 1120px; margin-right: auto; margin-left: auto; }
+  .public-page .mobile-benefits { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding-bottom: 30px; }
+  .public-page .mobile-benefits article { min-height: 150px; padding: 18px 16px; }
+  .public-page .benefit-icon { width: 40px; height: 40px; }
+  .public-page .popular-rubros-grid { gap: 12px; }
+}

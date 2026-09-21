@@ -54,12 +54,10 @@ if (homeGallery) {
   const mobileSlides = heroSlider.querySelectorAll('figure');
   let mobileSlide = 0;
   const moveMobileSlide = (index) => {
-    if (window.matchMedia('(max-width: 760px)').matches) {
-      mobileSlide = Math.min(index, mobileSlides.length - 1);
-      const targetSlide = mobileSlides[mobileSlide];
-      const targetLeft = targetSlide.getBoundingClientRect().left - heroSlider.getBoundingClientRect().left + heroSlider.scrollLeft;
-      heroSlider.scrollTo({ left: targetLeft, behavior: 'smooth' });
-    }
+    mobileSlide = Math.min(index, mobileSlides.length - 1);
+    const targetSlide = mobileSlides[mobileSlide];
+    const targetLeft = targetSlide.getBoundingClientRect().left - heroSlider.getBoundingClientRect().left + heroSlider.scrollLeft;
+    heroSlider.scrollTo({ left: targetLeft, behavior: 'smooth' });
   };
   let scrollResetTimer;
   heroSlider.addEventListener('scroll', () => {
