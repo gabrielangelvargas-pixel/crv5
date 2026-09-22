@@ -294,3 +294,10 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
   .public-page .benefit-icon { width: 40px; height: 40px; }
   .public-page .popular-rubros-grid { gap: 12px; }
 }
+
+/* The home gallery has one slide per viewport at every breakpoint. */
+.public-page .hero-gallery { display: flex; width: 100%; height: clamp(300px, 42vw, 560px); min-height: 0; gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.public-page .hero-gallery::-webkit-scrollbar { display: none; }
+.public-page .hero-gallery > figure { position: relative; flex: 0 0 100%; height: 100%; min-height: 0; margin: 0; overflow: hidden; scroll-snap-align: start; background: #c6d9d0; }
+.public-page .hero-gallery > figure img { display: block; width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 760px) { .public-page .hero-gallery { height: 280px; } }

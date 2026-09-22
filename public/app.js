@@ -45,18 +45,14 @@ function showDashboard(user) {
 }
 
 if (homeGallery) {
-  homeGallery.innerHTML = '<p class="eyebrow local-title">Nuestro local</p><div class="hero-gallery"><figure class="gallery-main"><img src="/images/local-1.jpg" alt="Interior del local CRV4 Mayorista" /></figure><div class="gallery-side"><figure><img src="/images/local-2.jpg" alt="Exhibición de productos en el local" loading="lazy" /></figure><figure><img src="/images/local-3.jpg" alt="Sector de accesorios y bijouterie" loading="lazy" /></figure></div></div>';
+  homeGallery.innerHTML = '<p class="eyebrow local-title">Nuestro local</p><div class="hero-gallery" role="region" aria-label="Fotos del local CRV4 Mayorista"><figure><img src="/images/local-1.jpg" alt="Interior del local CRV4 Mayorista" /></figure><figure><img src="/images/local-2.jpg" alt="Exhibición de productos en el local" loading="lazy" /></figure><figure><img src="/images/local-3.jpg" alt="Sector de accesorios y bijouterie" loading="lazy" /></figure></div>';
   const heroSlider = homeGallery.querySelector('.hero-gallery');
-  const firstSlide = heroSlider.querySelector('.gallery-main').cloneNode(true);
-  firstSlide.className = 'gallery-clone';
-  firstSlide.setAttribute('aria-hidden', 'true');
-  heroSlider.appendChild(firstSlide);
   const mobileSlides = heroSlider.querySelectorAll('figure');
   let mobileSlide = 0;
   const moveMobileSlide = (index) => {
-    mobileSlide = Math.min(index, mobileSlides.length - 1);
+    mobileSlide = index % mobileSlides.length;
     const targetSlide = mobileSlides[mobileSlide];
-    const targetLeft = targetSlide.getBoundingClientRect().left - heroSlider.getBoundingClientRect().left + heroSlider.scrollLeft;
+    const targetLeft = targetSlide.offsetLeft;
     heroSlider.scrollTo({ left: targetLeft, behavior: 'smooth' });
   };
   let scrollResetTimer;
@@ -65,10 +61,7 @@ if (homeGallery) {
     scrollResetTimer = window.setTimeout(() => {
       const nearestSlide = Math.round(heroSlider.scrollLeft / heroSlider.clientWidth);
       mobileSlide = nearestSlide;
-      if (nearestSlide === mobileSlides.length - 1) {
-        heroSlider.scrollTo({ left: 0, behavior: 'auto' });
-        mobileSlide = 0;
-      }
+      if (nearestSlide >= mobileSlides.length) moveMobileSlide(0);
     }, 140);
   }, { passive: true });
   if (mobileSlides.length > 1) window.setInterval(() => moveMobileSlide(mobileSlide + 1), 5000);
