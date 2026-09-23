@@ -173,7 +173,7 @@ select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13, 119, 11
 .menu-empty { margin: 28px 10px; color: var(--muted); font-size: 13px; }
 .catalog-browser { width: 100%; max-width: 1120px; min-height: calc(100vh - 90px); margin: 0 auto; padding: 116px 32px 70px; }
 .catalog-page .catalog-browser { padding-top: calc(90px + var(--catalog-gap)); }
-.catalog-intro { max-width: 700px; padding-bottom: 0; border-bottom: 0; }
+.catalog-intro { width: 100%; max-width: none; padding-bottom: 0; border-bottom: 0; }
 .catalog-intro p:not(.eyebrow):not(.form-message) { margin: 0; color: var(--muted); font-size: 17px; line-height: 1.6; }
 .catalog-cover { display: none; margin: 0 0 var(--catalog-gap); overflow: hidden; border-radius: 8px; }
 .catalog-cover[aria-hidden="false"] { display: block; }
