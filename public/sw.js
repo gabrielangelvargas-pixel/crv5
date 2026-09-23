@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crv5-shell-v39';
+const CACHE_NAME = 'crv5-shell-v40';
 const NETWORK_FIRST_PATHS = new Set(['/', '/index.html', '/app.js', '/styles.css', '/manifest.webmanifest', '/rubros', '/catalogo', '/login', '/register']);
 
 self.addEventListener('activate', (event) => {
@@ -28,6 +28,10 @@ self.addEventListener('install', (event) => {
     '/images/rubros/plata-900.png',
     '/images/rubros/oferta.png',
   ])).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {

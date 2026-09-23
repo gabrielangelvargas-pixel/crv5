@@ -244,7 +244,33 @@ if (cartCount) cartCount.textContent = guestCart.reduce((total, item) => total +
 if (cartSummary && guestCart.length) cartSummary.textContent = `${guestCart.length} producto${guestCart.length === 1 ? '' : 's'} en tu selección.`;
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((registration) => registration.update()).catch(() => {});
+  let isRefreshing = false;
+  let serviceWorkerRegistration;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (isRefreshing) return;
+    isRefreshing = true;
+    window.location.reload();
+  });
+
+  const checkForAppUpdate = async () => {
+    try {
+      serviceWorkerRegistration ||= await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+      await serviceWorkerRegistration.update();
+      if (serviceWorkerRegistration.waiting) serviceWorkerRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    } catch {
+      // La PWA puede seguir funcionando con la versión previamente instalada.
+    }
+  };
+
+  checkForAppUpdate();
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      window.location.reload();
+      return;
+    }
+    checkForAppUpdate();
+  });
 }
 
 const rubrosTable = document.querySelector('#rubros-table-body');
