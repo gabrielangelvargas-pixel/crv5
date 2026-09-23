@@ -239,6 +239,12 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
 .catalog-page .catalog-children { flex-wrap: nowrap; gap: 12px; padding-bottom: 6px; scrollbar-width: none; }
 .catalog-page .catalog-children::-webkit-scrollbar { display: none; }
 .catalog-page .catalog-child { flex: 0 0 70%; max-width: 620px; }
+@media (min-width: 761px) {
+  .catalog-page .catalog-cover img, .catalog-page .catalog-cover .catalog-placeholder { aspect-ratio: 2.4 / 1; }
+}
+@media (max-width: 760px) {
+  .catalog-page .catalog-cover img, .catalog-page .catalog-cover .catalog-placeholder { aspect-ratio: 1.91 / 1; }
+}
 
 /* Keep the mobile information architecture across every viewport. */
 .auth-page .app-shell { display: block; padding-top: 90px; }
