@@ -233,6 +233,13 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
 .app-icon-small, .footer-brand img { content: url('/icons/crv4-logo-final-192.png'); }
 
+/* Keep the category slider consistent: one card width across all viewports. */
+.catalog-page .catalog-browser { width: 100%; max-width: 1180px; }
+.catalog-page .catalog-section { width: 100%; margin-right: 0; margin-left: 0; }
+.catalog-page .catalog-children { flex-wrap: nowrap; gap: 12px; padding-bottom: 6px; scrollbar-width: none; }
+.catalog-page .catalog-children::-webkit-scrollbar { display: none; }
+.catalog-page .catalog-child { flex: 0 0 70%; max-width: 620px; }
+
 /* Keep the mobile information architecture across every viewport. */
 .auth-page .app-shell { display: block; padding-top: 90px; }
 .auth-page .brand-panel { display: none; }
