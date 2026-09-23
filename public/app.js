@@ -16,6 +16,10 @@ const publicRubrosMenu = document.querySelector('.public-page .side-nav, .catalo
 const homeGallery = document.querySelector('.hero-still');
 const homeOfferSlot = document.querySelector('#home-offer-slot');
 const registerForm = document.querySelector('#register-form');
+const sharePageButton = document.querySelector('#share-page-button');
+const shareUrlInput = document.querySelector('#share-url');
+const shareCopyButton = document.querySelector('#share-copy-button');
+const shareNativeButton = document.querySelector('#share-native-button');
 
 if (loginMessage && new URLSearchParams(window.location.search).get('registro') === 'ok') {
   loginMessage.textContent = 'Cuenta creada correctamente. Ya podés ingresar.';
@@ -88,6 +92,22 @@ if (homeGallery) {
 
 if (homeOfferSlot) {
   homeOfferSlot.innerHTML = '<a class="popular-offer" href="/catalogo?rubro=ofertas" aria-label="Ver ofertas"><img src="/images/rubros/oferta.png" alt="Ofertas" loading="lazy" /></a>';
+}
+
+if (sharePageButton && shareUrlInput && window.bootstrap?.Modal) {
+  const shareModal = new window.bootstrap.Modal(document.querySelector('#share-modal'));
+  const shareUrl = window.location.href;
+  shareUrlInput.value = shareUrl;
+  sharePageButton.addEventListener('click', () => shareModal.show());
+  shareCopyButton?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(shareUrl);
+    shareCopyButton.textContent = 'Enlace copiado';
+    window.setTimeout(() => { shareCopyButton.textContent = 'Copiar enlace'; }, 1800);
+  });
+  if (!navigator.share) shareNativeButton?.remove();
+  shareNativeButton?.addEventListener('click', async () => {
+    await navigator.share({ title: document.title, text: 'Mirá este rubro de CRV4 Mayorista', url: shareUrl });
+  });
 }
 
 function showStaffNavigation(user) {

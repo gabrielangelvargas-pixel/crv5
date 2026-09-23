@@ -251,6 +251,12 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
 .catalog-page .catalog-section:first-of-type .section-kicker { margin: 8px 0; font-size: 14px; letter-spacing: .1em; line-height: 1.2; text-align: center; }
 .catalog-page .catalog-section:not(:first-of-type) .section-kicker { margin: 8px 0; font-size: 14px; letter-spacing: .1em; line-height: 1.2; }
 .catalog-page .catalog-section--first { padding-top: 0; }
+.catalog-section-heading { position: relative; display: flex; align-items: center; justify-content: center; min-height: 34px; }
+.catalog-section-heading .section-kicker { margin: 8px 0; }
+.catalog-share-button { position: absolute; right: 0; display: grid; place-items: center; width: 34px; height: 34px; padding: 7px; color: var(--teal); background: transparent; border: 1px solid var(--line); border-radius: 50%; }
+.catalog-share-button:hover { color: var(--teal-dark); border-color: #a7d2c6; background: #e7f3ee; }
+.catalog-share-button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.catalog-page .catalog-section:first-of-type .catalog-section-heading + .catalog-children { margin-top: 0; }
 
 /* Keep the mobile information architecture across every viewport. */
 .auth-page .app-shell { display: block; padding-top: 90px; }
