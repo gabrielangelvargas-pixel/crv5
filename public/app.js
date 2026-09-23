@@ -283,10 +283,13 @@ async function loadCatalogRubro() {
   const catalogDescription = document.querySelector('#catalog-description');
   const catalogChildren = document.querySelector('#catalog-children');
   const catalogProducts = document.querySelector('#catalog-products');
+  const catalogChildrenSection = catalogChildren?.closest('.catalog-section');
+  const catalogProductsSection = catalogProducts?.closest('.catalog-section');
   const catalogPlaceholder = '<div class="catalog-placeholder" aria-label="Imagen no disponible"><span>Imagen no disponible</span></div>';
   if (!catalogBrowser) return;
   const slug = new URLSearchParams(window.location.search).get('rubro');
   if (!slug) {
+    if (catalogChildrenSection) catalogChildrenSection.hidden = true;
     catalogChildren.innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro desde el menú.</p>';
     catalogProducts.innerHTML = '<p class="catalog-empty-note">Seleccioná un rubro para ver sus productos.</p>';
     return;
@@ -311,6 +314,8 @@ async function loadCatalogRubro() {
       return `<a class="catalog-child flex-shrink-0" href="/catalogo?rubro=${encodeURIComponent(hijo.slug)}">${image}<span class="catalog-child-content"><strong>${hijo.nombre}</strong></span></a>`;
     }).join('')
     : '<p class="catalog-empty-note">Este rubro todavía no tiene subrubros.</p>';
+  if (catalogChildrenSection) catalogChildrenSection.hidden = result.hijos.length === 0;
+  if (catalogProductsSection) catalogProductsSection.classList.toggle('catalog-section--first', result.hijos.length === 0);
   catalogProducts.innerHTML = '<p class="catalog-empty-note">Todavía no hay productos publicados en este rubro.</p>';
 }
 

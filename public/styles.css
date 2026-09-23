@@ -249,6 +249,8 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
 .catalog-page .catalog-cover { margin-bottom: 8px; }
 .catalog-page .catalog-section:first-of-type { padding-top: 0; }
 .catalog-page .catalog-section:first-of-type .section-kicker { margin: 8px 0; font-size: 14px; letter-spacing: .1em; line-height: 1.2; text-align: center; }
+.catalog-page .catalog-section:not(:first-of-type) .section-kicker { margin: 8px 0; font-size: 14px; letter-spacing: .1em; line-height: 1.2; }
+.catalog-page .catalog-section--first { padding-top: 0; }
 
 /* Keep the mobile information architecture across every viewport. */
 .auth-page .app-shell { display: block; padding-top: 90px; }
