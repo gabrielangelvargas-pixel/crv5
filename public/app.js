@@ -98,7 +98,7 @@ if (sharePageButton && shareUrlInput && window.bootstrap?.Modal) {
   const shareModal = new window.bootstrap.Modal(document.querySelector('#share-modal'));
   const shareUrl = window.location.href;
   shareUrlInput.value = shareUrl;
-  const shareData = { title: document.title, text: 'Mirá este rubro de CRV4 Mayorista', url: shareUrl };
+  const shareData = { title: document.title, text: 'Descubrí productos mayoristas para tu negocio en CRV4 Mayorista.', url: shareUrl };
   sharePageButton.addEventListener('click', async () => {
     if (navigator.share) {
       try {
