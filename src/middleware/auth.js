@@ -18,7 +18,7 @@ export async function getSessionUser(request) {
     JOIN usuarios u ON u.id = s.id_usuario AND u.activo = TRUE
     LEFT JOIN usuarios_roles ur ON ur.id_usuario = u.id AND ur.activo = TRUE
     LEFT JOIN roles r ON r.id = ur.id_rol AND r.activo = TRUE
-    WHERE s.token_hash = ? AND s.revocada_en IS NULL AND s.expira_en > NOW()
+    WHERE s.token_hash = ? AND s.revocada_en IS NULL AND (s.expira_en IS NULL OR s.expira_en > NOW())
     GROUP BY u.id, u.nombre, u.usuario
     LIMIT 1
   `, [sessionTokenHash(token)]);

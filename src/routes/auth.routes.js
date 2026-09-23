@@ -6,7 +6,7 @@ import { env } from '../config/env.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 
 const SESSION_COOKIE = 'crv5_session';
-const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
+const SESSION_COOKIE_MAX_AGE_MS = 10 * 365 * 24 * 60 * 60 * 1000;
 export const authRouter = Router();
 
 const loginLimiter = rateLimit({
@@ -30,7 +30,7 @@ function cookieOptions() {
     httpOnly: true,
     sameSite: 'lax',
     secure: env.NODE_ENV === 'production',
-    maxAge: SESSION_DURATION_MS,
+    maxAge: SESSION_COOKIE_MAX_AGE_MS,
     path: '/',
   };
 }
@@ -64,10 +64,9 @@ authRouter.post('/login', loginLimiter, async (request, response, next) => {
 
     const token = crypto.randomBytes(32).toString('hex');
     const sessionId = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
     await database.query(
       'INSERT INTO sesiones (id, id_usuario, token_hash, expira_en) VALUES (?, ?, ?, ?)',
-      [sessionId, user.id, sessionTokenHash(token), expiresAt],
+      [sessionId, user.id, sessionTokenHash(token), null],
     );
     await database.query('UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = ?', [user.id]);
 
@@ -132,7 +131,7 @@ authRouter.get('/me', async (request, response, next) => {
       JOIN usuarios u ON u.id = s.id_usuario AND u.activo = TRUE
       LEFT JOIN usuarios_roles ur ON ur.id_usuario = u.id AND ur.activo = TRUE
       LEFT JOIN roles r ON r.id = ur.id_rol AND r.activo = TRUE
-      WHERE s.token_hash = ? AND s.revocada_en IS NULL AND s.expira_en > NOW()
+      WHERE s.token_hash = ? AND s.revocada_en IS NULL AND (s.expira_en IS NULL OR s.expira_en > NOW())
       GROUP BY u.id, u.nombre, u.usuario
       LIMIT 1
     `, [sessionTokenHash(token)]);

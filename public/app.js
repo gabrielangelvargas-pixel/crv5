@@ -8,6 +8,8 @@ const menuToggle = document.querySelector('#menu-toggle');
 const menuClose = document.querySelector('#menu-close');
 const sideMenu = document.querySelector('#side-menu');
 const menuOverlay = document.querySelector('#menu-overlay');
+const menuAccountName = document.querySelector('#menu-account-name');
+const menuAccountLink = document.querySelector('#menu-account-link');
 const staffNav = document.querySelector('#staff-nav');
 const staffMenuLink = document.querySelector('#staff-menu-link');
 const staffMenuLabel = document.querySelector('#staff-menu-label');
@@ -125,6 +127,11 @@ function showStaffNavigation(user) {
   if (staffNav) staffNav.hidden = true;
   if (staffMenuLink) staffMenuLink.hidden = true;
   if (staffMenuLabel) staffMenuLabel.textContent = user?.nombre || user?.usuario || 'CRV4 Mayorista';
+  if (menuAccountName) menuAccountName.textContent = user?.nombre || user?.usuario || 'Ingresar';
+  if (menuAccountLink) {
+    menuAccountLink.setAttribute('aria-label', user ? 'Abrir mi cuenta' : 'Ingresar');
+    menuAccountLink.title = user ? 'Abrir mi cuenta' : 'Ingresar';
+  }
   profileLinks.forEach((link) => {
     const signedIn = Boolean(user);
     link.setAttribute('aria-label', signedIn ? 'Abrir mi perfil' : 'Iniciar sesión');

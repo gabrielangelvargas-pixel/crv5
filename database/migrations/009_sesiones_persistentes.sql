@@ -1,0 +1,2 @@
+ALTER TABLE sesiones
+  MODIFY expira_en DATETIME NULL;
