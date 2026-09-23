@@ -264,7 +264,12 @@ td small { display: block; margin-top: 4px; color: var(--muted); }
 .auth-page .app-shell { display: block; padding-top: 90px; }
 .auth-page .brand-panel { display: none; }
 .auth-page .content-panel { width: min(100%, 920px); min-height: calc(100vh - 90px); margin: 0 auto; padding: clamp(38px, 6vw, 76px) clamp(24px, 8vw, 112px); }
-.auth-page .login-wrap, .auth-page .register-wrap, .auth-page .dashboard { width: 100%; max-width: 760px; margin: 0 auto; }
+.auth-page .login-wrap, .auth-page .register-wrap, .auth-page .dashboard, .auth-page .client-profile { width: 100%; max-width: 760px; margin: 0 auto; }
+.client-profile { padding-bottom: 30px; }
+.profile-summary { display: grid; gap: 12px; margin: 0 0 24px; }
+.profile-summary div { padding: 16px; background: var(--sand); border: 1px solid var(--line); }
+.profile-summary dt { color: var(--muted); font-size: 12px; }
+.profile-summary dd { margin: 4px 0 0; color: var(--ink); font-weight: 800; }
 
 .public-page .hero-section { display: flex; flex-direction: column; min-height: 0; border-bottom: 0; }
 .public-page .hero-still { order: 1; min-height: 0; padding: 32px clamp(24px, 6vw, 88px) 0; background: var(--paper); }

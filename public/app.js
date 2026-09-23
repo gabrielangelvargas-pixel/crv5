@@ -1,9 +1,13 @@
 const loginView = document.querySelector('#login-view');
 const dashboardView = document.querySelector('#dashboard-view');
+const clientProfileView = document.querySelector('#client-profile-view');
 const loginForm = document.querySelector('#login-form');
 const loginMessage = document.querySelector('#login-message');
 const userName = document.querySelector('#user-name');
+const clientName = document.querySelector('#client-name');
+const clientUsername = document.querySelector('#client-username');
 const logoutButton = document.querySelector('#logout-button');
+const clientLogoutButton = document.querySelector('#client-logout-button');
 const menuToggle = document.querySelector('#menu-toggle');
 const menuClose = document.querySelector('#menu-close');
 const sideMenu = document.querySelector('#side-menu');
@@ -45,6 +49,14 @@ document.addEventListener('keydown', (event) => { if (event.key === 'Escape') se
 setMenu(false);
 
 function showDashboard(user) {
+  if (user.roles?.includes('cliente')) {
+    loginView.hidden = true;
+    dashboardView.hidden = true;
+    clientProfileView.hidden = false;
+    if (clientName) clientName.textContent = user.nombre || user.usuario;
+    if (clientUsername) clientUsername.textContent = `@${user.usuario}`;
+    return;
+  }
   loginView.hidden = true;
   dashboardView.hidden = false;
   if (userName) userName.textContent = user.nombre || user.usuario;
@@ -174,12 +186,17 @@ loginForm?.addEventListener('submit', async (event) => {
   }
 });
 
-logoutButton?.addEventListener('click', async () => {
+async function logout() {
   await fetch('/api/auth/logout', { method: 'POST' });
   dashboardView.hidden = true;
+  if (clientProfileView) clientProfileView.hidden = true;
   loginView.hidden = false;
-  loginForm.querySelector('#usuario').focus();
-});
+  showStaffNavigation(null);
+  loginForm?.querySelector('#usuario')?.focus();
+}
+
+logoutButton?.addEventListener('click', logout);
+clientLogoutButton?.addEventListener('click', logout);
 
 if (registerForm) {
   const steps = [...registerForm.querySelectorAll('.wizard-step')];
