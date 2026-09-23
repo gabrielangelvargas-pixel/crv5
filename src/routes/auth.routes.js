@@ -7,6 +7,7 @@ import { hashPassword, verifyPassword } from '../utils/password.js';
 
 const SESSION_COOKIE = 'crv5_session';
 const SESSION_COOKIE_MAX_AGE_MS = 10 * 365 * 24 * 60 * 60 * 1000;
+const PERSISTENT_SESSION_EXPIRATION = '9999-12-31 23:59:59';
 export const authRouter = Router();
 
 const loginLimiter = rateLimit({
@@ -66,7 +67,7 @@ authRouter.post('/login', loginLimiter, async (request, response, next) => {
     const sessionId = crypto.randomUUID();
     await database.query(
       'INSERT INTO sesiones (id, id_usuario, token_hash, expira_en) VALUES (?, ?, ?, ?)',
-      [sessionId, user.id, sessionTokenHash(token), null],
+      [sessionId, user.id, sessionTokenHash(token), PERSISTENT_SESSION_EXPIRATION],
     );
     await database.query('UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = ?', [user.id]);
 
