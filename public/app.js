@@ -98,7 +98,18 @@ if (sharePageButton && shareUrlInput && window.bootstrap?.Modal) {
   const shareModal = new window.bootstrap.Modal(document.querySelector('#share-modal'));
   const shareUrl = window.location.href;
   shareUrlInput.value = shareUrl;
-  sharePageButton.addEventListener('click', () => shareModal.show());
+  const shareData = { title: document.title, text: 'Mirá este rubro de CRV4 Mayorista', url: shareUrl };
+  sharePageButton.addEventListener('click', async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+      }
+    }
+    shareModal.show();
+  });
   shareCopyButton?.addEventListener('click', async () => {
     await navigator.clipboard.writeText(shareUrl);
     shareCopyButton.textContent = 'Enlace copiado';
@@ -106,7 +117,7 @@ if (sharePageButton && shareUrlInput && window.bootstrap?.Modal) {
   });
   if (!navigator.share) shareNativeButton?.remove();
   shareNativeButton?.addEventListener('click', async () => {
-    await navigator.share({ title: document.title, text: 'Mirá este rubro de CRV4 Mayorista', url: shareUrl });
+    await navigator.share(shareData);
   });
 }
 
