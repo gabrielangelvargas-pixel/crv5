@@ -1,6 +1,7 @@
 const loginView = document.querySelector('#login-view');
 const dashboardView = document.querySelector('#dashboard-view');
 const clientProfileView = document.querySelector('#client-profile-view');
+const authLoading = document.querySelector('#auth-loading');
 const loginForm = document.querySelector('#login-form');
 const loginMessage = document.querySelector('#login-message');
 const userName = document.querySelector('#user-name');
@@ -160,13 +161,21 @@ function showStaffNavigation(user) {
 }
 
 async function getSession() {
-  const response = await fetch('/api/auth/me');
-  if (response.ok) {
-    const user = (await response.json()).usuario;
-    showStaffNavigation(user);
-    if (loginForm) showDashboard(user);
-  } else {
+  try {
+    const response = await fetch('/api/auth/me', { cache: 'no-store' });
+    if (response.ok) {
+      const user = (await response.json()).usuario;
+      showStaffNavigation(user);
+      if (loginForm) showDashboard(user);
+    } else {
+      showStaffNavigation(null);
+      if (loginView) loginView.hidden = false;
+    }
+  } catch {
     showStaffNavigation(null);
+    if (loginView) loginView.hidden = false;
+  } finally {
+    if (authLoading) authLoading.hidden = true;
   }
 }
 
@@ -257,7 +266,7 @@ if (registerForm) {
   });
 }
 
-getSession().catch(() => showStaffNavigation(null));
+getSession();
 
 const cartCount = document.querySelector('#cart-count');
 const cartSummary = document.querySelector('#cart-summary');
