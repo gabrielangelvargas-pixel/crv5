@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteHeader } from "@/components/site-header";
 import styles from "./page.module.css";
 
 const highlights = [
@@ -10,16 +11,7 @@ const highlights = [
 export default function Home() {
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <Link className={styles.wordmark} href="/" aria-label="CRV4 Mayorista, inicio">
-          <span className={styles.mark}>CRV4</span>
-          <span>Mayorista</span>
-        </Link>
-        <nav className={styles.nav} aria-label="Navegación principal">
-          <Link href="/catalogo">Catálogo</Link>
-          <Link href="/login">Ingresar</Link>
-        </nav>
-      </header>
+      <SiteHeader />
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>Regalería · Bijouterie · Accesorios</p>
