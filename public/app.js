@@ -148,10 +148,10 @@ function showStaffNavigation(user) {
     menuAccountLink.title = user ? 'Abrir mi cuenta' : 'Ingresar';
   }
   if (dashboardMenuLink) {
-    const isPanel = window.location.pathname === '/login';
+    const isHome = window.location.pathname === '/';
     dashboardMenuLink.hidden = !user || user.roles?.includes('cliente');
-    dashboardMenuLink.href = isPanel ? '/' : '/login';
-    if (dashboardMenuLabel) dashboardMenuLabel.textContent = isPanel ? 'Inicio' : 'Panel principal';
+    dashboardMenuLink.href = isHome ? '/login' : '/';
+    if (dashboardMenuLabel) dashboardMenuLabel.textContent = isHome ? 'Panel principal' : 'Inicio';
   }
   profileLinks.forEach((link) => {
     const signedIn = Boolean(user);
@@ -371,10 +371,9 @@ async function loadPublicRubrosMenu() {
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'No se pudieron cargar los rubros.');
   const rubrosUnicos = result.rubros.filter((rubro, index, rubros) => rubros.findIndex((item) => item.nombre.toLocaleLowerCase() === rubro.nombre.toLocaleLowerCase()) === index);
-  const homeLink = window.location.pathname === '/catalogo' ? '<a href="/">Inicio <span>→</span></a>' : '';
-  publicRubrosMenu.innerHTML = homeLink + (rubrosUnicos.length
+  publicRubrosMenu.innerHTML = rubrosUnicos.length
     ? rubrosUnicos.map((rubro) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}">${rubro.nombre}<span>→</span></a>`).join('')
-    : '<p class="menu-empty">Todavía no hay rubros publicados.</p>');
+    : '<p class="menu-empty">Todavía no hay rubros publicados.</p>';
   if (popularRubrosGrid) {
     popularRubrosGrid.innerHTML = rubrosUnicos.length
       ? rubrosUnicos.slice(0, 4).map((rubro) => `<a href="/catalogo?rubro=${encodeURIComponent(rubro.slug)}">${rubro.imagen ? `<img src="${rubro.imagen}" alt="" loading="lazy" />` : ''}<span class="popular-rubro-content"><strong>${rubro.nombre}</strong></span></a>`).join('')
