@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { RowDataPacket } from "mysql2";
+import { cookies } from "next/headers";
 import { database } from "@/server/db";
 
 export const SESSION_COOKIE = process.env.NODE_ENV === "production"
@@ -63,4 +64,13 @@ export async function createSession(userId: number) {
     [crypto.randomUUID(), userId, hashSessionToken(token), PERSISTENT_SESSION_EXPIRATION],
   );
   return token;
+}
+
+export async function getCurrentSessionUser() {
+  const cookieStore = await cookies();
+  return getSessionUser(cookieStore.get(SESSION_COOKIE)?.value);
+}
+
+export function canManageCatalog(user: SessionUser | null) {
+  return Boolean(user?.roles.some((role) => role === "admin" || role === "supervisor"));
 }

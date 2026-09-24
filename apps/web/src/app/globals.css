@@ -61,6 +61,21 @@ button, input, textarea, select { font: inherit; }
 .module-number { display: grid; place-items: center; width: 36px; height: 36px; color: var(--teal); background: #e7f3ee; font-size: 11px; font-weight: 800; }
 .module-list strong, .module-list small { display: block; }
 .module-list small { margin-top: 7px; color: var(--muted); }
+.module-toolbar { display: flex; align-items: center; justify-content: space-between; max-width: 760px; margin-top: 40px; color: var(--muted); font-size: 14px; }
+.module-toolbar .primary-action { margin-top: 0; }
+.rubro-list { display: grid; max-width: 760px; margin-top: 18px; gap: 12px; }
+.rubro-group { background: #fff; border: 1px solid var(--line); }
+.rubro-row, .rubro-child { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 18px; }
+.rubro-row { border-bottom: 1px solid var(--line); }
+.rubro-row > div, .rubro-child > div { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; min-width: 0; }
+.rubro-row strong, .rubro-child strong { grid-column: 2; }
+.rubro-row small, .rubro-child small { grid-column: 2; margin-top: 4px; color: var(--muted); font-size: 12px; }
+.rubro-order { grid-row: span 2; display: grid; place-items: center; width: 34px; height: 34px; color: var(--teal); background: #e7f3ee; font-size: 11px; font-weight: 800; }
+.rubro-child { padding: 13px 18px 13px 30px; color: var(--muted); }
+.rubro-child strong { color: var(--ink); font-size: 14px; }
+.status-active, .status-inactive { flex: 0 0 auto; font-size: 11px; font-weight: 800; }
+.status-active { color: var(--teal); }
+.status-inactive { color: #a8493f; }
 @media (max-width: 760px) {
   .site-header { padding: 14px 20px; }
   .site-desktop-nav { display: none; }
@@ -70,4 +85,7 @@ button, input, textarea, select { font: inherit; }
   .empty-state, .profile-state { margin-top: 38px; padding: 22px; }
   .profile-state dl { grid-template-columns: 1fr; }
   .module-list > * { grid-template-columns: 40px 1fr auto; gap: 12px; padding: 16px; }
+  .module-toolbar { align-items: flex-start; flex-direction: column; gap: 14px; }
+  .rubro-row, .rubro-child { padding: 16px; }
+  .rubro-child { padding-left: 24px; }
 }
