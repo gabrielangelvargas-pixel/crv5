@@ -15,6 +15,7 @@ const menuOverlay = document.querySelector('#menu-overlay');
 const menuAccountName = document.querySelector('#menu-account-name');
 const menuAccountLink = document.querySelector('#menu-account-link');
 const dashboardMenuLink = document.querySelector('#dashboard-menu-link');
+const dashboardMenuLabel = document.querySelector('#dashboard-menu-label');
 const staffNav = document.querySelector('#staff-nav');
 const staffMenuLink = document.querySelector('#staff-menu-link');
 const staffMenuLabel = document.querySelector('#staff-menu-label');
@@ -145,7 +146,12 @@ function showStaffNavigation(user) {
     menuAccountLink.setAttribute('aria-label', user ? 'Abrir mi cuenta' : 'Ingresar');
     menuAccountLink.title = user ? 'Abrir mi cuenta' : 'Ingresar';
   }
-  if (dashboardMenuLink) dashboardMenuLink.hidden = !user || user.roles?.includes('cliente');
+  if (dashboardMenuLink) {
+    const isPanel = window.location.pathname === '/login';
+    dashboardMenuLink.hidden = !user || user.roles?.includes('cliente');
+    dashboardMenuLink.href = isPanel ? '/' : '/login';
+    if (dashboardMenuLabel) dashboardMenuLabel.textContent = isPanel ? 'Inicio' : 'Panel principal';
+  }
   profileLinks.forEach((link) => {
     const signedIn = Boolean(user);
     link.setAttribute('aria-label', signedIn ? 'Abrir mi perfil' : 'Iniciar sesión');
