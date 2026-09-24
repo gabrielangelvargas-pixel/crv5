@@ -1,0 +1,15 @@
+:root {
+  --ink: #173b3f;
+  --teal: #0d7771;
+  --coral: #e8896c;
+  --paper: #fbfaf7;
+  --sand: #f4f0e8;
+  --line: #d9e1da;
+  --muted: #64767a;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--sand); }
+body { margin: 0; color: var(--ink); background: var(--paper); font-family: Arial, Helvetica, sans-serif; }
+a { color: inherit; }
+button, input, textarea, select { font: inherit; }
