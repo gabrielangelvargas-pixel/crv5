@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js",
+    "build": "npm --prefix apps/web ci && npm --prefix apps/web run build",
+    "start": "npm --prefix apps/web run start",
     "db:migrate": "node scripts/migrate.js",
     "crear:admin": "node scripts/crear-admin.js",
     "check": "node --check src/server.js && node --check src/config/env.js && node --check src/config/database.js && node --check src/routes/health.routes.js && node --check src/routes/auth.routes.js && node --check src/routes/catalogo.routes.js && node --check src/routes/rubros.routes.js && node --check src/middleware/auth.js && node --check src/utils/password.js && node --check scripts/migrate.js && node --check scripts/crear-admin.js"

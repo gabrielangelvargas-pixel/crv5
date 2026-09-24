@@ -18,7 +18,7 @@ Para crear o actualizar las tablas, ejecutar `npm run db:migrate` con las variab
 - Cada cambio se prueba localmente, se publica en `staging` y Hostinger lo despliega automaticamente desde esa rama.
 - Cuando la version este validada, se integra `staging` en `main` y se cambia la rama de despliegue del sitio publico.
 
-En Hostinger, crear primero un sitio temporal o subdominio de desarrollo, seleccionar la aplicacion Node.js y conectar el repositorio GitHub `gabrielangelvargas-pixel/crv5` usando la rama `staging`. El comando de inicio es `npm start`, el puerto debe ser el asignado por Hostinger y las variables de `.env.example` deben cargarse en el panel, nunca en Git.
+En Hostinger, crear primero un sitio temporal o subdominio de desarrollo, seleccionar la aplicacion Node.js y conectar el repositorio GitHub `gabrielangelvargas-pixel/crv5` usando la rama `staging`. El comando de build es `npm run build` y el de inicio es `npm start`; ambos ejecutan la aplicacion Next.js ubicada en `apps/web`. El puerto debe ser el asignado por Hostinger y las variables de `.env.example` deben cargarse en el panel, nunca en Git.
 
 ## Migraciones en Hostinger
 
