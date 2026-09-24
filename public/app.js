@@ -322,6 +322,7 @@ if ('serviceWorker' in navigator) {
 
 const rubrosTable = document.querySelector('#rubros-table-body');
 const rubroForm = document.querySelector('#rubro-form');
+const rubroFormPanel = document.querySelector('#rubro-form-panel');
 const rubroMessage = document.querySelector('#rubro-message');
 const rubroParent = document.querySelector('#id_rubro_padre');
 const rubroFormTitle = document.querySelector('#rubro-form-title');
@@ -333,12 +334,14 @@ const subrubrosCount = document.querySelector('#subrubros-count');
 const rubrosActiveCount = document.querySelector('#rubros-active-count');
 let rubrosData = [];
 let editingRubroId = null;
+if (rubroFormPanel && window.matchMedia('(max-width: 760px)').matches) rubroFormPanel.open = false;
 
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
 
 function resetRubroForm() {
   editingRubroId = null;
   rubroForm?.reset();
+  if (rubroFormPanel && window.matchMedia('(max-width: 760px)').matches) rubroFormPanel.open = false;
   if (rubroFormTitle) rubroFormTitle.textContent = 'Nuevo rubro';
   if (rubroSubmitButton) rubroSubmitButton.querySelector('span').textContent = 'Crear rubro';
   if (rubroCancelButton) rubroCancelButton.hidden = true;
@@ -360,7 +363,7 @@ function renderRubros(rows = rubrosData) {
       const isChild = Boolean(rubro.id_rubro_padre);
       const parent = rubrosById.get(String(rubro.id_rubro_padre));
       const parentLabel = isChild ? escapeHtml(parent?.nombre || 'Rubro no encontrado') : 'Principal';
-      return `<tr class="${isChild ? 'rubro-child-row' : 'rubro-parent-row'}"><td>${escapeHtml(rubro.orden)}</td><td><strong>${isChild ? '<span class="rubro-indent" aria-hidden="true">↳</span>' : ''}${escapeHtml(rubro.nombre)}</strong><small>${escapeHtml(rubro.codigo)}</small></td><td><span class="rubro-type">${isChild ? `Subrubro de ${parentLabel}` : 'Rubro padre'}</span></td><td><code>${escapeHtml(rubro.slug)}</code></td><td><span class="table-status ${rubro.activo ? '' : 'is-inactive'}">${rubro.activo ? 'Activo' : 'Inactivo'}</span></td><td><div class="table-actions"><button class="table-action" type="button" data-edit-rubro="${rubro.id}" title="Editar ${escapeHtml(rubro.nombre)}">Editar</button><button class="table-action" type="button" data-toggle-rubro="${rubro.id}">${rubro.activo ? 'Desactivar' : 'Activar'}</button></div></td></tr>`;
+      return `<tr class="${isChild ? 'rubro-child-row' : 'rubro-parent-row'}"><td data-label="Orden">${escapeHtml(rubro.orden)}</td><td data-label="Nombre"><strong>${isChild ? '<span class="rubro-indent" aria-hidden="true">↳</span>' : ''}${escapeHtml(rubro.nombre)}</strong><small>${escapeHtml(rubro.codigo)}</small></td><td data-label="Tipo"><span class="rubro-type">${isChild ? `Subrubro de ${parentLabel}` : 'Rubro padre'}</span></td><td data-label="Slug"><code>${escapeHtml(rubro.slug)}</code></td><td data-label="Estado"><span class="table-status ${rubro.activo ? '' : 'is-inactive'}">${rubro.activo ? 'Activo' : 'Inactivo'}</span></td><td data-label="Acciones"><div class="table-actions"><button class="table-action" type="button" data-edit-rubro="${rubro.id}" title="Editar ${escapeHtml(rubro.nombre)}">Editar</button><button class="table-action" type="button" data-toggle-rubro="${rubro.id}">${rubro.activo ? 'Desactivar' : 'Activar'}</button></div></td></tr>`;
     }).join('')
     : '<tr><td colspan="6" class="table-empty">No hay rubros que coincidan con la búsqueda.</td></tr>';
 }
@@ -369,6 +372,7 @@ function startRubroEdit(id) {
   const rubro = rubrosData.find((item) => String(item.id) === String(id));
   if (!rubro || !rubroForm) return;
   editingRubroId = rubro.id;
+  if (rubroFormPanel) rubroFormPanel.open = true;
   Object.entries(rubro).forEach(([key, value]) => {
     const field = rubroForm.elements[key];
     if (field) field.value = value ?? '';
