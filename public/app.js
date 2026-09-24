@@ -168,10 +168,14 @@ async function getSession() {
       showStaffNavigation(user);
       if (loginForm) showDashboard(user);
     } else {
+      if (dashboardView) dashboardView.hidden = true;
+      if (clientProfileView) clientProfileView.hidden = true;
       showStaffNavigation(null);
       if (loginView) loginView.hidden = false;
     }
   } catch {
+    if (dashboardView) dashboardView.hidden = true;
+    if (clientProfileView) clientProfileView.hidden = true;
     showStaffNavigation(null);
     if (loginView) loginView.hidden = false;
   } finally {
@@ -307,7 +311,9 @@ if ('serviceWorker' in navigator) {
   checkForAppUpdate();
   window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
-      window.location.reload();
+      // Revalidar la sesión sin recargar la vista restaurada por el historial.
+      // Así el panel permanece estable al volver desde el catálogo.
+      getSession();
       return;
     }
     checkForAppUpdate();
