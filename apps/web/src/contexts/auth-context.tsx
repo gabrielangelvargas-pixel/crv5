@@ -15,6 +15,7 @@ type AuthContextValue = {
   user: AuthUser | null;
   status: "loading" | "authenticated" | "anonymous";
   login: (usuario: string, clave: string) => Promise<void>;
+  register: (nombre: string, usuario: string, clave: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -60,6 +61,16 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       if (!response.ok) throw new Error(payload.error || "No se pudo iniciar sesión.");
       setUser(payload.usuario);
       setStatus("authenticated");
+    },
+    async register(nombre, usuario, clave) {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, usuario, clave }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "No se pudo crear la cuenta.");
+      await refresh();
     },
     async logout() {
       await fetch("/api/auth/logout", { method: "POST" });
