@@ -324,22 +324,78 @@ const rubrosTable = document.querySelector('#rubros-table-body');
 const rubroForm = document.querySelector('#rubro-form');
 const rubroMessage = document.querySelector('#rubro-message');
 const rubroParent = document.querySelector('#id_rubro_padre');
+const rubroFormTitle = document.querySelector('#rubro-form-title');
+const rubroSubmitButton = document.querySelector('#rubro-submit-button');
+const rubroCancelButton = document.querySelector('#rubro-cancel-button');
+const rubrosSearch = document.querySelector('#rubros-search');
+const rubrosCount = document.querySelector('#rubros-count');
+const subrubrosCount = document.querySelector('#subrubros-count');
+const rubrosActiveCount = document.querySelector('#rubros-active-count');
+let rubrosData = [];
+let editingRubroId = null;
+
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+
+function resetRubroForm() {
+  editingRubroId = null;
+  rubroForm?.reset();
+  if (rubroFormTitle) rubroFormTitle.textContent = 'Nuevo rubro';
+  if (rubroSubmitButton) rubroSubmitButton.querySelector('span').textContent = 'Crear rubro';
+  if (rubroCancelButton) rubroCancelButton.hidden = true;
+  if (rubroMessage) rubroMessage.textContent = '';
+}
+
+function renderRubros(rows = rubrosData) {
+  if (!rubrosTable) return;
+  const query = rubrosSearch?.value.trim().toLocaleLowerCase() || '';
+  const filteredRows = rows.filter((rubro) => !query || [rubro.nombre, rubro.codigo, rubro.slug].some((value) => String(value).toLocaleLowerCase().includes(query)));
+  const rubrosById = new Map(rows.map((rubro) => [String(rubro.id), rubro]));
+  const orderedRows = [...filteredRows].sort((a, b) => {
+    if (Boolean(a.id_rubro_padre) !== Boolean(b.id_rubro_padre)) return a.id_rubro_padre ? 1 : -1;
+    if (String(a.id_rubro_padre || '') !== String(b.id_rubro_padre || '')) return String(a.id_rubro_padre || '').localeCompare(String(b.id_rubro_padre || ''));
+    return Number(a.orden) - Number(b.orden) || a.nombre.localeCompare(b.nombre);
+  });
+  rubrosTable.innerHTML = orderedRows.length
+    ? orderedRows.map((rubro) => {
+      const isChild = Boolean(rubro.id_rubro_padre);
+      const parent = rubrosById.get(String(rubro.id_rubro_padre));
+      const parentLabel = isChild ? escapeHtml(parent?.nombre || 'Rubro no encontrado') : 'Principal';
+      return `<tr class="${isChild ? 'rubro-child-row' : 'rubro-parent-row'}"><td>${escapeHtml(rubro.orden)}</td><td><strong>${isChild ? '<span class="rubro-indent" aria-hidden="true">↳</span>' : ''}${escapeHtml(rubro.nombre)}</strong><small>${escapeHtml(rubro.codigo)}</small></td><td><span class="rubro-type">${isChild ? `Subrubro de ${parentLabel}` : 'Rubro padre'}</span></td><td><code>${escapeHtml(rubro.slug)}</code></td><td><span class="table-status ${rubro.activo ? '' : 'is-inactive'}">${rubro.activo ? 'Activo' : 'Inactivo'}</span></td><td><div class="table-actions"><button class="table-action" type="button" data-edit-rubro="${rubro.id}" title="Editar ${escapeHtml(rubro.nombre)}">Editar</button><button class="table-action" type="button" data-toggle-rubro="${rubro.id}">${rubro.activo ? 'Desactivar' : 'Activar'}</button></div></td></tr>`;
+    }).join('')
+    : '<tr><td colspan="6" class="table-empty">No hay rubros que coincidan con la búsqueda.</td></tr>';
+}
+
+function startRubroEdit(id) {
+  const rubro = rubrosData.find((item) => String(item.id) === String(id));
+  if (!rubro || !rubroForm) return;
+  editingRubroId = rubro.id;
+  Object.entries(rubro).forEach(([key, value]) => {
+    const field = rubroForm.elements[key];
+    if (field) field.value = value ?? '';
+  });
+  if (rubroFormTitle) rubroFormTitle.textContent = 'Editar rubro';
+  if (rubroSubmitButton) rubroSubmitButton.querySelector('span').textContent = 'Guardar cambios';
+  if (rubroCancelButton) rubroCancelButton.hidden = false;
+  if (rubroMessage) rubroMessage.textContent = `Editando “${rubro.nombre}”.`;
+  rubroForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 async function loadRubros() {
   if (!rubrosTable) return;
   const response = await fetch('/api/rubros');
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'No se pudieron cargar los rubros.');
-  const rubrosById = new Map(result.rubros.map((rubro) => [String(rubro.id), rubro.nombre]));
+  rubrosData = result.rubros;
+  if (rubrosCount) rubrosCount.textContent = rubrosData.filter((rubro) => !rubro.id_rubro_padre).length;
+  if (subrubrosCount) subrubrosCount.textContent = rubrosData.filter((rubro) => rubro.id_rubro_padre).length;
+  if (rubrosActiveCount) rubrosActiveCount.textContent = rubrosData.filter((rubro) => rubro.activo).length;
   if (rubroParent) {
     rubroParent.innerHTML = '<option value="">Sin rubro padre</option>';
-    result.rubros.filter((rubro) => rubro.activo).forEach((rubro) => {
+    rubrosData.filter((rubro) => rubro.activo && String(rubro.id) !== String(editingRubroId)).forEach((rubro) => {
       rubroParent.insertAdjacentHTML('beforeend', `<option value="${rubro.id}">${rubro.nombre}</option>`);
     });
   }
-  rubrosTable.innerHTML = result.rubros.length
-    ? result.rubros.map((rubro) => `<tr><td>${rubro.orden}</td><td><strong>${rubro.nombre}</strong><small>${rubro.codigo}</small></td><td>${rubro.id_rubro_padre ? rubrosById.get(String(rubro.id_rubro_padre)) || 'No encontrado' : 'Principal'}</td><td>${rubro.slug}</td><td><span class="table-status ${rubro.activo ? '' : 'is-inactive'}">${rubro.activo ? 'Activo' : 'Inactivo'}</span></td></tr>`).join('')
-    : '<tr><td colspan="5" class="table-empty">Todavía no hay rubros cargados.</td></tr>';
+  renderRubros();
 }
 
 rubroForm?.addEventListener('submit', async (event) => {
@@ -349,16 +405,42 @@ rubroForm?.addEventListener('submit', async (event) => {
   submitButton.disabled = true;
   try {
     const data = Object.fromEntries(new FormData(rubroForm));
-    const response = await fetch('/api/rubros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'No se pudo crear el rubro.');
-    rubroForm.reset();
-    rubroMessage.textContent = 'Rubro creado correctamente.';
+    const response = await fetch(editingRubroId ? `/api/rubros/${editingRubroId}` : '/api/rubros', { method: editingRubroId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editingRubroId ? { ...data, activo: true } : data) });
+    const result = response.status === 204 ? null : await response.json();
+    if (!response.ok) throw new Error(result?.error || 'No se pudo guardar el rubro.');
+    const wasEditing = Boolean(editingRubroId);
+    resetRubroForm();
+    rubroMessage.textContent = wasEditing ? 'Rubro actualizado correctamente.' : 'Rubro creado correctamente.';
     await loadRubros();
   } catch (error) {
     rubroMessage.textContent = error.message;
   } finally {
     submitButton.disabled = false;
+  }
+});
+
+rubroCancelButton?.addEventListener('click', resetRubroForm);
+rubrosSearch?.addEventListener('input', () => renderRubros());
+rubrosTable?.addEventListener('click', async (event) => {
+  const editButton = event.target.closest('[data-edit-rubro]');
+  if (editButton) {
+    startRubroEdit(editButton.dataset.editRubro);
+    return;
+  }
+  const toggleButton = event.target.closest('[data-toggle-rubro]');
+  if (!toggleButton) return;
+  const rubro = rubrosData.find((item) => String(item.id) === String(toggleButton.dataset.toggleRubro));
+  if (!rubro) return;
+  toggleButton.disabled = true;
+  try {
+    const response = await fetch(`/api/rubros/${rubro.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...rubro, activo: !rubro.activo }) });
+    const result = response.status === 204 ? null : await response.json();
+    if (!response.ok) throw new Error(result?.error || 'No se pudo actualizar el estado.');
+    await loadRubros();
+  } catch (error) {
+    rubroMessage.textContent = error.message;
+  } finally {
+    toggleButton.disabled = false;
   }
 });
 
