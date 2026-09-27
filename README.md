@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRV4
 
-## Getting Started
+Plantilla base para aplicaciones con Next.js, React, TypeScript estricto y App
+Router.
 
-First, run the development server:
+## Stack
+
+- Node.js 24 LTS
+- pnpm 11
+- Next.js 16
+- React 19
+- TypeScript en modo estricto
+- Tailwind CSS 4
+- ESLint, Prettier, Vitest y Playwright
+
+## Primer uso
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env.local
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+La app queda disponible en `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm dev          # Servidor local
+pnpm build        # Build de produccion
+pnpm start        # Ejecuta el build
+pnpm lint         # ESLint
+pnpm typecheck    # TypeScript sin emitir archivos
+pnpm format       # Verifica formato
+pnpm test         # Tests unitarios/componentes
+pnpm test:e2e     # Tests end-to-end
+pnpm validate     # Lint + typecheck + tests + build
+```
 
-## Learn More
+## Estructura
 
-To learn more about Next.js, take a look at the following resources:
+```text
+src/
+  app/         Rutas, layouts y Server Components del App Router
+  components/  Componentes reutilizables
+  config/      Configuracion tipada de entorno
+  lib/         Utilidades compartidas
+  test/        Setup de tests
+e2e/           Tests end-to-end
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Convenciones
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Server Components por defecto.
+- Usar Client Components solo para interaccion, estado local o APIs del navegador.
+- Validar variables de entorno en `src/config/env.ts`.
+- Mantener la logica de dominio fuera de `app/` cuando sea reutilizable.
+- Ejecutar `pnpm validate` antes de integrar cambios.
 
-## Deploy on Vercel
+## Pendientes de producto
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Definir antes de construir features reales:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Autenticacion y modelo de permisos.
+- Base de datos, ORM y estrategia de migraciones.
+- Estrategia de datos: Server Actions, Route Handlers, REST, tRPC o GraphQL.
+- Observabilidad y manejo de errores.
+- CI/CD y destino de deploy.

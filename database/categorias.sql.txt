@@ -1,0 +1,34 @@
+CREATE TABLE categorias (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  parent_id BIGINT UNSIGNED NULL,
+
+  nombre VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL,
+
+  imagen_url VARCHAR(500) NULL,
+  portada_url VARCHAR(500) NULL,
+
+  orden INT UNSIGNED NOT NULL DEFAULT 0,
+  activa TINYINT UNSIGNED NOT NULL DEFAULT 1,
+
+  creada DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizada DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  parent_id_unico BIGINT UNSIGNED
+    GENERATED ALWAYS AS (IFNULL(parent_id, 0)) STORED,
+
+  PRIMARY KEY (id),
+
+  CONSTRAINT fk_categorias_parent
+    FOREIGN KEY (parent_id)
+    REFERENCES categorias(id)
+    ON DELETE RESTRICT,
+
+  UNIQUE KEY uq_categorias_parent_slug (parent_id_unico, slug),
+
+  INDEX idx_categorias_parent_id (parent_id),
+  INDEX idx_categorias_activa_orden (activa, orden),
+  INDEX idx_categorias_slug (slug)
+) ENGINE=InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
