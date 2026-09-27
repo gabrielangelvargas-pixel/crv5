@@ -29,7 +29,6 @@ export function VisitedCategories({ categories }: VisitedCategoriesProps) {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {visitedCategories.map((category) => {
             const Icon = getCategoryIcon(category.iconKey);
-
             return (
               <article
                 key={category.name}
