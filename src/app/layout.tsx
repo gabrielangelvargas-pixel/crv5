@@ -4,6 +4,9 @@ import { Navbar } from "@/components/layout/navbar";
 import { getCategoryTree } from "@/lib/categories-repository";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
