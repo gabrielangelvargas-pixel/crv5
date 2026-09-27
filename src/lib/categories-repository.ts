@@ -28,11 +28,19 @@ function getIconKey(slug: string): CategoryIconKey {
 }
 
 function toPublicAssetUrl(value: string | null) {
-  if (!value || value.startsWith("/") || /^https?:\/\//.test(value)) {
-    return value;
+  if (!value) {
+    return null;
   }
 
-  return `/${value}`;
+  const normalizedValue = value.trim().replaceAll("\\", "/");
+
+  if (/^https?:\/\//i.test(normalizedValue)) {
+    return normalizedValue;
+  }
+
+  const publicRelativePath = normalizedValue.replace(/^\/?public\//i, "");
+
+  return `/${publicRelativePath.replace(/^\/+/, "")}`;
 }
 
 export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
