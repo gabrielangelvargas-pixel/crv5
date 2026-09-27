@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { getCategoryTree } from "@/lib/categories-repository";
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
     "Plantilla base con Next.js, React, TypeScript estricto y buenas practicas.",
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
   const categories = await getCategoryTree();
 
   return (
