@@ -1,6 +1,7 @@
 import { cache } from "react";
 import type { RowDataPacket } from "mysql2";
 import type { CategoryIconKey, CategoryNode } from "@/data/categories";
+import { getAssetUrl } from "@/lib/asset-url";
 import { getDatabasePool } from "@/lib/db";
 
 type CategoryRow = RowDataPacket & {
@@ -27,22 +28,6 @@ function getIconKey(slug: string): CategoryIconKey {
   return iconBySlug[slug] ?? "default";
 }
 
-function toPublicAssetUrl(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const normalizedValue = value.trim().replaceAll("\\", "/");
-
-  if (/^https?:\/\//i.test(normalizedValue)) {
-    return normalizedValue;
-  }
-
-  const publicRelativePath = normalizedValue.replace(/^\/?public\//i, "");
-
-  return `/${publicRelativePath.replace(/^\/+/, "")}`;
-}
-
 export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
   const [rows] = await getDatabasePool().query<CategoryRow[]>(`
     SELECT id, parent_id, nombre, slug, imagen_url, portada_url
@@ -62,8 +47,8 @@ export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
       parentId,
       name: row.nombre,
       slug: row.slug,
-      imageSrc: toPublicAssetUrl(row.imagen_url),
-      coverImageSrc: toPublicAssetUrl(row.portada_url),
+      imageSrc: getAssetUrl(row.imagen_url, "categorias"),
+      coverImageSrc: getAssetUrl(row.portada_url, "portadas"),
       iconKey: getIconKey(row.slug),
       subcategories: [],
     });

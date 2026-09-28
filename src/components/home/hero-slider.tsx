@@ -3,18 +3,19 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { getAssetUrl } from "@/lib/asset-url";
 
 const slides = [
   {
-    src: "/local1.webp",
+    src: getAssetUrl("local1.webp", "portadas") ?? "/local1.webp",
     alt: "Imagen principal del local CRV4",
   },
   {
-    src: "/local2.webp",
+    src: getAssetUrl("local2.webp", "portadas") ?? "/local2.webp",
     alt: "Segunda imagen del local CRV4",
   },
   {
-    src: "/local3.webp",
+    src: getAssetUrl("local3.webp", "portadas") ?? "/local3.webp",
     alt: "Tercera imagen del local CRV4",
   },
 ];
