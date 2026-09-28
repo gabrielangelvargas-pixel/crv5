@@ -7,7 +7,6 @@ import {
 } from "@/components/catalog/catalog-subcategory-nav";
 import { CategoryViewTracker } from "@/components/catalog/category-view-tracker";
 import { getCategoryTree } from "@/lib/categories-repository";
-import type { CategoryNode } from "@/data/categories";
 import { getProducts } from "@/lib/products-repository";
 import { ProductGroupCard } from "@/components/products/product-group-card";
 import { groupProducts } from "@/lib/product-groups";
@@ -55,16 +54,14 @@ export async function CatalogPage({
     notFound();
   }
 
-  const activeCategory = selectedChildCategory ?? selectedSubcategory ?? selectedCategory;
-  const categoryIds = new Set<string>();
-  const collectCategoryIds = (category: CategoryNode) => {
-    categoryIds.add(category.id);
-    for (const child of category.subcategories) {
-      collectCategoryIds(child);
-    }
-  };
-  collectCategoryIds(activeCategory);
-  const categoryProducts = allProducts.filter((product) => categoryIds.has(product.categoryId));
+  // Filter by the product's complete category path so TODO includes products
+  // assigned to any descendant, including grouped variants.
+  const categoryProducts = allProducts.filter(
+    (product) =>
+      product.categorySlug === categorySlug &&
+      (!subcategorySlug || product.subcategorySlug === subcategorySlug) &&
+      (!childCategorySlug || product.childCategorySlug === childCategorySlug),
+  );
   const productGroups = groupProducts(categoryProducts);
 
   const selectedCover = selectedSubcategory ?? selectedCategory;
