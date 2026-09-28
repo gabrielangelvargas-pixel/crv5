@@ -54,13 +54,22 @@ export async function CatalogPage({
     notFound();
   }
 
-  // Filter by the product's complete category path so TODO includes products
-  // assigned to any descendant, including grouped variants.
+  const visibleCategorySlugs = new Set<string>();
+  const collectCategorySlugs = (category: typeof selectedCategory) => {
+    visibleCategorySlugs.add(category.slug);
+    for (const child of category.subcategories) {
+      collectCategorySlugs(child);
+    }
+  };
+  collectCategorySlugs(selectedChildCategory ?? selectedSubcategory ?? selectedCategory);
+
+  // Match every level of the product path so TODO also includes grouped
+  // variants whose direct category is a descendant of the selected category.
   const categoryProducts = allProducts.filter(
     (product) =>
-      product.categorySlug === categorySlug &&
-      (!subcategorySlug || product.subcategorySlug === subcategorySlug) &&
-      (!childCategorySlug || product.childCategorySlug === childCategorySlug),
+      [product.categorySlug, product.subcategorySlug, product.childCategorySlug]
+        .filter((slug): slug is string => Boolean(slug))
+        .some((slug) => visibleCategorySlugs.has(slug)),
   );
   const productGroups = groupProducts(categoryProducts);
 
