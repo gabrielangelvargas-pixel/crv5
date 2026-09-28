@@ -4,7 +4,11 @@ export function groupProducts(products: Product[]): ProductGroup[] {
   const groups = new Map<string, ProductGroup>();
 
   for (const product of products) {
-    const groupId = product.groupId ?? product.id;
+    // Keep group IDs and product IDs in separate namespaces. A group can have
+    // the same numeric ID as an unrelated standalone product.
+    const groupId = product.groupId
+      ? `group:${product.groupId}`
+      : `product:${product.id}`;
     const group = groups.get(groupId);
 
     if (group) {
