@@ -22,11 +22,21 @@ export async function LatestProducts() {
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {products.map((product) => (
-            <article
-              key={product.id}
-              className="overflow-hidden border border-black/10 bg-background text-zinc-950"
-            >
+            (() => {
+              const hasOffer =
+                product.offerPrice !== null && product.offerPrice < product.salePrice;
+
+              return (
+                <article
+                  key={product.id}
+                  className="overflow-hidden border border-black/10 bg-background text-zinc-950"
+                >
               <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-zinc-100 text-zinc-950">
+                {hasOffer ? (
+                  <span className="absolute left-2 top-2 z-10 bg-red-600 px-2 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-white">
+                    OFF
+                  </span>
+                ) : null}
                 {product.imageSrc ? (
                   <Image
                     src={product.imageSrc}
@@ -53,11 +63,24 @@ export async function LatestProducts() {
                     {product.description}
                   </p>
                 ) : null}
-                <p className="mt-1 text-sm font-semibold text-zinc-700">
-                  ${(product.offerPrice ?? product.salePrice).toLocaleString("es-AR")}
-                </p>
+                {hasOffer ? (
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-xs text-zinc-400 line-through">
+                      ${product.salePrice.toLocaleString("es-AR")}
+                    </span>
+                    <span className="text-sm font-black text-red-600">
+                      ${product.offerPrice?.toLocaleString("es-AR")}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-sm font-semibold text-zinc-700">
+                    ${product.salePrice.toLocaleString("es-AR")}
+                  </p>
+                )}
               </div>
-            </article>
+                </article>
+              );
+            })()
           ))}
         </div>
       </div>
