@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
-const externalAssetsUrl = process.env.NEXT_PUBLIC_ASSETS_BASE_URL
-  ? new URL(process.env.NEXT_PUBLIC_ASSETS_BASE_URL)
+const configuredAssetsBaseUrl = process.env.NEXT_PUBLIC_ASSETS_BASE_URL?.trim();
+const externalAssetsUrl = configuredAssetsBaseUrl && /^https?:\/\//i.test(configuredAssetsBaseUrl)
+  ? new URL(configuredAssetsBaseUrl)
   : null;
 
 const nextConfig: NextConfig = {

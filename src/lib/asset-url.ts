@@ -1,7 +1,7 @@
-const externalAssetBaseUrl = process.env.NEXT_PUBLIC_ASSETS_BASE_URL?.trim().replace(
-  /\/+$/,
-  "",
-);
+const configuredAssetBaseUrl = process.env.NEXT_PUBLIC_ASSETS_BASE_URL?.trim();
+const externalAssetBaseUrl = configuredAssetBaseUrl && /^https?:\/\//i.test(configuredAssetBaseUrl)
+  ? configuredAssetBaseUrl.replace(/\/+$/, "")
+  : null;
 
 function normalizeAssetPath(value: string) {
   return value
