@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
+import { PwaRegister } from "@/components/pwa-register";
 import { getCategoryTree } from "@/lib/categories-repository";
 import "./globals.css";
 
@@ -24,7 +25,21 @@ export const metadata: Metadata = {
     template: "%s | CRV4",
   },
   description:
-    "Plantilla base con Next.js, React, TypeScript estricto y buenas practicas.",
+    "Catálogo mayorista de CRV4.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/crv4-logo-final-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/crv4-logo-final-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "CRV4 Mayorista",
+    statusBarStyle: "default",
+  },
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
@@ -36,6 +51,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <PwaRegister />
         <Navbar categories={categories} />
         <div className="pt-20">{children}</div>
       </body>
