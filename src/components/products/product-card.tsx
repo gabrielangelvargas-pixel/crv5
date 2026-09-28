@@ -106,7 +106,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
       {isOpen ? (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-0 md:p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-2 py-0 md:p-4"
           role="presentation"
           onMouseDown={() => setIsOpen(false)}
         >
