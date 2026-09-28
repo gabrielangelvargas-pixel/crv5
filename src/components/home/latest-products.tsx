@@ -1,8 +1,10 @@
 import { getLatestProducts } from "@/lib/products-repository";
-import { ProductCard } from "@/components/products/product-card";
+import { ProductGroupCard } from "@/components/products/product-group-card";
+import { groupProducts } from "@/lib/product-groups";
 
 export async function LatestProducts() {
   const products = await getLatestProducts();
+  const productGroups = groupProducts(products);
 
   return (
     <section aria-labelledby="latest-products-title" className="bg-white">
@@ -20,8 +22,8 @@ export async function LatestProducts() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {productGroups.map((productGroup) => (
+            <ProductGroupCard key={productGroup.id} productGroup={productGroup} />
           ))}
         </div>
       </div>

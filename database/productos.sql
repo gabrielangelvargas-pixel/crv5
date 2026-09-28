@@ -1,8 +1,10 @@
 CREATE TABLE productos (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  grupo_id BIGINT UNSIGNED NULL,
   categoria_id BIGINT UNSIGNED NOT NULL,
   codigo VARCHAR(13) NOT NULL,
   nombre VARCHAR(180) NOT NULL,
+  variante VARCHAR(80) NULL,
   slug VARCHAR(200) NOT NULL,
   descripcion TEXT NULL,
   precio_venta DECIMAL(12,2) NOT NULL,
@@ -23,6 +25,11 @@ CREATE TABLE productos (
     REFERENCES categorias(id)
     ON UPDATE CASCADE
     ON DELETE RESTRICT,
+  CONSTRAINT fk_productos_grupo
+    FOREIGN KEY (grupo_id)
+    REFERENCES producto_grupos(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL,
   INDEX idx_productos_categoria_activo_orden (categoria_id, activo, orden),
   INDEX idx_productos_activo (activo)
 ) ENGINE=InnoDB

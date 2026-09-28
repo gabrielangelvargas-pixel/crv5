@@ -9,7 +9,8 @@ import { CategoryViewTracker } from "@/components/catalog/category-view-tracker"
 import { getCategoryTree } from "@/lib/categories-repository";
 import type { CategoryNode } from "@/data/categories";
 import { getProducts } from "@/lib/products-repository";
-import { ProductCard } from "@/components/products/product-card";
+import { ProductGroupCard } from "@/components/products/product-group-card";
+import { groupProducts } from "@/lib/product-groups";
 
 type CatalogPageProps = {
   categorySlug: string;
@@ -64,6 +65,7 @@ export async function CatalogPage({
   };
   collectCategoryIds(activeCategory);
   const categoryProducts = allProducts.filter((product) => categoryIds.has(product.categoryId));
+  const productGroups = groupProducts(categoryProducts);
 
   const selectedCover = selectedSubcategory ?? selectedCategory;
   const trackedCategory = selectedChildCategory ?? selectedSubcategory ?? selectedCategory;
@@ -113,12 +115,12 @@ export async function CatalogPage({
         </div>
 
         <p className="mb-4 px-3 text-sm text-foreground/60 sm:px-0">
-          {categoryProducts.length} productos encontrados
+          {productGroups.length} productos encontrados
         </p>
 
         <div className="grid grid-cols-2 gap-3 px-3 sm:px-0 lg:grid-cols-4">
-          {categoryProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {productGroups.map((productGroup) => (
+            <ProductGroupCard key={productGroup.id} productGroup={productGroup} />
           ))}
         </div>
       </section>
