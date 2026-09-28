@@ -1,7 +1,5 @@
 const configuredAssetBaseUrl = process.env.NEXT_PUBLIC_ASSETS_BASE_URL?.trim();
-const externalAssetBaseUrl = configuredAssetBaseUrl && /^https?:\/\//i.test(configuredAssetBaseUrl)
-  ? configuredAssetBaseUrl.replace(/\/+$/, "")
-  : null;
+const assetBaseUrl = configuredAssetBaseUrl?.replace(/\/+$/, "") || null;
 
 function normalizeAssetPath(value: string) {
   return value
@@ -28,8 +26,12 @@ export function getAssetUrl(value: string | null, directory: string) {
     "",
   );
 
-  if (externalAssetBaseUrl) {
-    return `${externalAssetBaseUrl}/${directory}/${normalizedPath}`;
+  if (assetBaseUrl) {
+    if (!/^https?:\/\//i.test(assetBaseUrl)) {
+      return `/api/media/${directory}/${normalizedPath}`;
+    }
+
+    return `${assetBaseUrl}/${directory}/${normalizedPath}`;
   }
 
   return `/${normalizedPath}`;
