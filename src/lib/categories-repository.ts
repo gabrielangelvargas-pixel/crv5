@@ -9,6 +9,7 @@ type CategoryRow = RowDataPacket & {
   parent_id: number | string | bigint | null;
   nombre: string;
   slug: string;
+  descripcion: string | null;
   imagen_url: string | null;
   portada_url: string | null;
 };
@@ -47,6 +48,7 @@ export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
       parentId,
       name: row.nombre,
       slug: row.slug,
+      description: row.descripcion,
       imageSrc: getAssetUrl(row.imagen_url, "categorias"),
       coverImageSrc: getAssetUrl(row.portada_url, "portadas"),
       iconKey: getIconKey(row.slug),
@@ -66,6 +68,22 @@ export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
     if (parent) {
       parent.subcategories.push(node);
     }
+  }
+
+  const inheritMetadata = (
+    category: CategoryNode,
+    inherited: Pick<CategoryNode, "description" | "imageSrc"> | null,
+  ) => {
+    category.description = category.description ?? inherited?.description ?? null;
+    category.imageSrc = category.imageSrc ?? inherited?.imageSrc ?? null;
+
+    for (const child of category.subcategories) {
+      inheritMetadata(child, category);
+    }
+  };
+
+  for (const root of roots) {
+    inheritMetadata(root, null);
   }
 
   return roots;

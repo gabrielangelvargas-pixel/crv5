@@ -22,6 +22,7 @@ export type MockSubcategory = {
 export type MockCategory = {
   icon: IconType;
   name: string;
+  description: string | null;
   imageSrc: string | null;
   coverImageSrc: string | null;
   subcategories: MockSubcategory[];
@@ -31,6 +32,7 @@ export const mockCategories: MockCategory[] = [
   {
     icon: FaGem,
     name: "Bijouterie",
+    description: null,
     imageSrc: null,
     coverImageSrc: null,
     subcategories: [
@@ -43,6 +45,7 @@ export const mockCategories: MockCategory[] = [
   {
     icon: FaStar,
     name: "Piercing",
+    description: null,
     imageSrc: null,
     coverImageSrc: null,
     subcategories: [
@@ -55,6 +58,7 @@ export const mockCategories: MockCategory[] = [
   {
     icon: FaBagShopping,
     name: "Marroquineria",
+    description: null,
     imageSrc: null,
     coverImageSrc: "/portada-marroquineria.png",
     subcategories: [
@@ -71,6 +75,7 @@ export const mockCategories: MockCategory[] = [
   {
     icon: FaHeart,
     name: "Accesorios",
+    description: null,
     imageSrc: null,
     coverImageSrc: null,
     subcategories: [
@@ -83,6 +88,7 @@ export const mockCategories: MockCategory[] = [
   {
     icon: FaPaintbrush,
     name: "Belleza",
+    description: null,
     imageSrc: null,
     coverImageSrc: null,
     subcategories: [
@@ -93,6 +99,7 @@ export const mockCategories: MockCategory[] = [
   {
     icon: FaPen,
     name: "Libreria",
+    description: null,
     imageSrc: null,
     coverImageSrc: "/portada-libreria.png",
     subcategories: [
@@ -104,6 +111,7 @@ export const mockCategories: MockCategory[] = [
   {
     icon: FaTabletScreenButton,
     name: "Tecnologia",
+    description: null,
     imageSrc: null,
     coverImageSrc: "/portada-tecnologia.png",
     subcategories: [
@@ -114,6 +122,7 @@ export const mockCategories: MockCategory[] = [
   {
     icon: FaHeart,
     name: "Regaleria",
+    description: null,
     imageSrc: null,
     coverImageSrc: "/portada-regaleria.png",
     subcategories: [
