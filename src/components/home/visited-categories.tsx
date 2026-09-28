@@ -34,7 +34,7 @@ export function VisitedCategories({ categories }: VisitedCategoriesProps) {
                 key={category.name}
                 className="group overflow-hidden border border-black/10 bg-white text-zinc-950 transition-colors hover:border-black/25 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:border-white/25"
               >
-                <div className="relative flex aspect-[1.91/1] w-full items-center justify-center overflow-hidden bg-zinc-100 text-zinc-950 transition-colors group-hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-50 dark:group-hover:bg-zinc-800">
+                <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-zinc-100 text-zinc-950 transition-colors group-hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-50 dark:group-hover:bg-zinc-800">
                   {category.imageSrc ? (
                     <Image
                       src={category.imageSrc}
