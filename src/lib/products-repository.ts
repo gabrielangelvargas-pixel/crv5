@@ -57,7 +57,7 @@ export const getProducts = cache(async (): Promise<Product[]> => {
       SELECT
         p.id,
         p.grupo_id,
-        p.categoria_id,
+        COALESCE(grupo.categoria_id, p.categoria_id) AS categoria_id,
         COALESCE(raiz.nombre, padre.nombre, categoria.nombre) AS categoria_nombre,
         COALESCE(raiz.slug, padre.slug, categoria.slug) AS categoria_slug,
         CASE
@@ -82,7 +82,8 @@ export const getProducts = cache(async (): Promise<Product[]> => {
         p.imagen_url,
         p.etiquetas
       FROM productos p
-      INNER JOIN categorias categoria ON categoria.id = p.categoria_id
+      LEFT JOIN producto_grupos grupo ON grupo.id = p.grupo_id
+      INNER JOIN categorias categoria ON categoria.id = COALESCE(grupo.categoria_id, p.categoria_id)
       LEFT JOIN categorias padre ON padre.id = categoria.parent_id
       LEFT JOIN categorias raiz ON raiz.id = padre.parent_id
       WHERE p.activo = 1 AND categoria.activa = 1
