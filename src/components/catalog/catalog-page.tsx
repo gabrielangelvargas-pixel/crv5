@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { FaBoxOpen, FaImage } from "react-icons/fa6";
+import { FaImage } from "react-icons/fa6";
 import {
   CatalogChildCategoryNav,
   CatalogSubcategoryNav,
@@ -9,6 +9,7 @@ import { CategoryViewTracker } from "@/components/catalog/category-view-tracker"
 import { getCategoryTree } from "@/lib/categories-repository";
 import type { CategoryNode } from "@/data/categories";
 import { getProducts } from "@/lib/products-repository";
+import { ProductCard } from "@/components/products/product-card";
 
 type CatalogPageProps = {
   categorySlug: string;
@@ -117,66 +118,7 @@ export async function CatalogPage({
 
         <div className="grid grid-cols-2 gap-3 px-3 sm:px-0 lg:grid-cols-4">
           {categoryProducts.map((product) => (
-            (() => {
-              const hasOffer =
-                product.offerPrice !== null && product.offerPrice < product.salePrice;
-
-              return (
-                <article
-                  key={product.id}
-                  className="overflow-hidden border border-black/10 bg-white text-zinc-950 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50"
-                >
-              <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-zinc-100 text-zinc-950 dark:bg-zinc-900 dark:text-zinc-50">
-                {hasOffer ? (
-                  <span className="absolute left-2 top-2 z-10 bg-red-600 px-2 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-white">
-                    OFF
-                  </span>
-                ) : null}
-                {product.imageSrc ? (
-                  <Image
-                    src={product.imageSrc}
-                    alt={product.name}
-                    fill
-                    sizes="(min-width: 1024px) 25vw, 50vw"
-                    className="object-cover"
-                  />
-                ) : (
-                  <FaBoxOpen aria-hidden="true" className="size-7" />
-                )}
-              </div>
-              <div className="px-3 py-3">
-                <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-zinc-500">
-                  {product.childCategory
-                    ? `${product.subcategory} / ${product.childCategory}`
-                    : product.subcategory ?? product.category}
-                </p>
-                <h2 className="mt-1 text-sm font-black uppercase tracking-[0.06em]">
-                  {product.name}
-                </h2>
-                {product.description ? (
-                  <p className="mt-1 text-xs leading-5 text-zinc-500">
-                    {product.description}
-                  </p>
-                ) : null}
-                {hasOffer ? (
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-xs text-zinc-400 line-through">
-                      ${product.salePrice.toLocaleString("es-AR")}
-                    </span>
-                    <span className="text-sm font-black text-red-600">
-                      ${product.offerPrice?.toLocaleString("es-AR")}
-                    </span>
-                  </div>
-                ) : (
-                  <p className="mt-1 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                    ${product.salePrice.toLocaleString("es-AR")}
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-zinc-500">Stock: {product.stock}</p>
-              </div>
-                </article>
-              );
-            })()
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       </section>
