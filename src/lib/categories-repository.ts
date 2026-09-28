@@ -55,15 +55,21 @@ export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
     `);
   } catch (error) {
     if (!isMissingDescriptionColumn(error)) {
-      throw error;
+      console.error("No se pudieron cargar las categorías", error);
+      return [];
     }
 
-    [rows] = await getDatabasePool().query<CategoryRow[]>(`
-      SELECT id, parent_id, nombre, NULL AS descripcion, slug, imagen_url, portada_url, orden
-      FROM categorias
-      WHERE activa = 1
-      ORDER BY parent_id IS NOT NULL, parent_id, orden, id
-    `);
+    try {
+      [rows] = await getDatabasePool().query<CategoryRow[]>(`
+        SELECT id, parent_id, nombre, NULL AS descripcion, slug, imagen_url, portada_url, orden
+        FROM categorias
+        WHERE activa = 1
+        ORDER BY parent_id IS NOT NULL, parent_id, orden, id
+      `);
+    } catch (fallbackError) {
+      console.error("No se pudieron cargar las categorías sin descripción", fallbackError);
+      return [];
+    }
   }
 
   const nodes = new Map<string, CategoryNode>();
