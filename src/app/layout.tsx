@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { PwaRegister } from "@/components/pwa-register";
 import { getCategoryTree } from "@/lib/categories-repository";
+import { getProducts } from "@/lib/products-repository";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const categories = await getCategoryTree();
+  const products = await getProducts();
 
   return (
     <html
@@ -52,7 +54,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     >
       <body className="flex min-h-full flex-col">
         <PwaRegister />
-        <Navbar categories={categories} />
+        <Navbar categories={categories} products={products} />
         <div className="pt-20">{children}</div>
       </body>
     </html>

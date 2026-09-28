@@ -1,10 +1,10 @@
 import Image from "next/image";
 import { FaBoxOpen } from "react-icons/fa6";
-import { mockProducts } from "@/data/mock-products";
+import { getLatestProducts } from "@/lib/products-repository";
 
-const products = mockProducts.filter((product) => product.isNew).slice(0, 8);
+export async function LatestProducts() {
+  const products = await getLatestProducts();
 
-export function LatestProducts() {
   return (
     <section aria-labelledby="latest-products-title" className="bg-white">
       <div className="mx-auto w-full max-w-6xl px-6 py-8 sm:py-10">
@@ -41,13 +41,20 @@ export function LatestProducts() {
               </div>
               <div className="px-3 py-3">
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-zinc-500">
-                  {product.category} / {product.subcategory}
+                  {product.subcategory
+                    ? `${product.category} / ${product.subcategory}`
+                    : product.category}
                 </p>
                 <h3 className="mt-1 text-sm font-black uppercase tracking-[0.06em]">
                   {product.name}
                 </h3>
+                {product.description ? (
+                  <p className="mt-1 text-xs leading-5 text-zinc-500">
+                    {product.description}
+                  </p>
+                ) : null}
                 <p className="mt-1 text-sm font-semibold text-zinc-700">
-                  ${product.wholesalePrice.toLocaleString("es-AR")}
+                  ${(product.offerPrice ?? product.salePrice).toLocaleString("es-AR")}
                 </p>
               </div>
             </article>

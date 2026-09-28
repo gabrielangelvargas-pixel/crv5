@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import type { CategoryNode } from "@/data/categories";
-import { mockProducts } from "@/data/mock-products";
+import type { Product } from "@/data/products";
 import { getCategoryIcon } from "@/lib/category-icons";
 import {
   FaBars,
@@ -59,9 +59,10 @@ function normalizeSearchValue(value: string) {
 
 type NavbarProps = {
   categories: CategoryNode[];
+  products: Product[];
 };
 
-export function Navbar({ categories }: NavbarProps) {
+export function Navbar({ categories, products }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const normalizedSearchQuery = normalizeSearchValue(searchQuery);
@@ -84,11 +85,11 @@ export function Navbar({ categories }: NavbarProps) {
       })),
   );
 
-  const productResults = mockProducts
+  const productResults = products
     .filter((product) => {
       const searchableValue = [
         product.name,
-        product.sku,
+        product.code,
         product.category,
         product.subcategory,
         ...product.tags,
@@ -265,10 +266,9 @@ export function Navbar({ categories }: NavbarProps) {
                         {productResults.map((product) => (
                           <Link
                             key={product.id}
-                            href={getSubcategoryHref(
-                              product.category,
-                              product.subcategory,
-                            )}
+                            href={product.subcategorySlug
+                              ? getSubcategoryHref(product.categorySlug, product.subcategorySlug)
+                              : getCategoryHref(product.categorySlug)}
                             onClick={closeMenu}
                             className="block border border-black/10 bg-white px-3 py-3 transition-colors hover:border-black/25 dark:border-white/10 dark:bg-zinc-950 dark:hover:border-white/25"
                           >
@@ -276,10 +276,12 @@ export function Navbar({ categories }: NavbarProps) {
                               {product.name}
                             </span>
                             <span className="mt-1 block text-xs text-foreground/50">
-                              {product.category} / {product.subcategory}
+                              {product.subcategory
+                                ? `${product.category} / ${product.subcategory}`
+                                : product.category}
                             </span>
                             <span className="mt-1 block text-sm font-semibold text-foreground/70">
-                              ${product.wholesalePrice.toLocaleString("es-AR")}
+                              ${(product.offerPrice ?? product.salePrice).toLocaleString("es-AR")}
                             </span>
                           </Link>
                         ))}

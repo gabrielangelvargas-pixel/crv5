@@ -7,8 +7,8 @@ import {
 } from "@/components/catalog/catalog-subcategory-nav";
 import { CategoryViewTracker } from "@/components/catalog/category-view-tracker";
 import { getCategoryTree } from "@/lib/categories-repository";
-import { mockProducts } from "@/data/mock-products";
-import { toSlug } from "@/lib/slug";
+import type { CategoryNode } from "@/data/categories";
+import { getProducts } from "@/lib/products-repository";
 
 type CatalogPageProps = {
   categorySlug: string;
@@ -22,6 +22,7 @@ export async function CatalogPage({
   childCategorySlug,
 }: CatalogPageProps) {
   const categories = await getCategoryTree();
+  const allProducts = await getProducts();
   const selectedCategory = categories.find(
     (category) => category.slug === categorySlug,
   );
@@ -29,10 +30,6 @@ export async function CatalogPage({
   if (!selectedCategory) {
     notFound();
   }
-
-  const categoryProducts = mockProducts.filter(
-    (product) => toSlug(product.category) === categorySlug,
-  );
 
   const selectedSubcategory = subcategorySlug
     ? selectedCategory.subcategories.find(
@@ -46,12 +43,6 @@ export async function CatalogPage({
 
   const subcategories = selectedCategory.subcategories;
 
-  const subcategoryProducts = subcategorySlug
-    ? categoryProducts.filter(
-        (product) => toSlug(product.subcategory) === subcategorySlug,
-      )
-    : categoryProducts;
-
   const childCategories = selectedSubcategory?.subcategories ?? [];
 
   const selectedChildCategory = childCategorySlug
@@ -62,11 +53,16 @@ export async function CatalogPage({
     notFound();
   }
 
-  const products = childCategorySlug
-    ? subcategoryProducts.filter(
-        (product) => toSlug(product.childCategory ?? "") === childCategorySlug,
-      )
-    : subcategoryProducts;
+  const activeCategory = selectedChildCategory ?? selectedSubcategory ?? selectedCategory;
+  const categoryIds = new Set<string>();
+  const collectCategoryIds = (category: CategoryNode) => {
+    categoryIds.add(category.id);
+    for (const child of category.subcategories) {
+      collectCategoryIds(child);
+    }
+  };
+  collectCategoryIds(activeCategory);
+  const categoryProducts = allProducts.filter((product) => categoryIds.has(product.categoryId));
 
   const selectedCover = selectedSubcategory ?? selectedCategory;
   const trackedCategory = selectedChildCategory ?? selectedSubcategory ?? selectedCategory;
@@ -116,11 +112,11 @@ export async function CatalogPage({
         </div>
 
         <p className="mb-4 px-3 text-sm text-foreground/60 sm:px-0">
-          {products.length} productos encontrados
+          {categoryProducts.length} productos encontrados
         </p>
 
         <div className="grid grid-cols-2 gap-3 px-3 sm:px-0 lg:grid-cols-4">
-          {products.map((product) => (
+          {categoryProducts.map((product) => (
             <article
               key={product.id}
               className="overflow-hidden border border-black/10 bg-white text-zinc-950 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50"
@@ -142,13 +138,18 @@ export async function CatalogPage({
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-zinc-500">
                   {product.childCategory
                     ? `${product.subcategory} / ${product.childCategory}`
-                    : product.subcategory}
+                    : product.subcategory ?? product.category}
                 </p>
                 <h2 className="mt-1 text-sm font-black uppercase tracking-[0.06em]">
                   {product.name}
                 </h2>
+                {product.description ? (
+                  <p className="mt-1 text-xs leading-5 text-zinc-500">
+                    {product.description}
+                  </p>
+                ) : null}
                 <p className="mt-1 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                  ${product.wholesalePrice.toLocaleString("es-AR")}
+                  ${(product.offerPrice ?? product.salePrice).toLocaleString("es-AR")}
                 </p>
                 <p className="mt-1 text-xs text-zinc-500">Stock: {product.stock}</p>
               </div>
