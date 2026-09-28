@@ -31,7 +31,7 @@ function getIconKey(slug: string): CategoryIconKey {
 
 export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
   const [rows] = await getDatabasePool().query<CategoryRow[]>(`
-    SELECT id, parent_id, nombre, slug, imagen_url, portada_url
+    SELECT id, parent_id, nombre, descripcion, slug, imagen_url, portada_url
     FROM categorias
     WHERE activa = 1
     ORDER BY parent_id IS NOT NULL, parent_id, orden, id
