@@ -12,7 +12,7 @@ export async function getCategoryMetadata(slugs: string[]): Promise<Metadata> {
     return {};
   }
 
-  const title = `${category.name} | CRV4 Mayorista`;
+  const title = `${category.name} - CRV4 Mayorista`;
   const description =
     category.description ?? `Productos mayoristas de ${category.name}.`;
   const image = category.imageSrc

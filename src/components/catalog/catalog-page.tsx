@@ -5,6 +5,7 @@ import {
   CatalogChildCategoryNav,
   CatalogSubcategoryNav,
 } from "@/components/catalog/catalog-subcategory-nav";
+import { CategoryViewTracker } from "@/components/catalog/category-view-tracker";
 import { getCategoryTree } from "@/lib/categories-repository";
 import { mockProducts } from "@/data/mock-products";
 import { toSlug } from "@/lib/slug";
@@ -71,6 +72,7 @@ export async function CatalogPage({
 
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-background text-foreground">
+      <CategoryViewTracker categoryId={selectedCategory.id} />
       <section className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-6 sm:py-8">
         <div className="mb-6 overflow-hidden bg-white shadow-sm ring-1 ring-black/10 dark:bg-zinc-950 dark:ring-white/10">
           <div className="relative flex aspect-[2.5/1] min-h-32 items-center justify-center overflow-hidden bg-zinc-100 text-zinc-950 dark:bg-zinc-900 dark:text-zinc-50">

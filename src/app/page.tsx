@@ -5,10 +5,10 @@ import { LatestProducts } from "@/components/home/latest-products";
 import { VisitedCategories } from "@/components/home/visited-categories";
 import { WhatsappCta } from "@/components/home/whatsapp-cta";
 import { WholesalePacks } from "@/components/home/wholesale-packs";
-import { getCategoryTree } from "@/lib/categories-repository";
+import { getMostVisitedCategories } from "@/lib/categories-repository";
 
 export default async function Home() {
-  const categories = await getCategoryTree();
+  const categories = await getMostVisitedCategories();
 
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-background text-foreground">

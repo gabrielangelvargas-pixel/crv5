@@ -11,6 +11,7 @@ export type CategoryIconKey =
 export type CategoryNode = {
   id: string;
   parentId: string | null;
+  order: number;
   name: string;
   slug: string;
   description: string | null;

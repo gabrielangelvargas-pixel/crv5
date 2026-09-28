@@ -7,6 +7,7 @@ import { getDatabasePool } from "@/lib/db";
 type CategoryRow = RowDataPacket & {
   id: number | string | bigint;
   parent_id: number | string | bigint | null;
+  orden: number | string | bigint;
   nombre: string;
   slug: string;
   descripcion: string | null;
@@ -31,7 +32,7 @@ function getIconKey(slug: string): CategoryIconKey {
 
 export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
   const [rows] = await getDatabasePool().query<CategoryRow[]>(`
-    SELECT id, parent_id, nombre, descripcion, slug, imagen_url, portada_url
+    SELECT id, parent_id, nombre, descripcion, slug, imagen_url, portada_url, orden
     FROM categorias
     WHERE activa = 1
     ORDER BY parent_id IS NOT NULL, parent_id, orden, id
@@ -46,6 +47,7 @@ export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
     nodes.set(id, {
       id,
       parentId,
+      order: Number(row.orden),
       name: row.nombre,
       slug: row.slug,
       description: row.descripcion,
@@ -87,4 +89,32 @@ export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
   }
 
   return roots;
+});
+
+export const getMostVisitedCategories = cache(async (limit = 4) => {
+  const categories = await getCategoryTree();
+
+  try {
+    const [rows] = await getDatabasePool().query<RowDataPacket[]>(`
+      SELECT categoria_id, SUM(visitas) AS visitas
+      FROM categoria_visitas
+      WHERE fecha >= (CURRENT_DATE - INTERVAL 30 DAY)
+      GROUP BY categoria_id
+    `);
+
+    const popularity = new Map(
+      rows.map((row) => [String(row.categoria_id), Number(row.visitas)]),
+    );
+
+    return [...categories]
+      .sort((first, second) => {
+        const visitDifference =
+          (popularity.get(second.id) ?? 0) - (popularity.get(first.id) ?? 0);
+
+        return visitDifference || first.order - second.order || first.name.localeCompare(second.name, "es");
+      })
+      .slice(0, limit);
+  } catch {
+    return categories.slice(0, limit);
+  }
 });
