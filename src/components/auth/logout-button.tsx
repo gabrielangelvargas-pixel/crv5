@@ -10,6 +10,7 @@ export function LogoutButton() {
   async function handleLogout() {
     setIsSubmitting(true);
     await fetch("/api/auth/logout", { method: "POST" });
+    window.dispatchEvent(new Event("crv4:auth-changed"));
     router.replace("/login");
     router.refresh();
   }

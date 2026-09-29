@@ -28,6 +28,7 @@ export default function LoginPage() {
         return;
       }
 
+      window.dispatchEvent(new Event("crv4:auth-changed"));
       router.push("/");
       router.refresh();
     } catch {

@@ -11,20 +11,26 @@ export function SessionLink() {
   useEffect(() => {
     let isMounted = true;
 
-    fetch("/api/auth/session", { cache: "no-store" })
-      .then((response) => response.json())
-      .then((result: { user?: unknown }) => {
-        if (isMounted) {
-          setIsAuthenticated(Boolean(result.user));
-          setIsLoaded(true);
-        }
-      })
-      .catch(() => {
-        if (isMounted) setIsLoaded(true);
-      });
+    const refreshSession = () => {
+      fetch("/api/auth/session", { cache: "no-store" })
+        .then((response) => response.json())
+        .then((result: { user?: unknown }) => {
+          if (isMounted) {
+            setIsAuthenticated(Boolean(result.user));
+            setIsLoaded(true);
+          }
+        })
+        .catch(() => {
+          if (isMounted) setIsLoaded(true);
+        });
+    };
+
+    refreshSession();
+    window.addEventListener("crv4:auth-changed", refreshSession);
 
     return () => {
       isMounted = false;
+      window.removeEventListener("crv4:auth-changed", refreshSession);
     };
   }, []);
 
