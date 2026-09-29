@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
-import type { RowDataPacket } from "mysql2";
+import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import type { AuthUser } from "@/data/auth";
 import { getDatabasePool } from "@/lib/db";
 
@@ -108,6 +108,66 @@ export async function authenticateUser(username: string, password: string) {
   );
 
   return { token, user };
+}
+
+export async function registerCustomer(name: string, username: string, password: string) {
+  const pool = getDatabasePool();
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [roleRows] = await connection.query<RowDataPacket[]>(
+      "SELECT id FROM roles WHERE codigo = 'cliente' AND activo = 1 LIMIT 1",
+    );
+    const role = roleRows[0] as { id?: number | string | bigint } | undefined;
+
+    if (!role?.id) {
+      throw new Error("No existe el rol cliente");
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const [userResult] = await connection.query<ResultSetHeader>(
+      `
+        INSERT INTO usuarios (nombre, usuario, clave_hash, activo)
+        VALUES (?, ?, ?, 1)
+      `,
+      [name.trim(), username.trim(), passwordHash],
+    );
+    const userId = String(userResult.insertId);
+
+    await connection.query(
+      `
+        INSERT INTO usuarios_roles (id_usuario, id_rol, activo)
+        VALUES (?, ?, 1)
+      `,
+      [userId, role.id],
+    );
+
+    await connection.commit();
+
+    const user = await loadUserAccess(userId);
+
+    if (!user) {
+      throw new Error("No se pudo cargar el usuario registrado");
+    }
+
+    const token = randomBytes(32).toString("hex");
+    await pool.query(
+      `
+        INSERT INTO sesiones (id, id_usuario, token_hash, expira_en)
+        VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY))
+      `,
+      [randomUUID(), userId, hashToken(token)],
+    );
+
+    return { token, user };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
