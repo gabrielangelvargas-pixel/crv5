@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { CategoryNode } from "@/data/categories";
 import type { Product } from "@/data/products";
 import { getCategoryIcon } from "@/lib/category-icons";
+import { SessionLink } from "@/components/auth/session-link";
 import {
   FaBars,
   FaFire,
@@ -141,6 +142,7 @@ export function Navbar({ categories, products }: NavbarProps) {
               </span>
             </Link>
           </div>
+          <SessionLink />
         </nav>
       </header>
 
