@@ -2,9 +2,12 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth/auth-provider";
+import type { AuthUser } from "@/data/auth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setUser } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,14 +24,14 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-      const result = await response.json();
+      const result = (await response.json()) as { error?: string; user?: AuthUser };
 
       if (!response.ok) {
         setError(result.error ?? "No se pudo iniciar sesión");
         return;
       }
 
-      window.dispatchEvent(new Event("crv4:auth-changed"));
+      setUser(result.user ?? null);
       router.push("/");
       router.refresh();
     } catch {

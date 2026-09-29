@@ -2,18 +2,11 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import type { RowDataPacket } from "mysql2";
+import type { AuthUser } from "@/data/auth";
 import { getDatabasePool } from "@/lib/db";
 
 export const SESSION_COOKIE = "crv4_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
-
-export type AuthUser = {
-  id: string;
-  name: string;
-  username: string;
-  roles: string[];
-  permissions: string[];
-};
 
 type UserCredentialRow = RowDataPacket & {
   id: number | string | bigint;

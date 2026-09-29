@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { PwaRegister } from "@/components/pwa-register";
+import { AuthProvider } from "@/components/auth/auth-provider";
 import { getCategoryTree } from "@/lib/categories-repository";
+import { getCurrentUser } from "@/lib/auth";
 import { getProducts } from "@/lib/products-repository";
 import "./globals.css";
 
@@ -50,6 +52,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const categories = await getCategoryTree();
   const products = await getProducts();
+  const user = await getCurrentUser();
 
   return (
     <html
@@ -57,9 +60,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <PwaRegister />
-        <Navbar categories={categories} products={products} />
-        <div className="pt-20">{children}</div>
+        <AuthProvider initialUser={user}>
+          <PwaRegister />
+          <Navbar categories={categories} products={products} />
+          <div className="pt-20">{children}</div>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -2,15 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/components/auth/auth-provider";
 
 export function LogoutButton() {
   const router = useRouter();
+  const { setUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleLogout() {
     setIsSubmitting(true);
     await fetch("/api/auth/logout", { method: "POST" });
-    window.dispatchEvent(new Event("crv4:auth-changed"));
+    setUser(null);
     router.replace("/login");
     router.refresh();
   }
