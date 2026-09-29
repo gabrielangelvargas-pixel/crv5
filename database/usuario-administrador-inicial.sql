@@ -8,7 +8,7 @@ START TRANSACTION;
 
 INSERT INTO roles (codigo, nombre, descripcion, activo)
 VALUES (
-  'administrador',
+  'admin',
   'Administrador',
   'Acceso completo a la aplicación.',
   1

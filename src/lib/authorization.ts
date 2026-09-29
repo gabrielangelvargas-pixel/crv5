@@ -6,5 +6,5 @@ export function hasRole(user: AuthUser, ...roles: string[]) {
 }
 
 export function canAccessAdmin(user: AuthUser) {
-  return hasRole(user, "administrador", "admin", "vendedor");
+  return hasRole(user, "administrador", "admin", "vendedor", "supervisor");
 }

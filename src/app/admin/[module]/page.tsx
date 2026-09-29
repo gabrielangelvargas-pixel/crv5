@@ -24,7 +24,7 @@ export default async function AdminModulePage({ params }: { params: Promise<{ mo
   if (!canAccessAdmin(user)) redirect("/perfil");
 
   const isAdministrator = hasRole(user, "administrador", "admin");
-  const allowed = isAdministrator || (commercialModules.has(module) && hasRole(user, "vendedor"));
+  const allowed = isAdministrator || (commercialModules.has(module) && hasRole(user, "vendedor", "supervisor"));
 
   if (!allowed || (!isAdministrator && administratorModules.has(module))) {
     redirect("/admin");

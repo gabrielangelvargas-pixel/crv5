@@ -1,6 +1,7 @@
 INSERT INTO roles (codigo, nombre, descripcion, activo)
 VALUES
-  ('administrador', 'Administrador', 'Acceso completo a la aplicación.', 1),
+  ('admin', 'Administrador', 'Acceso completo a la aplicación.', 1),
+  ('supervisor', 'Supervisor', 'Gestión operativa de catálogo, clientes y ventas.', 1),
   ('vendedor', 'Vendedor', 'Acceso a la gestión comercial.', 1),
   ('cliente', 'Cliente', 'Acceso al catálogo, pedidos y perfil propio.', 1)
 ON DUPLICATE KEY UPDATE

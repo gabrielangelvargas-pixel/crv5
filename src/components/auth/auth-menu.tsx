@@ -27,8 +27,8 @@ const clientLinks = [
   ["Mis pedidos", "/pedidos"],
 ] as const;
 
-function hasRole(roles: string[], expected: string) {
-  return roles.some((role) => role.toLowerCase() === expected);
+function hasRole(roles: string[], ...expected: string[]) {
+  return roles.some((role) => expected.includes(role.toLowerCase()));
 }
 
 export function AuthMenu() {
@@ -68,7 +68,7 @@ export function AuthMenu() {
 
   const links = hasRole(user.roles, "administrador") || hasRole(user.roles, "admin")
     ? adminLinks
-    : hasRole(user.roles, "vendedor")
+    : hasRole(user.roles, "vendedor", "supervisor")
       ? sellerLinks
       : clientLinks;
 
