@@ -50,8 +50,7 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
             {product.imageSrc ? <Image src={product.imageSrc} alt={product.name} fill sizes="(min-width: 1024px) 25vw, 50vw" className="object-cover" /> : <FaBoxOpen aria-hidden="true" className="size-7" />}
           </div>
           <div className="px-3 py-3">
-            <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-zinc-500">{[product.category, product.subcategory, product.childCategory].filter(Boolean).join(" / ")}</p>
-            <h2 className="mt-1 text-sm font-black uppercase tracking-[0.06em]">{product.name}</h2>
+            <h2 className="text-sm font-black uppercase tracking-[0.06em]">{product.name}</h2>
             {product.description ? <p className="mt-1 text-xs leading-5 text-zinc-500">{product.description}</p> : null}
             <p className="mt-1 text-sm font-semibold text-zinc-700 dark:text-zinc-300">{formatPrice(product.offerPrice ?? product.salePrice)}</p>
             {productGroup.variants.length > 1 ? <p className="mt-1 text-xs font-semibold text-zinc-500">{productGroup.variants.length} variantes disponibles</p> : null}
