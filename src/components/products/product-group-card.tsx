@@ -60,15 +60,15 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
 
       {isOpen ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-2 py-0 md:p-4" role="presentation" onMouseDown={() => setIsOpen(false)}>
-          <section aria-labelledby={titleId} aria-modal="true" role="dialog" className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto bg-white text-zinc-950 shadow-2xl dark:bg-zinc-950 dark:text-zinc-50" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="grid md:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]">
-              <div className="relative flex aspect-square min-h-0 items-center justify-center overflow-hidden bg-zinc-100 p-4 text-zinc-950 dark:bg-zinc-900 dark:text-zinc-50 md:aspect-auto md:min-h-[34rem] md:p-8">
+          <section aria-labelledby={titleId} aria-modal="true" role="dialog" className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto bg-white text-zinc-950 shadow-2xl dark:bg-zinc-950 dark:text-zinc-50 md:h-[36rem] md:overflow-hidden" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="grid md:h-full md:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]">
+              <div className="relative flex aspect-square min-h-0 items-center justify-center overflow-hidden bg-zinc-100 p-4 text-zinc-950 dark:bg-zinc-900 dark:text-zinc-50 md:aspect-auto md:h-full md:p-8">
                 <button type="button" onClick={() => setIsOpen(false)} aria-label="Cerrar detalle del producto" title="Cerrar" className="absolute right-3 top-3 z-20 flex size-9 items-center justify-center bg-white/90 text-zinc-700 shadow-sm dark:bg-zinc-950/90 dark:text-zinc-300">
                   <FaXmark aria-hidden="true" className="size-5" />
                 </button>
                 {selected.imageSrc ? <Image src={selected.imageSrc} alt={selected.name} fill sizes="(min-width: 768px) 55vw, 100vw" className="object-contain" /> : <FaBoxOpen aria-hidden="true" className="size-10" />}
               </div>
-              <div className="space-y-5 p-5 sm:p-6">
+              <div className="space-y-5 p-5 sm:p-6 md:overflow-y-auto">
                 <div>
                   <h2 id={titleId} className="text-2xl font-black uppercase tracking-[0.04em]">{product.name}</h2>
                   {selected.description ? <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">{selected.description}</p> : null}
