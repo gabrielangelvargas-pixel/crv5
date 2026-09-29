@@ -70,8 +70,7 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
               </div>
               <div className="space-y-5 p-5 sm:p-6 md:overflow-y-auto">
                 <div>
-                  <h2 id={titleId} className="text-2xl font-black uppercase tracking-[0.04em]">{product.name}</h2>
-                  {selected.description ? <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">{selected.description}</p> : null}
+                  <h2 id={titleId} className="text-xl font-black uppercase tracking-[0.04em]">{product.name}</h2>
                 </div>
 
                 {productGroup.variants.length > 1 ? (
