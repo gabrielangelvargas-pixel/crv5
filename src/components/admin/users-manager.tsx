@@ -5,8 +5,9 @@ import { FaPen, FaPlus, FaXmark } from "react-icons/fa6";
 import type { AdminRole, AdminUser } from "@/lib/users-repository";
 
 type Props = { initialUsers: AdminUser[]; roles: AdminRole[] };
-type FormState = { id?: string; name: string; username: string; password: string; roleId: string; active: boolean };
-const emptyForm = (roleId: string): FormState => ({ name: "", username: "", password: "", roleId, active: true });
+type FormState = { id?: string; name: string; username: string; password: string; roleId: string; active: boolean; address: NonNullable<AdminUser["addressDetails"]> };
+const emptyAddress = (): FormState["address"] => ({ label: "casa", phone: "", address: "", neighborhood: "", city: "", province: "", postalCode: "", reference: "" });
+const emptyForm = (roleId: string): FormState => ({ name: "", username: "", password: "", roleId, active: true, address: emptyAddress() });
 
 function formatDate(value: string | null) {
   if (!value) return "Nunca";
@@ -31,7 +32,7 @@ export function UsersManager({ initialUsers, roles }: Props) {
   const openEdit = (user: AdminUser) => {
     setError("");
     const role = roles.find((candidate) => user.roles.includes(candidate.name));
-    setForm({ id: user.id, name: user.name, username: user.username, password: "", roleId: role?.id ?? defaultRole, active: user.active });
+    setForm({ id: user.id, name: user.name, username: user.username, password: "", roleId: role?.id ?? defaultRole, active: user.active, address: user.addressDetails ?? emptyAddress() });
   };
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
@@ -79,6 +80,15 @@ export function UsersManager({ initialUsers, roles }: Props) {
             <label><span className="text-sm font-bold">Usuario</span><input required value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15" /></label>
             <label><span className="text-sm font-bold">Rol</span><select required value={form.roleId} onChange={(e) => setForm({ ...form, roleId: e.target.value })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15">{roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</select></label>
             <label className="sm:col-span-2"><span className="text-sm font-bold">Contraseña {form.id ? <span className="font-normal text-foreground/50">(dejar vacía para conservarla)</span> : null}</span><input required={!form.id} minLength={8} type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15" /></label>
+            <div className="border-t border-black/10 pt-4 sm:col-span-2 dark:border-white/10"><p className="text-xs font-bold uppercase tracking-[0.12em] text-foreground/55">Contacto y dirección</p></div>
+            <label><span className="text-sm font-bold">Teléfono</span><input type="tel" value={form.address.phone} onChange={(e) => setForm({ ...form, address: { ...form.address, phone: e.target.value } })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15" /></label>
+            <label><span className="text-sm font-bold">Etiqueta</span><select value={form.address.label} onChange={(e) => setForm({ ...form, address: { ...form.address, label: e.target.value as FormState["address"]["label"] } })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15"><option value="casa">Casa</option><option value="trabajo">Trabajo</option><option value="deposito">Depósito</option><option value="otro">Otro</option></select></label>
+            <label className="sm:col-span-2"><span className="text-sm font-bold">Dirección</span><input type="text" value={form.address.address} onChange={(e) => setForm({ ...form, address: { ...form.address, address: e.target.value } })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15" /></label>
+            <label><span className="text-sm font-bold">Barrio</span><input type="text" value={form.address.neighborhood} onChange={(e) => setForm({ ...form, address: { ...form.address, neighborhood: e.target.value } })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15" /></label>
+            <label><span className="text-sm font-bold">Localidad</span><input type="text" value={form.address.city} onChange={(e) => setForm({ ...form, address: { ...form.address, city: e.target.value } })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15" /></label>
+            <label><span className="text-sm font-bold">Provincia</span><input type="text" value={form.address.province} onChange={(e) => setForm({ ...form, address: { ...form.address, province: e.target.value } })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15" /></label>
+            <label><span className="text-sm font-bold">Código postal</span><input type="text" value={form.address.postalCode} onChange={(e) => setForm({ ...form, address: { ...form.address, postalCode: e.target.value } })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15" /></label>
+            <label className="sm:col-span-2"><span className="text-sm font-bold">Referencia</span><input type="text" value={form.address.reference} onChange={(e) => setForm({ ...form, address: { ...form.address, reference: e.target.value } })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15" /></label>
             <label className="flex items-center gap-3 text-sm font-bold"><input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} className="size-4" /> Cuenta activa</label>
           </div>
           {error ? <p className="mt-4 text-sm font-semibold text-red-600">{error}</p> : null}

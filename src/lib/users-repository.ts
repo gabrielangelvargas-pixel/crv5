@@ -10,9 +10,21 @@ export type AdminUser = {
   active: boolean;
   phone: string | null;
   address: string | null;
+  addressDetails: AdminUserAddress | null;
   lastAccess: string | null;
   createdAt: string;
   roles: string[];
+};
+
+export type AdminUserAddress = {
+  label: "casa" | "trabajo" | "deposito" | "otro";
+  phone: string;
+  address: string;
+  neighborhood: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  reference: string;
 };
 
 export type AdminRole = {
@@ -32,6 +44,11 @@ type UserRow = RowDataPacket & {
   telefono: string | null;
   direccion: string | null;
   localidad: string | null;
+  etiqueta: "casa" | "trabajo" | "deposito" | "otro" | null;
+  barrio: string | null;
+  provincia: string | null;
+  codigo_postal: string | null;
+  referencia: string | null;
 };
 
 type RoleRow = RowDataPacket & {
@@ -57,7 +74,12 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
         GROUP_CONCAT(r.nombre ORDER BY r.nombre SEPARATOR ', ') AS roles,
         address.telefono,
         address.direccion,
-        address.localidad
+        address.localidad,
+        address.etiqueta,
+        address.barrio,
+        address.provincia,
+        address.codigo_postal,
+        address.referencia
       FROM usuarios u
       LEFT JOIN usuarios_roles ur
         ON ur.id_usuario = u.id AND ur.activo = 1
@@ -84,6 +106,16 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
     active: Boolean(row.activo),
     phone: row.telefono,
     address: row.direccion && row.localidad ? `${row.direccion}, ${row.localidad}` : row.direccion,
+    addressDetails: row.etiqueta && row.telefono && row.direccion && row.localidad && row.provincia ? {
+      label: row.etiqueta,
+      phone: row.telefono,
+      address: row.direccion,
+      neighborhood: row.barrio ?? "",
+      city: row.localidad,
+      province: row.provincia,
+      postalCode: row.codigo_postal ?? "",
+      reference: row.referencia ?? "",
+    } : null,
     lastAccess: formatDate(row.ultimo_acceso),
     createdAt: formatDate(row.creado) ?? "",
     roles: row.roles ? row.roles.split(", ") : [],
@@ -104,6 +136,7 @@ export type UserInput = {
   password: string | undefined;
   roleId: string;
   active: boolean;
+  address: AdminUserAddress | undefined;
 };
 
 function validateInput(input: UserInput, passwordRequired: boolean) {
@@ -140,6 +173,38 @@ async function assignRole(connection: PoolConnection, userId: string, roleId: st
   );
 }
 
+async function saveAddress(connection: PoolConnection, userId: string, address: AdminUserAddress) {
+  const hasAddress = [address.phone, address.address, address.city, address.province].some((value) => value.trim());
+  if (!hasAddress) return;
+  if (!address.phone.trim() || !address.address.trim() || !address.city.trim() || !address.province.trim()) {
+    throw new Error("Completá teléfono, dirección, localidad y provincia");
+  }
+
+  const [rows] = await connection.query<RowDataPacket[]>(
+    "SELECT id FROM usuarios_direcciones WHERE id_usuario = ? AND activa = 1 ORDER BY predeterminada DESC, id ASC LIMIT 1",
+    [userId],
+  );
+  const values = [address.label, address.phone.trim(), address.address.trim(), address.neighborhood.trim() || null, address.city.trim(), address.province.trim(), address.postalCode.trim() || null, address.reference.trim() || null];
+
+  if (rows[0]) {
+    await connection.query(
+      `UPDATE usuarios_direcciones
+       SET etiqueta = ?, telefono = ?, direccion = ?, barrio = ?, localidad = ?, provincia = ?,
+           codigo_postal = ?, referencia = ?, predeterminada = 1, activa = 1
+       WHERE id = ?`,
+      [...values, rows[0].id],
+    );
+    return;
+  }
+
+  await connection.query(
+    `INSERT INTO usuarios_direcciones
+      (id_usuario, etiqueta, telefono, direccion, barrio, localidad, provincia, codigo_postal, referencia, predeterminada, activa)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1)`,
+    [userId, ...values],
+  );
+}
+
 export async function createAdminUser(input: UserInput) {
   const { name, username, password } = validateInput(input, true);
   const pool = getDatabasePool();
@@ -154,6 +219,7 @@ export async function createAdminUser(input: UserInput) {
       [name, username, passwordHash, input.active ? 1 : 0],
     );
     await assignRole(connection, String(result.insertId), input.roleId);
+    if (input.address) await saveAddress(connection, String(result.insertId), input.address);
     await connection.commit();
   } catch (error) {
     await connection.rollback();
@@ -184,6 +250,7 @@ export async function updateAdminUser(id: string, input: UserInput) {
       );
     }
     await assignRole(connection, id, input.roleId);
+    if (input.address) await saveAddress(connection, id, input.address);
     await connection.commit();
   } catch (error) {
     await connection.rollback();

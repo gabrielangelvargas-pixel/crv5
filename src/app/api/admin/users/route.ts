@@ -10,6 +10,16 @@ const userSchema = z.object({
   password: z.string().optional(),
   roleId: z.string(),
   active: z.boolean(),
+  address: z.object({
+    label: z.enum(["casa", "trabajo", "deposito", "otro"]),
+    phone: z.string().max(30),
+    address: z.string().max(180),
+    neighborhood: z.string().max(100),
+    city: z.string().max(100),
+    province: z.string().max(100),
+    postalCode: z.string().max(15),
+    reference: z.string().max(255),
+  }).optional(),
 });
 
 async function requireAdministrator() {
@@ -24,7 +34,7 @@ export async function POST(request: Request) {
 
   try {
     const parsed = userSchema.parse(await request.json());
-    const input = { ...parsed, password: parsed.password };
+    const input = { ...parsed, password: parsed.password, address: parsed.address };
     await createAdminUser(input);
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
@@ -43,7 +53,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const id = z.string().parse(body.id);
     const parsed = userSchema.parse(body);
-    const input = { ...parsed, password: parsed.password };
+    const input = { ...parsed, password: parsed.password, address: parsed.address };
     await updateAdminUser(id, input);
     return NextResponse.json({ ok: true });
   } catch (error) {
