@@ -12,6 +12,7 @@ export type AdminCategory = {
   coverUrl: string | null;
   order: number;
   active: boolean;
+  depth: number;
 };
 
 type CategoryRow = RowDataPacket & {
@@ -33,10 +34,10 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
       c.slug, c.imagen_url, c.portada_url, c.orden, c.activa
     FROM categorias c
     LEFT JOIN categorias parent ON parent.id = c.parent_id
-    ORDER BY c.parent_id IS NOT NULL, c.parent_id, c.orden, c.id
+    ORDER BY c.orden, c.id
   `);
 
-  return rows.map((row) => ({
+  const categories = rows.map((row) => ({
     id: String(row.id),
     parentId: row.parent_id === null ? null : String(row.parent_id),
     parentName: row.parent_nombre,
@@ -47,7 +48,35 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
     coverUrl: row.portada_url,
     order: Number(row.orden),
     active: Boolean(row.activa),
+    depth: 0,
   }));
+
+  const byParent = new Map<string | null, AdminCategory[]>();
+  for (const category of categories) {
+    const siblings = byParent.get(category.parentId) ?? [];
+    siblings.push(category);
+    byParent.set(category.parentId, siblings);
+  }
+
+  const sortSiblings = (siblings: AdminCategory[]) => siblings.sort((first, second) => first.order - second.order || Number(first.id) - Number(second.id));
+  const ordered: AdminCategory[] = [];
+  const visit = (parentId: string | null, depth: number) => {
+    for (const category of sortSiblings(byParent.get(parentId) ?? [])) {
+      category.depth = depth;
+      ordered.push(category);
+      visit(category.id, depth + 1);
+    }
+  };
+
+  visit(null, 0);
+  for (const category of categories) {
+    if (!ordered.includes(category)) {
+      category.depth = 0;
+      ordered.push(category);
+    }
+  }
+
+  return ordered;
 }
 
 export type CategoryInput = {
