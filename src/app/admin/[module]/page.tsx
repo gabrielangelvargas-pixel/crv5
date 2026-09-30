@@ -7,6 +7,8 @@ import { getAdminPermissions, getAdminRoles as getRoles } from "@/lib/roles-repo
 import { RolesManager } from "@/components/admin/roles-manager";
 import { getAdminCategories } from "@/lib/admin-categories-repository";
 import { CategoriesManager } from "@/components/admin/categories-manager";
+import { getAdminProductGroups, getAdminProducts } from "@/lib/admin-products-repository";
+import { ProductsManager } from "@/components/admin/products-manager";
 
 const administratorModules = new Set(["usuarios", "roles", "categorias"]);
 const commercialModules = new Set(["productos", "clientes", "pedidos"]);
@@ -70,6 +72,19 @@ export default async function AdminModulePage({ params }: { params: Promise<{ mo
         <section className="mx-auto w-full max-w-6xl">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-foreground/45">Administración</p>
           <CategoriesManager initialCategories={categories} />
+        </section>
+      </main>
+    );
+  }
+
+  if (module === "productos") {
+    const [products, categories, groups] = await Promise.all([getAdminProducts(), getAdminCategories(), getAdminProductGroups()]);
+
+    return (
+      <main className="min-h-[calc(100vh-5rem)] bg-background px-4 py-10 text-foreground">
+        <section className="mx-auto w-full max-w-6xl">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-foreground/45">Administración</p>
+          <ProductsManager initialProducts={products} categories={categories} groups={groups} />
         </section>
       </main>
     );
