@@ -18,7 +18,8 @@ function getAssetRoot() {
     return null;
   }
 
-  return path.resolve(configuredRoot);
+  const root = path.resolve(configuredRoot);
+  return path.basename(root).toLowerCase() === "productos" ? path.dirname(root) : root;
 }
 
 export async function GET(
