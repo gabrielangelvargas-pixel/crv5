@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FaChevronDown, FaRightFromBracket, FaRightToBracket, FaUser } from "react-icons/fa6";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -32,6 +33,7 @@ function hasRole(roles: string[], ...expected: string[]) {
 }
 
 export function AuthMenu() {
+  const router = useRouter();
   const { user, setUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -109,6 +111,8 @@ export function AuthMenu() {
               await fetch("/api/auth/logout", { method: "POST" });
               setUser(null);
               setIsOpen(false);
+              router.replace("/");
+              router.refresh();
             }}
             className="flex w-full items-center gap-2 border-t border-black/10 px-3 py-3 text-left text-sm font-bold text-red-600 dark:border-white/10"
           >

@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 import type { AuthUser } from "@/data/auth";
+import { hasRole } from "@/lib/authorization";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,8 +32,9 @@ export default function LoginPage() {
         return;
       }
 
-      setUser(result.user ?? null);
-      router.push("/");
+      const user = result.user ?? null;
+      setUser(user);
+      router.push(user && hasRole(user, "cliente") ? "/" : "/admin");
       router.refresh();
     } catch {
       setError("No se pudo conectar con el servidor");
