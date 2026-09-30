@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaBoxOpen, FaXmark } from "react-icons/fa6";
 import type { ProductGroup } from "@/data/products";
 
@@ -15,6 +15,8 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
   const product = productGroup.product;
   const [isOpen, setIsOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(product.id);
+  const modalHistoryRef = useRef(false);
+  const modalUrlRef = useRef("");
   const selected = productGroup.variants.find((variant) => variant.id === selectedId) ?? product;
   const hasOffer = selected.offerPrice !== null && selected.offerPrice < selected.salePrice;
   const hasAnyOffer = productGroup.variants.some(
@@ -22,17 +24,40 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
   );
   const titleId = `product-group-title-${productGroup.id}`;
 
+  function openModal() {
+    modalUrlRef.current = window.location.href;
+    window.history.pushState({ crv4ProductModal: true }, "", modalUrlRef.current);
+    modalHistoryRef.current = true;
+    setIsOpen(true);
+  }
+
+  function closeModal() {
+    if (modalHistoryRef.current) {
+      modalHistoryRef.current = false;
+      window.history.back();
+    }
+    setIsOpen(false);
+  }
+
   useEffect(() => {
     if (!isOpen) return;
+    const closeWithBrowserBack = () => {
+      if (!modalHistoryRef.current) return;
+      modalHistoryRef.current = false;
+      setIsOpen(false);
+      window.history.pushState({ crv4ProductModal: false }, "", modalUrlRef.current);
+    };
     const closeWithEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsOpen(false);
+      if (event.key === "Escape") closeModal();
     };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", closeWithEscape);
+    window.addEventListener("popstate", closeWithBrowserBack);
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeWithEscape);
+      window.removeEventListener("popstate", closeWithBrowserBack);
     };
   }, [isOpen]);
 
@@ -41,7 +66,7 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
       <article className="overflow-hidden border border-black/10 bg-white text-zinc-950 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50">
         <button
           type="button"
-          onClick={() => setIsOpen(true)}
+          onClick={openModal}
           aria-label={`Ver detalles de ${product.name}`}
           className="block w-full text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-600"
         >
@@ -59,11 +84,11 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
       </article>
 
       {isOpen ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-2 py-0 md:p-4" role="presentation" onMouseDown={() => setIsOpen(false)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-2 py-0 md:p-4" role="presentation" onMouseDown={closeModal}>
           <section aria-labelledby={titleId} aria-modal="true" role="dialog" className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto bg-white text-zinc-950 shadow-2xl dark:bg-zinc-950 dark:text-zinc-50 md:h-[36rem] md:overflow-hidden" onMouseDown={(event) => event.stopPropagation()}>
             <div className="grid md:h-full md:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]">
               <div className="relative flex aspect-square min-h-0 items-center justify-center overflow-hidden bg-zinc-100 p-4 text-zinc-950 dark:bg-zinc-900 dark:text-zinc-50 md:aspect-auto md:h-full md:p-8">
-                <button type="button" onClick={() => setIsOpen(false)} aria-label="Cerrar detalle del producto" title="Cerrar" className="absolute right-3 top-3 z-20 flex size-9 items-center justify-center bg-white/90 text-zinc-700 shadow-sm dark:bg-zinc-950/90 dark:text-zinc-300">
+                <button type="button" onClick={closeModal} aria-label="Cerrar detalle del producto" title="Cerrar" className="absolute right-3 top-3 z-20 flex size-9 items-center justify-center bg-white/90 text-zinc-700 shadow-sm dark:bg-zinc-950/90 dark:text-zinc-300">
                   <FaXmark aria-hidden="true" className="size-5" />
                 </button>
                 {selected.imageSrc ? <Image src={selected.imageSrc} alt={selected.name} fill sizes="(min-width: 768px) 55vw, 100vw" className="object-contain" /> : <FaBoxOpen aria-hidden="true" className="size-10" />}
