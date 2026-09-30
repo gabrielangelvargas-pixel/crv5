@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { canAccessAdmin, hasRole } from "@/lib/authorization";
+import { getAdminRoles, getAdminUsers } from "@/lib/users-repository";
+import { UsersManager } from "@/components/admin/users-manager";
 
 const administratorModules = new Set(["usuarios", "roles", "categorias"]);
 const commercialModules = new Set(["productos", "clientes", "pedidos"]);
@@ -28,6 +30,21 @@ export default async function AdminModulePage({ params }: { params: Promise<{ mo
 
   if (!allowed || (!isAdministrator && administratorModules.has(module))) {
     redirect("/admin");
+  }
+
+  if (module === "usuarios") {
+    const [users, roles] = await Promise.all([getAdminUsers(), getAdminRoles()]);
+
+    return (
+      <main className="min-h-[calc(100vh-5rem)] bg-background px-4 py-10 text-foreground">
+        <section className="mx-auto w-full max-w-6xl">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-foreground/45">Administración</p>
+          <h1 className="mt-2 text-3xl font-black uppercase tracking-[0.05em]">Usuarios</h1>
+          <p className="mt-2 text-sm text-foreground/60">Gestiona las cuentas y los roles de acceso a la aplicación.</p>
+          <UsersManager initialUsers={users} roles={roles} />
+        </section>
+      </main>
+    );
   }
 
   return (
