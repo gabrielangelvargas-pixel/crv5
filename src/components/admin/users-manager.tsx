@@ -10,7 +10,14 @@ const emptyForm = (roleId: string): FormState => ({ name: "", username: "", pass
 
 function formatDate(value: string | null) {
   if (!value) return "Nunca";
-  return new Intl.DateTimeFormat("es-AR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(value)).replace(", ", " ");
 }
 
 export function UsersManager({ initialUsers, roles }: Props) {
@@ -49,11 +56,12 @@ export function UsersManager({ initialUsers, roles }: Props) {
       <div className="mt-4 overflow-x-auto border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-950">
         <table className="w-full min-w-[700px] text-left text-sm">
           <thead className="border-b border-black/10 bg-black/[0.03] text-xs uppercase tracking-[0.08em] text-foreground/55 dark:border-white/10 dark:bg-white/[0.03]">
-            <tr><th className="px-4 py-3">Usuario</th><th className="px-4 py-3">Rol</th><th className="px-4 py-3">Último acceso</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3 text-right">Acción</th></tr>
+            <tr><th className="px-4 py-3">Usuario</th><th className="px-4 py-3">Contacto</th><th className="px-4 py-3">Rol</th><th className="px-4 py-3">Último acceso</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3 text-right">Acción</th></tr>
           </thead>
           <tbody>
             {users.map((user) => <tr key={user.id} className="border-b border-black/10 last:border-0 dark:border-white/10">
               <td className="px-4 py-4"><p className="font-bold">{user.name}</p><p className="text-xs text-foreground/55">@{user.username}</p></td>
+              <td className="px-4 py-4 text-foreground/70"><p>{user.phone || "-"}</p><p className="max-w-xs text-xs text-foreground/55">{user.address || "Sin dirección"}</p></td>
               <td className="px-4 py-4 text-foreground/70">{user.roles.join(", ") || "Sin rol"}</td>
               <td className="px-4 py-4 text-foreground/70">{formatDate(user.lastAccess)}</td>
               <td className="px-4 py-4"><span className={user.active ? "font-bold text-emerald-700" : "font-bold text-red-600"}>{user.active ? "Activo" : "Inactivo"}</span></td>

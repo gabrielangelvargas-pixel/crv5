@@ -8,6 +8,8 @@ export type AdminUser = {
   name: string;
   username: string;
   active: boolean;
+  phone: string | null;
+  address: string | null;
   lastAccess: string | null;
   createdAt: string;
   roles: string[];
@@ -27,6 +29,9 @@ type UserRow = RowDataPacket & {
   ultimo_acceso: Date | string | null;
   creado: Date | string;
   roles: string | null;
+  telefono: string | null;
+  direccion: string | null;
+  localidad: string | null;
 };
 
 type RoleRow = RowDataPacket & {
@@ -49,12 +54,24 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
         u.activo,
         u.ultimo_acceso,
         u.creado,
-        GROUP_CONCAT(r.nombre ORDER BY r.nombre SEPARATOR ', ') AS roles
+        GROUP_CONCAT(r.nombre ORDER BY r.nombre SEPARATOR ', ') AS roles,
+        address.telefono,
+        address.direccion,
+        address.localidad
       FROM usuarios u
       LEFT JOIN usuarios_roles ur
         ON ur.id_usuario = u.id AND ur.activo = 1
       LEFT JOIN roles r
         ON r.id = ur.id_rol AND r.activo = 1
+      LEFT JOIN usuarios_direcciones address
+        ON address.id = (
+          SELECT selected_address.id
+          FROM usuarios_direcciones selected_address
+          WHERE selected_address.id_usuario = u.id
+            AND selected_address.activa = 1
+          ORDER BY selected_address.predeterminada DESC, selected_address.id ASC
+          LIMIT 1
+        )
       GROUP BY u.id, u.nombre, u.usuario, u.activo, u.ultimo_acceso, u.creado
       ORDER BY u.activo DESC, u.nombre ASC
     `,
@@ -65,6 +82,8 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
     name: row.nombre,
     username: row.usuario,
     active: Boolean(row.activo),
+    phone: row.telefono,
+    address: row.direccion && row.localidad ? `${row.direccion}, ${row.localidad}` : row.direccion,
     lastAccess: formatDate(row.ultimo_acceso),
     createdAt: formatDate(row.creado) ?? "",
     roles: row.roles ? row.roles.split(", ") : [],
