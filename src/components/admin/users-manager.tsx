@@ -46,9 +46,9 @@ export function UsersManager({ initialUsers, roles }: Props) {
   }
 
   return (
-    <div className="mt-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-foreground/60">{users.length} cuentas registradas</p>
+    <div className="mt-2">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-3xl font-black uppercase tracking-[0.05em]">Usuarios</h1>
         <button type="button" onClick={openCreate} className="flex items-center gap-2 bg-black px-4 py-3 text-sm font-bold uppercase tracking-[0.06em] text-white hover:bg-black/80">
           <FaPlus aria-hidden="true" /> Nuevo usuario
         </button>
