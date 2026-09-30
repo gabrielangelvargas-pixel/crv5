@@ -72,8 +72,8 @@ export function UsersManager({ initialUsers, roles }: Props) {
         </table>
       </div>
 
-      {form ? <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="user-form-title">
-        <form onSubmit={save} className="w-full max-w-lg border border-black/10 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-zinc-950">
+      {form ? <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/60 p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="user-form-title">
+        <form onSubmit={save} className="box-border max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-zinc-950 sm:max-h-[calc(100dvh-2rem)] sm:p-6">
           <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-foreground/45">Administración</p><h2 id="user-form-title" className="mt-1 text-xl font-black uppercase">{form.id ? "Editar usuario" : "Nuevo usuario"}</h2></div><button type="button" onClick={() => setForm(null)} aria-label="Cerrar" className="flex size-9 items-center justify-center hover:bg-black/5 dark:hover:bg-white/10"><FaXmark /></button></div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <label className="sm:col-span-2"><span className="text-sm font-bold">Nombre</span><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1 w-full border border-black/15 bg-transparent px-3 py-3 outline-none focus:border-black dark:border-white/15" /></label>
