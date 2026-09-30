@@ -25,6 +25,17 @@ type SessionRow = RowDataPacket & {
   id_usuario: number | string | bigint;
 };
 
+export type RegistrationAddress = {
+  label: "casa" | "trabajo" | "deposito" | "otro";
+  phone: string;
+  address: string;
+  neighborhood: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  reference: string;
+};
+
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
@@ -110,7 +121,7 @@ export async function authenticateUser(username: string, password: string) {
   return { token, user };
 }
 
-export async function registerCustomer(name: string, username: string, password: string) {
+export async function registerCustomer(name: string, username: string, password: string, address: RegistrationAddress) {
   const pool = getDatabasePool();
   const connection = await pool.getConnection();
 
@@ -142,6 +153,25 @@ export async function registerCustomer(name: string, username: string, password:
         VALUES (?, ?, 1)
       `,
       [userId, role.id],
+    );
+
+    await connection.query(
+      `
+        INSERT INTO usuarios_direcciones
+          (id_usuario, etiqueta, telefono, direccion, barrio, localidad, provincia, codigo_postal, referencia, predeterminada, activa)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1)
+      `,
+      [
+        userId,
+        address.label,
+        address.phone.trim(),
+        address.address.trim(),
+        address.neighborhood.trim() || null,
+        address.city.trim(),
+        address.province.trim(),
+        address.postalCode.trim() || null,
+        address.reference.trim() || null,
+      ],
     );
 
     await connection.commit();

@@ -6,6 +6,16 @@ const registerSchema = z.object({
   name: z.string().trim().min(2).max(100),
   username: z.string().trim().min(3).max(80),
   password: z.string().min(8).max(128),
+  address: z.object({
+    label: z.enum(["casa", "trabajo", "deposito", "otro"]),
+    phone: z.string().trim().min(6).max(30),
+    address: z.string().trim().min(3).max(180),
+    neighborhood: z.string().trim().max(100),
+    city: z.string().trim().min(2).max(100),
+    province: z.string().trim().min(2).max(100),
+    postalCode: z.string().trim().max(15),
+    reference: z.string().trim().max(255),
+  }),
 });
 
 function isDuplicateError(error: unknown) {
@@ -18,13 +28,13 @@ export async function POST(request: Request) {
 
   if (!input.success) {
     return NextResponse.json(
-      { error: "Completá nombre, usuario y una contraseña de al menos 8 caracteres" },
+      { error: "Completá todos los datos requeridos para crear tu cuenta" },
       { status: 400 },
     );
   }
 
   try {
-    const result = await registerCustomer(input.data.name, input.data.username, input.data.password);
+    const result = await registerCustomer(input.data.name, input.data.username, input.data.password, input.data.address);
     const response = NextResponse.json({ user: result.user }, { status: 201 });
     response.cookies.set(SESSION_COOKIE, result.token, sessionCookieOptions());
     return response;
