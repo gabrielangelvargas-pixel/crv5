@@ -109,12 +109,15 @@ export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
   const inheritMetadata = (
     category: CategoryNode,
     inherited: Pick<CategoryNode, "description" | "imageSrc"> | null,
+    visited = new Set<string>(),
   ) => {
+    if (visited.has(category.id)) return;
+    const nextVisited = new Set(visited).add(category.id);
     category.description = category.description ?? inherited?.description ?? null;
     category.imageSrc = category.imageSrc ?? inherited?.imageSrc ?? null;
 
     for (const child of category.subcategories) {
-      inheritMetadata(child, category);
+      inheritMetadata(child, category, nextVisited);
     }
   };
 

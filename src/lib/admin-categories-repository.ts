@@ -94,8 +94,16 @@ export async function saveAdminCategory(id: string | undefined, input: CategoryI
   if (id && input.parentId === id) throw new Error("Una categoría no puede ser su propia padre");
   const pool = getDatabasePool();
   if (input.parentId) {
-    const [parentRows] = await pool.query<RowDataPacket[]>("SELECT id FROM categorias WHERE id = ? LIMIT 1", [input.parentId]);
-    if (!parentRows[0]) throw new Error("La categoría padre no existe");
+    const [parentRows] = await pool.query<RowDataPacket[]>("SELECT id, parent_id FROM categorias");
+    const parentById = new Map(parentRows.map((row) => [String(row.id), row.parent_id === null ? null : String(row.parent_id)]));
+    let ancestorId: string | null = input.parentId;
+    const visited = new Set<string>();
+    while (ancestorId && !visited.has(ancestorId)) {
+      if (id && ancestorId === id) throw new Error("No se puede mover una categoría debajo de una de sus hijas");
+      visited.add(ancestorId);
+      ancestorId = parentById.get(ancestorId) ?? null;
+    }
+    if (!parentById.has(input.parentId)) throw new Error("La categoría padre no existe");
   }
 
   if (id) {

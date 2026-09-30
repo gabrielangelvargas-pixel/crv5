@@ -55,10 +55,12 @@ export async function CatalogPage({
   }
 
   const visibleCategorySlugs = new Set<string>();
-  const collectCategorySlugs = (category: typeof selectedCategory) => {
+  const collectCategorySlugs = (category: typeof selectedCategory, visited = new Set<string>()) => {
+    if (visited.has(category.id)) return;
+    visited.add(category.id);
     visibleCategorySlugs.add(category.slug);
     for (const child of category.subcategories) {
-      collectCategorySlugs(child);
+      collectCategorySlugs(child, visited);
     }
   };
   collectCategorySlugs(selectedChildCategory ?? selectedSubcategory ?? selectedCategory);
