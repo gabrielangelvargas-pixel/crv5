@@ -95,6 +95,7 @@ async function ensureCategory(connection: PoolConnection, categoryId: string) {
 }
 
 async function resolveGroup(connection: PoolConnection, input: ProductInput) {
+  if (input.groupId === "__new__" && !input.newGroupName.trim()) throw new Error("Completá el nombre del grupo nuevo");
   if (input.newGroupName.trim()) {
     if (!input.newGroupSlug.trim()) throw new Error("El grupo nuevo necesita un slug");
     const [result] = await connection.query<ResultSetHeader>(
