@@ -54,8 +54,6 @@ export default async function AdminModulePage({ params }: { params: Promise<{ mo
       <main className="min-h-[calc(100vh-5rem)] bg-background px-4 py-10 text-foreground">
         <section className="mx-auto w-full max-w-6xl">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-foreground/45">Administración</p>
-          <h1 className="mt-2 text-3xl font-black uppercase tracking-[0.05em]">Roles y permisos</h1>
-          <p className="mt-2 text-sm text-foreground/60">Define qué puede consultar y gestionar cada rol.</p>
           <RolesManager initialRoles={roles} permissions={permissions} />
         </section>
       </main>

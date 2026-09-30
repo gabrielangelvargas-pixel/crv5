@@ -37,9 +37,9 @@ export function RolesManager({ initialRoles, permissions }: Props) {
   }
 
   return (
-    <div className="mt-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-foreground/60">{roles.length} roles configurados</p>
+    <div className="mt-2">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-3xl font-black uppercase tracking-[0.05em]">Roles y permisos</h1>
         <button type="button" onClick={() => { setError(""); setForm(emptyForm()); }} className="flex items-center gap-2 bg-black px-4 py-3 text-sm font-bold uppercase tracking-[0.06em] text-white"><FaPlus aria-hidden="true" /> Nuevo rol</button>
       </div>
       <div className="mt-4 overflow-x-auto border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-950">
