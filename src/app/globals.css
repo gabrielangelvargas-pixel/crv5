@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
+/* CRV4 uses a single light theme; dark utilities must never activate. */
+@custom-variant dark (&:where(:not(*)));
+
 :root {
+  color-scheme: only light;
   --background: #fbfaf8;
   --foreground: #171717;
 }
@@ -10,13 +14,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111111;
-    --foreground: #f4f4f5;
-  }
 }
 
 body {

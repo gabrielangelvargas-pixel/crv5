@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
@@ -12,6 +12,7 @@ import "./globals.css";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const viewport: Viewport = { colorScheme: "only light" };
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
