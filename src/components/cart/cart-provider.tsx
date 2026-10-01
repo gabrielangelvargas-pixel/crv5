@@ -38,6 +38,7 @@ export function CartProvider({ products, children, userId = null }: { products: 
     let cancelled = false;
     let busy = false;
     let nextAttemptAt = 0;
+    let nextReadAt = 0;
     const controller = new AbortController();
     let local: CartItem[] = [];
     let cachedVersion: number | undefined;
@@ -66,13 +67,15 @@ export function CartProvider({ products, children, userId = null }: { products: 
         return { items: data.status === "confirmado" || data.status === "actualizado" ? data.items as CartItem[] : normalizeCart(data.items, productsRef.current), version: data.version as number, conflict: response.status === 409 };
       } finally { window.clearTimeout(timeout); controller.signal.removeEventListener("abort", abort); }
     }
-    async function sync() {
+    async function sync(forceRead = false) {
       if (busy || cancelled || Date.now() < nextAttemptAt) return;
+      if (!forceRead && !dirty.current && version.current !== undefined && Date.now() < nextReadAt) return;
       busy = true;
       try {
         if (dirty.current && version.current === undefined && cachedVersion !== undefined) version.current = cachedVersion;
         if (version.current === undefined || !dirty.current) {
           const remote = await request({ items: local });
+          nextReadAt = Date.now() + 15000;
           if (cancelled) return;
           version.current = remote.version;
           if (!dirty.current) {
@@ -120,12 +123,12 @@ export function CartProvider({ products, children, userId = null }: { products: 
       while (busy && !cancelled) await new Promise((resolve) => window.setTimeout(resolve, 25));
       if (cancelled) throw new Error("Volvé a abrir el carrito.");
       nextAttemptAt = 0;
-      await sync();
+      await sync(true);
       if (dirty.current || version.current === undefined) throw new Error("No se pudo sincronizar el carrito. Reintentá antes de confirmar.");
       return { version: version.current, items: currentItems.current };
     };
     void sync();
-    const timer = window.setInterval(() => void sync(), 2000);
+    const timer = window.setInterval(() => { if (document.visibilityState === "visible") void sync(); }, 2000);
     const onStorage = (event: StorageEvent) => {
       if (event.key !== storageKey) return;
       // Fetch server state instead of writing another tab's snapshot over it.
@@ -137,9 +140,11 @@ export function CartProvider({ products, children, userId = null }: { products: 
       void fetch("/api/cart", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: currentItems.current, version: version.current }), keepalive: true }).catch(() => {});
     };
     window.addEventListener("pagehide", flush);
-    const reconnect = () => { nextAttemptAt = 0; void sync(); };
+    const reconnect = () => { nextAttemptAt = 0; void sync(true); };
+    const onVisible = () => { if (document.visibilityState === "visible") reconnect(); };
     window.addEventListener("online", reconnect);
-    return () => { cancelled = true; controller.abort(); window.clearInterval(timer); window.removeEventListener("storage", onStorage); window.removeEventListener("pagehide", flush); window.removeEventListener("online", reconnect); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { cancelled = true; controller.abort(); window.clearInterval(timer); window.removeEventListener("storage", onStorage); window.removeEventListener("pagehide", flush); window.removeEventListener("online", reconnect); document.removeEventListener("visibilitychange", onVisible); };
   }, [storageKey, userId]);
 
   useEffect(() => { if (ready && dirty.current) syncNow.current(); }, [items, ready]);

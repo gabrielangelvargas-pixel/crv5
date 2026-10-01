@@ -90,3 +90,9 @@ Definir antes de construir features reales:
 ### Pedidos anteriores
 
 El módulo Pedidos conserva el historial generado antes del cambio de flujo. Los nuevos envíos y sus revisiones se gestionan en Carritos.
+
+### Conexiones de producción
+
+La aplicación reutiliza un único pool MySQL por proceso, también en producción (máximo 10 conexiones, hasta 2 inactivas). La sincronización guarda cambios del carrito de inmediato y consulta revisiones cada 15 segundos mientras la ventana está visible. Al volver a la ventana refresca el carrito.
+
+Para comprobar las pantallas autenticadas y el límite de conexiones con la BD remota, iniciar el build con `pnpm start --port 3100` y ejecutar `node --env-file=.env.local scripts/test-production-db.mjs`. Crea y elimina una cuenta, sesión y carrito temporales. Tras desplegar esta corrección se debe reiniciar el proceso Node para liberar los pools del proceso anterior.

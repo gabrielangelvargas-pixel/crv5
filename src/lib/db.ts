@@ -33,13 +33,14 @@ export function getDatabasePool() {
     user: databaseEnv.DATABASE_USER,
     password: databaseEnv.DATABASE_PASSWORD,
     connectionLimit: 10,
+    maxIdle: 2,
+    idleTimeout: 60000,
     waitForConnections: true,
     queueLimit: 0,
   });
 
-  if (process.env.NODE_ENV !== "production") {
-    globalThis.crv4DatabasePool = pool;
-  }
+  // Reuse one pool per process in production too; abandoned pools retain connections.
+  globalThis.crv4DatabasePool = pool;
 
   return pool;
 }
