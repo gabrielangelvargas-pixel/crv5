@@ -97,9 +97,9 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
             {productGroup.variants.length > 1 ? <p className="mt-1 text-xs font-semibold text-zinc-500">{productGroup.variants.length} variantes disponibles</p> : null}
           </div>
           {groupQuantity > 0 ? (
-            <div id={`product-cart-quantity-${productGroup.id}`} className="pointer-events-none absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center justify-center gap-2 bg-white/60 px-3 py-5 text-center text-zinc-950 backdrop-blur-sm dark:bg-zinc-950/60 dark:text-white">
-              <span className="text-6xl font-black leading-none tabular-nums sm:text-7xl">{groupQuantity}</span>
-              <span className="text-xs font-black uppercase tracking-[0.12em] sm:text-sm">{groupQuantity === 1 ? "Unidad en el carrito" : "Unidades en el carrito"}</span>
+            <div id={`product-cart-quantity-${productGroup.id}`} className="pointer-events-none absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 items-center justify-center gap-2 bg-white/60 px-3 py-3 text-center text-zinc-950 backdrop-blur-sm dark:bg-zinc-950/60 dark:text-white">
+              <span className="text-3xl font-black leading-none tabular-nums sm:text-4xl">{groupQuantity}</span>
+              <span className="text-base font-bold sm:text-lg">{groupQuantity === 1 ? "agregado" : "agregados"}</span>
             </div>
           ) : null}
         </button>
