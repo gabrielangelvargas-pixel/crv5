@@ -84,3 +84,7 @@ Definir antes de construir features reales:
 - Estrategia de datos: Server Actions, Route Handlers, REST, tRPC o GraphQL.
 - Observabilidad y manejo de errores.
 - CI/CD y destino de deploy.
+
+### Edición administrativa de pedidos
+
+En Administración → Pedidos, los pedidos pendientes de revisión permiten cambiar cantidades, quitar líneas y buscar productos por nombre, código o variante. Guardar recalcula el total con los precios vigentes y el menor precio aplicable por cantidad/oferta. Se exige al menos un producto y stock disponible, sin reservar ni descontar existencias. Las ediciones concurrentes se rechazan para evitar sobrescribir cambios. No requiere migración adicional.

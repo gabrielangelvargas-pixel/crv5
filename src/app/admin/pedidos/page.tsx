@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/lib/authorization";
+import { getProducts } from "@/lib/products-repository";
 import { getOrders } from "@/lib/orders-repository";
 import { OrdersList } from "@/components/orders/orders-list";
 
@@ -9,6 +10,6 @@ export default async function AdminOrdersPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (!hasRole(user, "admin", "administrador", "vendedor", "supervisor")) redirect("/perfil");
-  const orders = await getOrders();
-  return <main className="mx-auto max-w-6xl px-4 py-10"><h1 className="text-3xl font-black uppercase">Pedidos</h1><p className="mt-2 text-sm text-foreground/60">Últimos 200 pedidos. Los nuevos pedidos quedan pendientes de revisión, sin reserva ni descuento de stock.</p><OrdersList orders={orders} admin /></main>;
+  const [orders, products] = await Promise.all([getOrders(), getProducts()]);
+  return <main className="mx-auto max-w-6xl px-4 py-10"><h1 className="text-3xl font-black uppercase">Pedidos</h1><p className="mt-2 text-sm text-foreground/60">Últimos 200 pedidos. Los nuevos pedidos quedan pendientes de revisión, sin reserva ni descuento de stock.</p><OrdersList orders={orders} products={products} admin /></main>;
 }

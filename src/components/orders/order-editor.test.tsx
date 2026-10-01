@@ -1,0 +1,25 @@
+import { expect, it, vi } from "vitest";
+import { fireEvent, render, screen, cleanup } from "@testing-library/react";
+import { OrderEditor } from "./order-editor";
+import type { Order } from "@/lib/orders-repository";
+import type { Product } from "@/data/products";
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+const order = { id: "id", lines: [{ productId: "1", code: "A", name: "Aro", variant: null, quantity: 1, unitPrice: 100, subtotal: 100 }] } as Order;
+const products = [{ id: "1", code: "A", name: "Aro", variantName: null, salePrice: 100, offerPrice: null, stock: 5, priceTiers: [] }, { id: "2", code: "B", name: "Bolso", variantName: "Azul", salePrice: 200, offerPrice: null, stock: 5, priceTiers: [] }] as unknown as Product[];
+it("permite cambiar cantidad, quitar y buscar una variante nueva", () => {
+  render(<OrderEditor order={order} products={products} />);
+  fireEvent.click(screen.getByText("Editar pedido"));
+  expect(screen.getByText("Guardar cambios")).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Cantidad de Aro"), { target: { value: "2" } });
+  expect(screen.getByText("Guardar cambios")).toBeEnabled();
+  fireEvent.click(screen.getByText("Quitar"));
+  expect(screen.getByText("Guardar cambios")).toBeDisabled();
+  fireEvent.change(screen.getByPlaceholderText("Buscar por nombre, código o variante"), { target: { value: "Azul" } });
+  fireEvent.click(screen.getByText("Agregar"));
+  expect(screen.getByLabelText("Cantidad de Bolso")).toHaveValue(1);
+  expect(screen.getByText("Guardar cambios")).toBeEnabled();
+  fireEvent.click(screen.getByText("Cancelar"));
+  fireEvent.click(screen.getByText("Editar pedido"));
+  expect(screen.getByLabelText("Cantidad de Aro")).toHaveValue(1);
+  cleanup();
+});
