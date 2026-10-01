@@ -24,6 +24,9 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
   const modalUrlRef = useRef("");
   const selected = productGroup.variants.find((variant) => variant.id === selectedId) ?? product;
   const inCart = items.find((item) => item.productId === selected.id)?.quantity ?? 0;
+  const groupQuantity = items.reduce((total, item) =>
+    productGroup.variants.some((variant) => variant.id === item.productId)
+      ? total + item.quantity : total, 0);
   const maximumQuantity = Math.max(0, Math.floor(selected.stock));
   const validQuantity = Number.isSafeInteger(quantity) && quantity >= 0 && quantity <= maximumQuantity;
   const canSubmit = ready && validQuantity && quantity !== inCart;
@@ -80,7 +83,8 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
           type="button"
           onClick={openModal}
           aria-label={`Ver detalles de ${product.name}`}
-          className="block w-full text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-600"
+          aria-describedby={groupQuantity > 0 ? `product-cart-quantity-${productGroup.id}` : undefined}
+          className="relative block w-full text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-600"
         >
           <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-zinc-100 text-zinc-950 dark:bg-zinc-900 dark:text-zinc-50">
             {hasAnyOffer ? <span className="absolute left-2 top-2 z-10 bg-red-600 px-2 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-white">OFF</span> : null}
@@ -92,6 +96,12 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
             <p className="mt-1 text-sm font-semibold text-zinc-700 dark:text-zinc-300">{formatPrice(product.offerPrice ?? product.salePrice)}</p>
             {productGroup.variants.length > 1 ? <p className="mt-1 text-xs font-semibold text-zinc-500">{productGroup.variants.length} variantes disponibles</p> : null}
           </div>
+          {groupQuantity > 0 ? (
+            <div id={`product-cart-quantity-${productGroup.id}`} className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/60 px-3 text-center text-zinc-950 backdrop-blur-sm dark:bg-zinc-950/60 dark:text-white">
+              <span className="text-6xl font-black leading-none tabular-nums sm:text-7xl">{groupQuantity}</span>
+              <span className="text-xs font-black uppercase tracking-[0.12em] sm:text-sm">{groupQuantity === 1 ? "Unidad en el carrito" : "Unidades en el carrito"}</span>
+            </div>
+          ) : null}
         </button>
       </article>
 
