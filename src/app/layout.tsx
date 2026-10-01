@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { PwaRegister } from "@/components/pwa-register";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { CartProvider } from "@/components/cart/cart-provider";
 import { getCategoryTree } from "@/lib/categories-repository";
 import { getCurrentUser } from "@/lib/auth";
 import { getProducts } from "@/lib/products-repository";
@@ -61,9 +62,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     >
       <body className="flex min-h-full flex-col">
         <AuthProvider initialUser={user}>
+          <CartProvider products={products}>
           <PwaRegister />
           <Navbar categories={categories} products={products} />
           <div className="pt-20">{children}</div>
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

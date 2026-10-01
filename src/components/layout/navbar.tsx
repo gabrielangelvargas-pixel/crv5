@@ -1,4 +1,5 @@
 "use client";
+import { useCart } from "@/components/cart/cart-provider";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -64,6 +65,8 @@ type NavbarProps = {
 };
 
 export function Navbar({ categories, products }: NavbarProps) {
+  const { items } = useCart();
+  const cartCount = items.reduce((total, item) => total + item.quantity, 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const normalizedSearchQuery = normalizeSearchValue(searchQuery);
@@ -143,6 +146,7 @@ export function Navbar({ categories, products }: NavbarProps) {
             </Link>
           </div>
           <AuthMenu />
+          <Link href="/carrito" aria-label={`Carrito, ${cartCount} unidades`} className="ml-2 flex items-center gap-1 text-sm font-bold">Carrito <span className="rounded-full bg-emerald-500 px-2 py-1 text-zinc-950">{cartCount}</span></Link>
         </nav>
       </header>
 
