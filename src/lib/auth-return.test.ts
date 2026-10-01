@@ -5,3 +5,7 @@ it("conserva el regreso al pedido y rechaza redirecciones externas", () => {
   expect(getAuthReturnPath("?next=https://otro.example")).toBeNull();
   expect(getAuthReturnPath("?next=//otro.example")).toBeNull();
 });
+
+it("conserva el regreso a la confirmación del carrito", () => {
+  expect(getAuthReturnPath("?next=/carrito/confirmar")).toBe("/carrito/confirmar");
+});

@@ -51,13 +51,15 @@ e2e/           Tests end-to-end
 
 ## Convenciones
 
-### Confirmación de pedidos
+### Carritos confirmados y revisión administrativa
 
-Aplicar `database/pedidos.sql` con `node --env-file=.env.local scripts/migrate-orders.mjs` antes de desplegar. Desde el carrito se accede a `/pedido/confirmar`; requiere sesión y conserva el destino al iniciar sesión o registrarse. Las sesiones duran 30 días mediante cookie persistente.
+Aplicar la migración con `node --env-file=.env.local scripts/migrate-confirmed-carts.mjs` antes de desplegar, incluso si ya existe la tabla carritos. Agrega estados y los datos de entrega, detalle e importe estimado. Puede ejecutarse nuevamente.
 
-La confirmación sincroniza el carrito, verifica versión, disponibilidad y precios en el servidor y guarda un pedido `pendiente_revision`, con detalle e importe estimado. No hay mínimo por pedido. El carrito queda convertido y el usuario puede crear otro; no se reserva ni descuenta stock. Los pedidos se consultan en `/pedidos` y `/admin/pedidos`. La confirmación del importe, registro del pago y cierre de la venta con descuento de stock corresponden a la siguiente etapa.
+Desde `/carrito/confirmar` el cliente inicia sesión o se registra (sesión persistente de 30 días) y envía su carrito. El mismo registro queda `confirmado`, mantiene propietario y productos y no genera pedidos. No hay mínimo y no reserva ni descuenta stock. La antigua ruta `/pedido/confirmar` redirige al carrito; la API de creación de pedidos responde 410.
 
-Prueba real con registros temporales y stock intacto: iniciar `pnpm dev --port 3100` y ejecutar `node --env-file=.env.local scripts/test-order-integration.mjs`.
+En Administración → Carritos se editan cantidades, se quitan productos y se agregan variantes buscando por nombre o código. Guardar verifica la versión, disponibilidad y precios y deja el carrito `actualizado`. El cliente ve los cambios y el total guardado; la aceptación final se implementará en el próximo paso. Si modifica los productos vuelve a `activo` y debe enviarlo nuevamente. Consultarlo no altera el estado. Los pedidos anteriores permanecen como historial.
+
+Prueba real con registros temporales: iniciar `pnpm dev --port 3100` y ejecutar `node --env-file=.env.local scripts/test-confirmed-cart-integration.mjs`. La prueba elimina sus cuentas/carritos temporales y verifica que no se creen pedidos ni se modifique el stock.
 
 ### Carritos persistentes
 
@@ -65,7 +67,7 @@ Antes de desplegar esta funcionalidad, aplicar `database/carritos.sql` en la bas
 
 El servidor guarda variantes y cantidades, valida el stock y controla la versión del carrito. Los visitantes usan una cookie HttpOnly de 180 días; los clientes recuperan el carrito de su cuenta. Al iniciar sesión se fusiona el carrito anónimo una sola vez. Al cerrar sesión se conserva el carrito de la cuenta en el servidor y se cambia al respaldo local del visitante. LocalStorage utiliza claves separadas por cuenta.
 
-`/admin/carritos` está disponible para administradores, vendedores y supervisores. Un carrito con productos se muestra como abandonado después de 24 horas sin modificaciones. Consultarlo no reinicia ese plazo. El panel muestra hasta 200 carritos recientes y calcula totales con precios actuales. Los recordatorios y la conversión a pedido quedan pendientes de implementar el cierre del pedido.
+`/admin/carritos` está disponible para administradores, vendedores y supervisores. Un carrito con productos se muestra como abandonado después de 24 horas sin modificaciones. Consultarlo no reinicia ese plazo. El panel muestra hasta 200 carritos recientes. Para carritos activos calcula precios actuales; los confirmados/actualizados muestran el total guardado durante la revisión.
 
 Prueba de integración opcional: iniciar `pnpm dev --port 3100` y ejecutar `node --env-file=.env.local scripts/test-cart-integration.mjs`. Requiere las tablas de productos, usuarios y sesiones y un producto activo con stock de al menos 5 unidades. La prueba crea y elimina una cuenta y carritos temporales, sin modificar productos.
 
@@ -85,6 +87,6 @@ Definir antes de construir features reales:
 - Observabilidad y manejo de errores.
 - CI/CD y destino de deploy.
 
-### Edición administrativa de pedidos
+### Pedidos anteriores
 
-En Administración → Pedidos, los pedidos pendientes de revisión permiten cambiar cantidades, quitar líneas y buscar productos por nombre, código o variante. Guardar recalcula el total con los precios vigentes y el menor precio aplicable por cantidad/oferta. Se exige al menos un producto y stock disponible, sin reservar ni descontar existencias. Las ediciones concurrentes se rechazan para evitar sobrescribir cambios. No requiere migración adicional.
+El módulo Pedidos conserva el historial generado antes del cambio de flujo. Los nuevos envíos y sus revisiones se gestionan en Carritos.

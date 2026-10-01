@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import type { Order } from "@/lib/orders-repository";
 import type { Product } from "@/data/products";
 const money = (v: number) => v.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
-export function OrderEditor({ order, products }: { order: Order; products: Product[] }) {
+export function OrderEditor({ order, products, cartVersion }: { order: Order; products: Pick<Product, "id" | "name" | "code" | "variantName" | "stock" | "salePrice" | "offerPrice" | "priceTiers">[]; cartVersion?: number }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(order.lines.map(l => ({ productId: l.productId, quantity: l.quantity })));
@@ -19,15 +19,15 @@ export function OrderEditor({ order, products }: { order: Order; products: Produ
   async function save() {
     setBusy(true); setError("");
     try {
-      const response = await fetch(`/api/orders/${order.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ original: order.lines, items }) });
+      const response = await fetch(cartVersion === undefined ? `/api/orders/${order.id}` : `/api/admin/carts/${order.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ original: order.lines, items, version: cartVersion }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       setOpen(false); router.refresh();
     } catch (e) { setError(e instanceof Error ? e.message : "No se pudo guardar."); }
     finally { setBusy(false); }
   }
-  if (!open) return <button className="mt-4 border px-4 py-2 font-bold" onClick={() => { setItems(order.lines.map(l => ({ productId: l.productId, quantity: l.quantity }))); setError(""); setSearch(""); setOpen(true); }}>Editar pedido</button>;
-  return <section className="mt-4 border p-4" aria-label="Editar pedido">
+  if (!open) return <button className="mt-4 border px-4 py-2 font-bold" onClick={() => { setItems(order.lines.map(l => ({ productId: l.productId, quantity: l.quantity }))); setError(""); setSearch(""); setOpen(true); }}>{cartVersion === undefined ? "Editar pedido" : "Editar carrito"}</button>;
+  return <section className="mt-4 border p-4" aria-label={cartVersion === undefined ? "Editar pedido" : "Editar carrito"}>
     <fieldset disabled={busy} className="space-y-4">
       {items.map(item => { const p = products.find(p => p.id === item.productId); const old = order.lines.find(l => l.productId === item.productId); return <div key={item.productId} className="flex flex-wrap items-center gap-3 border-b pb-3">
         <span className="min-w-40 flex-1">{p?.name ?? old?.name} · {p?.variantName ?? old?.variant ?? p?.code ?? old?.code}</span>
@@ -39,6 +39,7 @@ export function OrderEditor({ order, products }: { order: Order; products: Produ
       {search.trim() && <ul className="max-h-64 overflow-auto">{products.filter(p => p.stock > 0 && !items.some(i => i.productId === p.id) && `${p.name} ${p.code} ${p.variantName ?? ""}`.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 30).map(p => <li key={p.id} className="flex items-center justify-between gap-3 border-b py-2"><span>{p.name} · {p.variantName ?? p.code} · Stock {p.stock}</span><button className="border px-3 py-2" onClick={() => { setItems([...items, { productId: p.id, quantity: 1 }]); setSearch(""); }}>Agregar</button></li>)}</ul>}
       <p className="font-bold">Total estimado: {money(items.reduce((s, i) => s + Math.round(price(i.productId, i.quantity) * 100) * i.quantity, 0) / 100)}</p>
       <p className="text-sm">Se aplican los precios actuales por variante y cantidad. El stock no se descuenta al editar.</p>
+      {cartVersion !== undefined ? <p className="text-sm">Se guardará como actualizado por administración. La aceptación del cliente se habilitará en el próximo paso.</p> : null}
       <div className="flex gap-3"><button className="bg-black px-4 py-2 text-white disabled:opacity-40" disabled={!changed || !items.length || items.some(i => !Number.isInteger(i.quantity) || i.quantity < 1)} onClick={save}>{busy ? "Guardando…" : "Guardar cambios"}</button><button className="border px-4 py-2" onClick={() => setOpen(false)}>Cancelar</button></div>
     </fieldset>
     {error && <p role="alert" className="mt-3 text-red-700">{error}</p>}

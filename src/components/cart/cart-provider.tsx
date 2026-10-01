@@ -1,22 +1,26 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import type { OrderLine } from "@/lib/orders-repository";
 import type { Product } from "@/data/products";
 import { normalizeCart, type CartItem } from "@/lib/cart";
 
 type CartContextValue = {
-  items: CartItem[]; products: Product[]; ready: boolean; storageError: boolean; syncError: boolean;
+  status: string; confirmedLines: OrderLine[] | null; confirmedTotal: number | null; items: CartItem[]; products: Product[]; ready: boolean; storageError: boolean; syncError: boolean;
   addItem: (productId: string, quantity: number) => void;
   setQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
   prepareCheckout: () => Promise<{ version: number; items: CartItem[] }>;
-  completeOrder: () => void;
+  refreshCart: () => void;
 };
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ products, children, userId = null }: { products: Product[]; children: ReactNode; userId?: string | null }) {
   const storageKey = userId ? `crv4-cart-user-${userId}` : "crv4-cart-v1";
   const [items, setItems] = useState<CartItem[]>([]);
+  const [status, setStatus] = useState("activo");
+  const [confirmedLines, setConfirmedLines] = useState<OrderLine[] | null>(null);
+  const [confirmedTotal, setConfirmedTotal] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const [storageError, setStorageError] = useState(false);
   const [syncError, setSyncError] = useState(false);
@@ -27,7 +31,6 @@ export function CartProvider({ products, children, userId = null }: { products: 
   const dirty = useRef(false);
   const syncNow = useRef<() => void>(() => {});
   const checkoutRef = useRef<() => Promise<{ version: number; items: CartItem[] }>>(async () => { throw new Error("El carrito todavía está cargando."); });
-  const completeRef = useRef<() => void>(() => {});
   currentItems.current = items;
   productsRef.current = products;
 
@@ -58,7 +61,9 @@ export function CartProvider({ products, children, userId = null }: { products: 
         if (!response.ok && response.status !== 409) throw new Error("sync");
         const data = await response.json();
         if (!Array.isArray(data.items) || !Number.isInteger(data.version)) throw new Error("response");
-        return { items: normalizeCart(data.items, productsRef.current), version: data.version as number, conflict: response.status === 409 };
+        setStatus(data.status ?? "activo");
+        setConfirmedLines(data.lines ?? null); setConfirmedTotal(data.total ?? null);
+        return { items: data.status === "confirmado" || data.status === "actualizado" ? data.items as CartItem[] : normalizeCart(data.items, productsRef.current), version: data.version as number, conflict: response.status === 409 };
       } finally { window.clearTimeout(timeout); controller.signal.removeEventListener("abort", abort); }
     }
     async function sync() {
@@ -66,7 +71,7 @@ export function CartProvider({ products, children, userId = null }: { products: 
       busy = true;
       try {
         if (dirty.current && version.current === undefined && cachedVersion !== undefined) version.current = cachedVersion;
-        if (version.current === undefined) {
+        if (version.current === undefined || !dirty.current) {
           const remote = await request({ items: local });
           if (cancelled) return;
           version.current = remote.version;
@@ -119,16 +124,6 @@ export function CartProvider({ products, children, userId = null }: { products: 
       if (dirty.current || version.current === undefined) throw new Error("No se pudo sincronizar el carrito. Reintentá antes de confirmar.");
       return { version: version.current, items: currentItems.current };
     };
-    completeRef.current = () => {
-      local = [];
-      dirty.current = false;
-      currentItems.current = [];
-      acknowledged.current = "[]";
-      version.current = undefined;
-      setItems([]);
-      try { localStorage.removeItem(storageKey); localStorage.removeItem(`${storageKey}-sync`); }
-      catch { setStorageError(true); }
-    };
     void sync();
     const timer = window.setInterval(() => void sync(), 2000);
     const onStorage = (event: StorageEvent) => {
@@ -161,19 +156,22 @@ export function CartProvider({ products, children, userId = null }: { products: 
   function addItem(productId: string, quantity: number) {
     if (!ready || !Number.isSafeInteger(quantity) || quantity < 1) return;
     dirty.current = true;
+    setStatus("activo"); setConfirmedLines(null); setConfirmedTotal(null);
     setItems((current) => normalizeCart([...current, { productId, quantity }], products));
   }
   function setQuantity(productId: string, quantity: number) {
     if (!ready || !Number.isSafeInteger(quantity) || quantity < 1) return;
     dirty.current = true;
+    setStatus("activo"); setConfirmedLines(null); setConfirmedTotal(null);
     setItems((current) => normalizeCart(current.map((item) => item.productId === productId ? { productId, quantity } : item), products));
   }
   function removeItem(productId: string) {
     if (!ready) return;
     dirty.current = true;
+    setStatus("activo"); setConfirmedLines(null); setConfirmedTotal(null);
     setItems((current) => current.filter((item) => item.productId !== productId));
   }
-  return <CartContext.Provider value={{ items, products, ready, storageError, syncError, addItem, setQuantity, removeItem, prepareCheckout: () => checkoutRef.current(), completeOrder: () => completeRef.current() }}>{children}</CartContext.Provider>;
+  return <CartContext.Provider value={{ status, confirmedLines, confirmedTotal, items, products, ready, storageError, syncError, addItem, setQuantity, removeItem, prepareCheckout: () => checkoutRef.current(), refreshCart: () => { version.current = undefined; syncNow.current(); } }}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

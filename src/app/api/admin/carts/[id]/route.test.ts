@@ -1,0 +1,13 @@
+import { beforeEach, expect, it, vi } from "vitest";
+import { PATCH } from "./route";
+const mocks = vi.hoisted(() => ({ user: vi.fn(), role: vi.fn(), update: vi.fn() }));
+vi.mock("@/lib/auth", () => ({ getCurrentUser: mocks.user }));
+vi.mock("@/lib/authorization", () => ({ hasRole: mocks.role }));
+vi.mock("@/lib/confirmed-carts-repository", () => ({ updateConfirmedCart: mocks.update, ConfirmedCartError: class extends Error {} }));
+const context = { params: Promise.resolve({ id: "d608a5d9-72cb-4aa4-8a35-0cbb37e68612" }) };
+const request = (items = [{ productId: "1", quantity: 2 }]) => new Request("https://shop.test/api/orders/id", { method: "PATCH", headers: { origin: "https://shop.test", host: "shop.test", "Content-Type": "application/json" }, body: JSON.stringify({ version: 1, items }) });
+beforeEach(() => { vi.clearAllMocks(); mocks.user.mockResolvedValue({ id: "7" }); mocks.role.mockReturnValue(true); mocks.update.mockResolvedValue({ total: 200 }); });
+it("exige sesión", async () => { mocks.user.mockResolvedValue(null); expect((await PATCH(request(), context)).status).toBe(401); expect(mocks.update).not.toHaveBeenCalled(); });
+it("rechaza clientes sin rol administrativo", async () => { mocks.role.mockReturnValue(false); expect((await PATCH(request(), context)).status).toBe(403); expect(mocks.update).not.toHaveBeenCalled(); });
+it("rechaza un pedido vacío y variantes duplicadas", async () => { expect((await PATCH(request([]), context)).status).toBe(400); expect((await PATCH(request([{ productId: "1", quantity: 1 }, { productId: "1", quantity: 2 }]), context)).status).toBe(400); expect(mocks.update).not.toHaveBeenCalled(); });
+it("guarda una edición autorizada", async () => { expect((await PATCH(request(), context)).status).toBe(200); expect(mocks.update).toHaveBeenCalledWith(expect.any(String), { version: 1, items: [{ productId: "1", quantity: 2 }] }); });

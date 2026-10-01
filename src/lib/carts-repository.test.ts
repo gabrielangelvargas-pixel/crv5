@@ -60,3 +60,26 @@ describe("persistencia del carrito", () => {
     expect(db.release).toHaveBeenCalledOnce();
   });
 });
+
+it("leer un carrito confirmado conserva estado, cantidades y versión", async () => {
+  db.query.mockImplementation(async (sql: string) => {
+    if (sql.includes("WHERE usuario_id = ?")) return [[{ id: "cart", estado: "confirmado", items: [{ productId: "1", quantity: 3 }], version: 2, total_estimado: "210.00", productos_confirmados: [] }]];
+    return [[]];
+  });
+  const result = await synchronizeCart("7", undefined, { items: [] });
+  expect(result.status).toBe("confirmado");
+  expect(result.items).toEqual([{ productId: "1", quantity: 3 }]);
+  expect(result.total).toBe(210);
+  expect(db.query.mock.calls.some(([sql]) => sql.startsWith("UPDATE"))).toBe(false);
+});
+it("una modificación del cliente reactiva el carrito y descarta el total revisado", async () => {
+  db.query.mockImplementation(async (sql: string) => {
+    if (sql.includes("WHERE usuario_id = ?")) return [[{ id: "cart", estado: "actualizado", items: [{ productId: "1", quantity: 3 }], version: 2 }]];
+    if (sql.includes("SELECT p.id")) return [[{ id: 1, stock: 10 }]];
+    return [[]];
+  });
+  const result = await synchronizeCart("7", undefined, { items: [{ productId: "1", quantity: 4 }], version: 2 });
+  expect(result.status).toBe("activo");
+  expect(result.version).toBe(3);
+  expect(result.lines).toBeNull();
+});

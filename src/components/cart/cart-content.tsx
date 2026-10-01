@@ -7,13 +7,15 @@ import { getCartUnitPrice } from "@/lib/cart";
 const money = (value: number) => value.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 
 export function CartContent() {
-  const { items, products, ready, storageError, syncError, setQuantity, removeItem } = useCart();
+  const { items, products, ready, status, confirmedLines, confirmedTotal, storageError, syncError, setQuantity, removeItem } = useCart();
   const lines = items.flatMap((item) => {
     const product = products.find((entry) => entry.id === item.productId);
-    return product ? [{ ...item, product, unitPrice: getCartUnitPrice(product, item.quantity) }] : [];
+    return product ? [{ ...item, product, unitPrice: confirmedLines?.find(line => line.productId === item.productId)?.unitPrice ?? getCartUnitPrice(product, item.quantity) }] : [];
   });
   return <main className="mx-auto max-w-4xl px-4 py-8 text-foreground">
     <h1 className="text-2xl font-black uppercase">Mi carrito</h1>
+    {status === "confirmado" ? <p role="status" className="mt-4 border border-emerald-200 bg-emerald-50 p-4">Carrito confirmado y enviado a administración. Conserva sus productos y no genera un pedido.</p> : status === "actualizado" ? <p role="status" className="mt-4 border border-amber-200 bg-amber-50 p-4">Administración actualizó tu carrito. Revisá los productos y cantidades. La aceptación se habilitará en el próximo paso.</p> : null}
+    {status !== "activo" ? <p className="mt-2 text-sm">Si modificás los productos, el carrito vuelve a estar activo para revisión.</p> : null}
     {syncError ? <p role="status" className="mt-4 text-sm">La sincronización está pendiente o el carrito cambió desde otro dispositivo. Revisá las cantidades; reintentaremos guardar automáticamente.</p> : null}
     {storageError ? <p role="status" className="mt-4 text-sm">No pudimos guardar el carrito en este navegador. Podés seguir usándolo durante esta visita.</p> : null}
     {!ready ? <p className="mt-6" role="status">Cargando carrito…</p> : lines.length === 0 ? <p className="mt-6">Tu carrito está vacío.</p> : <>
@@ -24,9 +26,9 @@ export function CartContent() {
           <strong>{money(unitPrice * quantity)}</strong>
           <button type="button" onClick={() => removeItem(product.id)} className="text-sm underline" aria-label={`Eliminar ${product.name} ${product.variantName ?? product.code}`}>Eliminar</button>
         </li>)}</ul>
-      <p className="mt-6 text-right text-xl font-bold">Total: {money(lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0))}</p>
-      <p className="mt-3 text-sm text-foreground/60">El carrito no reserva stock. Los precios y la disponibilidad se verificarán al confirmar el pedido.</p>
-      <Link href="/pedido/confirmar" className="mt-5 inline-block bg-emerald-600 px-5 py-3 font-bold text-white">Continuar con el pedido</Link>
+      <p className="mt-6 text-right text-xl font-bold">Total: {money(confirmedTotal ?? lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0))}</p>
+      <p className="mt-3 text-sm text-foreground/60">El carrito no reserva stock. Los precios y la disponibilidad se verificarán al confirmar el carrito.</p>
+      {status === "activo" ? <Link href="/carrito/confirmar" className="mt-5 inline-block bg-emerald-600 px-5 py-3 font-bold text-white">Confirmar carrito</Link> : null}
     </>}
     <Link href="/" className="mt-6 inline-block border border-black/20 px-4 py-3 font-bold dark:border-white/20">Seguir comprando</Link>
   </main>;
