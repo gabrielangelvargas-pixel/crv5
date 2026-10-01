@@ -90,18 +90,20 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
             {hasAnyOffer ? <span className="absolute left-2 top-2 z-10 bg-red-600 px-2 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-white">OFF</span> : null}
             {product.imageSrc ? <Image src={product.imageSrc} alt={product.name} fill sizes="(min-width: 1024px) 25vw, 50vw" className="object-cover" /> : <FaBoxOpen aria-hidden="true" className="size-7" />}
           </div>
-          <div className="px-3 py-3">
+          <div className="px-3 pb-2 pt-3">
             <h2 className="text-sm font-black uppercase tracking-[0.06em]">{product.name}</h2>
             {product.description ? <p className="mt-1 text-xs leading-5 text-zinc-500">{product.description}</p> : null}
-            <p className="mt-1 text-sm font-semibold text-zinc-700 dark:text-zinc-300">{formatPrice(product.offerPrice ?? product.salePrice)}</p>
-            {productGroup.variants.length > 1 ? <p className="mt-1 text-xs font-semibold text-zinc-500">{productGroup.variants.length} variantes disponibles</p> : null}
           </div>
+          <div className={`relative px-3 pb-3 pt-1 ${groupQuantity > 0 ? "min-h-16" : ""}`}>
+            <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{formatPrice(product.offerPrice ?? product.salePrice)}</p>
+            {productGroup.variants.length > 1 ? <p className="mt-1 text-xs font-semibold text-zinc-500">{productGroup.variants.length} variantes disponibles</p> : null}
           {groupQuantity > 0 ? (
-            <div id={`product-cart-quantity-${productGroup.id}`} className="pointer-events-none absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 items-center justify-center gap-2 bg-white/60 px-3 py-3 text-center text-zinc-950 backdrop-blur-sm dark:bg-zinc-950/60 dark:text-white">
+            <div id={`product-cart-quantity-${productGroup.id}`} className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center gap-2 border-t border-emerald-500/20 bg-emerald-50/80 px-3 py-3 text-center text-emerald-950 backdrop-blur-sm dark:bg-emerald-950/80 dark:text-white">
               <span className="text-3xl font-black leading-none tabular-nums sm:text-4xl">{groupQuantity}</span>
               <span className="text-base font-bold sm:text-lg">{groupQuantity === 1 ? "agregado" : "agregados"}</span>
             </div>
           ) : null}
+          </div>
         </button>
       </article>
 
