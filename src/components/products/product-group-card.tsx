@@ -14,7 +14,7 @@ function formatPrice(value: number) {
 }
 
 export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
-  const { items, addItem, ready } = useCart();
+  const { items, addItem, setQuantity: updateCartQuantity, removeItem, ready } = useCart();
   const [quantity, setQuantity] = useState(0);
   const [message, setMessage] = useState("");
   const product = productGroup.product;
@@ -24,9 +24,10 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
   const modalUrlRef = useRef("");
   const selected = productGroup.variants.find((variant) => variant.id === selectedId) ?? product;
   const inCart = items.find((item) => item.productId === selected.id)?.quantity ?? 0;
-  const remaining = Math.max(0, Math.floor(selected.stock) - inCart);
-  const validQuantity = Number.isSafeInteger(quantity) && quantity >= 1 && quantity <= remaining;
-  const unitPrice = getCartUnitPrice(selected, inCart + (validQuantity ? quantity : 0));
+  const maximumQuantity = Math.max(0, Math.floor(selected.stock));
+  const validQuantity = Number.isSafeInteger(quantity) && quantity >= 0 && quantity <= maximumQuantity;
+  const canSubmit = ready && validQuantity && quantity !== inCart;
+  const unitPrice = getCartUnitPrice(selected, quantity);
   const hasOffer = selected.offerPrice !== null && selected.offerPrice < selected.salePrice;
   const hasAnyOffer = productGroup.variants.some(
     (variant) => variant.offerPrice !== null && variant.offerPrice < variant.salePrice,
@@ -34,7 +35,7 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
   const titleId = `product-group-title-${productGroup.id}`;
 
   function openModal() {
-    setQuantity(0);
+    setQuantity(inCart);
     setMessage("");
     modalUrlRef.current = window.location.href;
     window.history.pushState({ crv4ProductModal: true }, "", modalUrlRef.current);
@@ -114,7 +115,7 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
                     <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">Variantes</p>
                     <div className="grid grid-cols-2 gap-2">
                       {productGroup.variants.map((variant) => (
-                        <button key={variant.id} type="button" onClick={() => { setSelectedId(variant.id); setQuantity(0); setMessage(""); }} className={`border px-3 py-3 text-left text-sm font-bold uppercase ${selected.id === variant.id ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950" : "border-black/10 dark:border-white/10"}`}>
+                        <button key={variant.id} type="button" onClick={() => { setSelectedId(variant.id); setQuantity(items.find((item) => item.productId === variant.id)?.quantity ?? 0); setMessage(""); }} className={`border px-3 py-3 text-left text-sm font-bold uppercase ${selected.id === variant.id ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950" : "border-black/10 dark:border-white/10"}`}>
                           {variant.variantName ?? variant.code}
                         </button>
                       ))}
@@ -129,20 +130,28 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
 
                 <form className="space-y-3" onSubmit={(event) => {
                   event.preventDefault();
-                  if (!ready || !validQuantity) return;
-                  addItem(selected.id, quantity);
-                  setMessage(`${quantity} unidades de ${selected.variantName ?? selected.name} agregadas al carrito.`);
-                  setQuantity(0);
+                  if (!canSubmit) return;
+                  if (quantity === 0) {
+                    removeItem(selected.id);
+                    setMessage(`${selected.variantName ?? selected.name} eliminado del carrito.`);
+                  } else if (inCart > 0) {
+                    updateCartQuantity(selected.id, quantity);
+                    setMessage(`Cantidad actualizada a ${quantity} unidades de ${selected.variantName ?? selected.name}.`);
+                  } else {
+                    addItem(selected.id, quantity);
+                    setMessage(`${quantity} unidades de ${selected.variantName ?? selected.name} agregadas al carrito.`);
+                  }
                 }}>
                   <div role="group" aria-label="Cantidad" className="flex items-center gap-3">
                     <span className="text-sm font-bold">Cantidad</span>
-                    <button type="button" aria-label="Aumentar cantidad" disabled={!ready || quantity >= remaining} onClick={() => { setQuantity((current) => Math.min(current + 1, remaining)); setMessage(""); }} className="flex size-11 items-center justify-center border border-black/20 text-xl font-bold disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20">+</button>
+                    <button type="button" aria-label="Aumentar cantidad" disabled={!ready || quantity >= maximumQuantity} onClick={() => { setQuantity((current) => Math.min(current + 1, maximumQuantity)); setMessage(""); }} className="flex size-11 items-center justify-center border border-black/20 text-xl font-bold disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20">+</button>
                     <output aria-label="Cantidad seleccionada" aria-live="polite" className="min-w-10 text-center text-lg font-bold">{quantity}</output>
                     <button type="button" aria-label="Disminuir cantidad" disabled={!ready || quantity === 0} onClick={() => { setQuantity((current) => Math.max(0, current - 1)); setMessage(""); }} className="flex size-11 items-center justify-center border border-black/20 text-xl font-bold disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20">−</button>
                   </div>
                   {inCart > 0 ? <p className="text-sm">Ya tenés {inCart} unidades de esta variante en el carrito.</p> : null}
-                  {validQuantity ? <p className="text-sm">Precio aplicado: <strong>{formatPrice(unitPrice)} c/u</strong></p> : null}
-                  <button type="submit" disabled={!ready || !validQuantity} className="w-full bg-emerald-500 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{remaining === 0 ? selected.stock === 0 ? "Sin stock" : "Stock disponible ya agregado" : "Agregar al carrito"}</button>
+                  {validQuantity && quantity > 0 ? <p className="text-sm">Precio aplicado: <strong>{formatPrice(unitPrice)} c/u</strong></p> : null}
+                  {inCart > 0 && quantity === 0 ? <p className="text-sm">Al actualizar con cantidad 0, se eliminará esta variante del carrito.</p> : null}
+                  <button type="submit" disabled={!canSubmit} className="w-full bg-emerald-500 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{inCart > 0 ? "Actualizar" : maximumQuantity === 0 ? "Sin stock" : "Agregar al carrito"}</button>
                   <p role="status" aria-live="polite" className="text-sm">{message}</p>
                 </form>
 
