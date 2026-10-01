@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 import type { AuthUser } from "@/data/auth";
+import { getAuthReturnPath } from "@/lib/auth-return";
 
 const steps = ["Tus datos", "Dirección", "Acceso"];
 
@@ -36,6 +37,8 @@ const initialForm: RegistrationForm = {
 export default function RegisterPage() {
   const router = useRouter();
   const { setUser } = useAuth();
+  const [returnPath, setReturnPath] = useState<string | null>(null);
+  useEffect(() => { setReturnPath(getAuthReturnPath(window.location.search)); }, []);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +80,7 @@ export default function RegisterPage() {
       const result = (await response.json()) as { error?: string; user?: AuthUser };
       if (!response.ok) { setError(result.error ?? "No se pudo crear la cuenta"); return; }
       setUser(result.user ?? null);
-      router.push("/");
+      router.push(returnPath ?? "/");
       router.refresh();
     } catch {
       setError("No se pudo conectar con el servidor");
@@ -131,7 +134,7 @@ export default function RegisterPage() {
           {step < steps.length - 1 ? <button type="button" onClick={nextStep} className="bg-zinc-950 px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white dark:bg-white dark:text-zinc-950">Continuar</button> : <button type="submit" disabled={isSubmitting} className="bg-zinc-950 px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white disabled:cursor-wait disabled:opacity-60 dark:bg-white dark:text-zinc-950">{isSubmitting ? "Creando cuenta..." : "Crear cuenta"}</button>}
         </div>
 
-        <p className="mt-5 text-center text-sm text-foreground/60">¿Ya tenés una cuenta? <Link href="/login" className="font-bold text-foreground underline">Iniciá sesión</Link></p>
+        <p className="mt-5 text-center text-sm text-foreground/60">¿Ya tenés una cuenta? <Link href={returnPath ? `/login?next=${encodeURIComponent(returnPath)}` : "/login"} className="font-bold text-foreground underline">Iniciá sesión</Link></p>
       </form>
     </main>
   );

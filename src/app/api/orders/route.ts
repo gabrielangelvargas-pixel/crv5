@@ -1,0 +1,24 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { getCurrentUser } from "@/lib/auth";
+import { createOrder, OrderError } from "@/lib/orders-repository";
+import { hasAllowedOrigin } from "@/lib/request-origin";
+
+export const runtime = "nodejs";
+const schema = z.object({ key: z.uuid(), version: z.number().int().nonnegative(), expectedTotalCents: z.number().int().nonnegative().max(99999999999999), delivery: z.object({ method: z.enum(["retiro", "envio"]), phone: z.string().trim().min(6).max(30), address: z.string().trim().max(500), notes: z.string().trim().max(1000) }).refine((value) => value.method === "retiro" || value.address.length >= 5) });
+
+export async function POST(request: Request) {
+  if (!hasAllowedOrigin(request)) return NextResponse.json({ error: "Origen no autorizado" }, { status: 403 });
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Iniciá sesión o registrate para confirmar el pedido." }, { status: 401 });
+    const input = schema.safeParse(await request.json().catch(() => null));
+    if (!input.success) return NextResponse.json({ error: "Completá el teléfono y los datos de entrega." }, { status: 400 });
+    const id = await createOrder(user.id, input.data);
+    return NextResponse.json({ id }, { status: 201, headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    if (error instanceof OrderError) return NextResponse.json({ error: error.message }, { status: 409 });
+    console.error("No se pudo confirmar el pedido", error);
+    return NextResponse.json({ error: "No se pudo guardar el pedido. Podés reintentar." }, { status: 503 });
+  }
+}

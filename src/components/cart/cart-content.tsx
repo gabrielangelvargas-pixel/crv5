@@ -26,6 +26,7 @@ export function CartContent() {
         </li>)}</ul>
       <p className="mt-6 text-right text-xl font-bold">Total: {money(lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0))}</p>
       <p className="mt-3 text-sm text-foreground/60">El carrito no reserva stock. Los precios y la disponibilidad se verificarán al confirmar el pedido.</p>
+      <Link href="/pedido/confirmar" className="mt-5 inline-block bg-emerald-600 px-5 py-3 font-bold text-white">Continuar con el pedido</Link>
     </>}
     <Link href="/" className="mt-6 inline-block border border-black/20 px-4 py-3 font-bold dark:border-white/20">Seguir comprando</Link>
   </main>;

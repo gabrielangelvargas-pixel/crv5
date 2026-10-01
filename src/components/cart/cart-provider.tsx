@@ -9,6 +9,8 @@ type CartContextValue = {
   addItem: (productId: string, quantity: number) => void;
   setQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
+  prepareCheckout: () => Promise<{ version: number; items: CartItem[] }>;
+  completeOrder: () => void;
 };
 const CartContext = createContext<CartContextValue | null>(null);
 
@@ -24,6 +26,8 @@ export function CartProvider({ products, children, userId = null }: { products: 
   const productsRef = useRef(products);
   const dirty = useRef(false);
   const syncNow = useRef<() => void>(() => {});
+  const checkoutRef = useRef<() => Promise<{ version: number; items: CartItem[] }>>(async () => { throw new Error("El carrito todavía está cargando."); });
+  const completeRef = useRef<() => void>(() => {});
   currentItems.current = items;
   productsRef.current = products;
 
@@ -107,6 +111,24 @@ export function CartProvider({ products, children, userId = null }: { products: 
       finally { busy = false; if (!cancelled) setReady(true); }
     }
     syncNow.current = () => { void sync(); };
+    checkoutRef.current = async () => {
+      while (busy && !cancelled) await new Promise((resolve) => window.setTimeout(resolve, 25));
+      if (cancelled) throw new Error("Volvé a abrir el carrito.");
+      nextAttemptAt = 0;
+      await sync();
+      if (dirty.current || version.current === undefined) throw new Error("No se pudo sincronizar el carrito. Reintentá antes de confirmar.");
+      return { version: version.current, items: currentItems.current };
+    };
+    completeRef.current = () => {
+      local = [];
+      dirty.current = false;
+      currentItems.current = [];
+      acknowledged.current = "[]";
+      version.current = undefined;
+      setItems([]);
+      try { localStorage.removeItem(storageKey); localStorage.removeItem(`${storageKey}-sync`); }
+      catch { setStorageError(true); }
+    };
     void sync();
     const timer = window.setInterval(() => void sync(), 2000);
     const onStorage = (event: StorageEvent) => {
@@ -151,7 +173,7 @@ export function CartProvider({ products, children, userId = null }: { products: 
     dirty.current = true;
     setItems((current) => current.filter((item) => item.productId !== productId));
   }
-  return <CartContext.Provider value={{ items, products, ready, storageError, syncError, addItem, setQuantity, removeItem }}>{children}</CartContext.Provider>;
+  return <CartContext.Provider value={{ items, products, ready, storageError, syncError, addItem, setQuantity, removeItem, prepareCheckout: () => checkoutRef.current(), completeOrder: () => completeRef.current() }}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

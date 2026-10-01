@@ -45,7 +45,7 @@ export async function synchronizeCart(userId: string | null, token: string | und
       await connection.query("UPDATE carritos SET estado = 'fusionado', token_hash = NULL, items = JSON_ARRAY() WHERE id = ?", [guest.id]);
     }
     // Import the old browser cart once, only when no visitor identity exists.
-    if (input.version === undefined && !cart && !guest && !token) items = [...items, ...input.items];
+    if (input.version === undefined && !userId && !cart && !guest && !token) items = [...items, ...input.items];
     if (!cart) {
       if (input.version === undefined && items.length === 0) {
         await connection.commit();

@@ -1,14 +1,17 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 import type { AuthUser } from "@/data/auth";
+import { getAuthReturnPath } from "@/lib/auth-return";
 import { hasRole } from "@/lib/authorization";
 
 export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useAuth();
+  const [returnPath, setReturnPath] = useState<string | null>(null);
+  useEffect(() => { setReturnPath(getAuthReturnPath(window.location.search)); }, []);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +37,7 @@ export default function LoginPage() {
 
       const user = result.user ?? null;
       setUser(user);
-      router.push(user && hasRole(user, "cliente") ? "/" : "/admin");
+      router.push(returnPath ?? (user && hasRole(user, "cliente") ? "/" : "/admin"));
       router.refresh();
     } catch {
       setError("No se pudo conectar con el servidor");
@@ -83,7 +86,7 @@ export default function LoginPage() {
         </button>
 
         <p className="mt-5 text-center text-sm text-foreground/60">
-          ¿No tenés una cuenta? <a href="/registro" className="font-bold text-foreground underline">Crear cuenta</a>
+          ¿No tenés una cuenta? <a href={returnPath ? `/registro?next=${encodeURIComponent(returnPath)}` : "/registro"} className="font-bold text-foreground underline">Crear cuenta</a>
         </p>
       </form>
     </main>

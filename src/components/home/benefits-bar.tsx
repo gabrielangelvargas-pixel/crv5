@@ -4,7 +4,7 @@ const benefits = [
   {
     icon: FaBoxesStacked,
     title: "Compra mayorista",
-    description: "Minimo de inversion $70.000.",
+    description: "Inversión de $70.000 acumulable en varios pedidos.",
   },
   {
     icon: FaUserCheck,

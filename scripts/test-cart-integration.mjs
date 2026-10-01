@@ -30,7 +30,8 @@ try {
   assert(guestCookie.startsWith("crv4_cart="));
   const [guestRows] = await db.query("SELECT id FROM carritos WHERE token_hash = ?", [createHash("sha256").update(guestCookie.split("=")[1]).digest("hex")]);
   guestId = guestRows[0].id;
-  const account = await post("/api/cart", { items: [{ productId, quantity: 1 }] }, session);
+  const accountStart = await post("/api/cart", { items: [] }, session);
+  const account = await post("/api/cart", { items: [{ productId, quantity: 1 }], version: accountStart.data.version }, session);
   assert.equal(account.data.items[0].quantity, 1);
   const merged = await post("/api/cart", { items: [] }, `${session}; ${guestCookie}`);
   assert.equal(merged.data.items[0].quantity, 3);

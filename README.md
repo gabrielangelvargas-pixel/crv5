@@ -51,6 +51,14 @@ e2e/           Tests end-to-end
 
 ## Convenciones
 
+### Confirmación de pedidos
+
+Aplicar `database/pedidos.sql` con `node --env-file=.env.local scripts/migrate-orders.mjs` antes de desplegar. Desde el carrito se accede a `/pedido/confirmar`; requiere sesión y conserva el destino al iniciar sesión o registrarse. Las sesiones duran 30 días mediante cookie persistente.
+
+La confirmación sincroniza el carrito, verifica versión, disponibilidad y precios en el servidor y guarda un pedido `pendiente_revision`, con detalle e importe estimado. No hay mínimo por pedido. El carrito queda convertido y el usuario puede crear otro; no se reserva ni descuenta stock. Los pedidos se consultan en `/pedidos` y `/admin/pedidos`. La confirmación del importe, registro del pago y cierre de la venta con descuento de stock corresponden a la siguiente etapa.
+
+Prueba real con registros temporales y stock intacto: iniciar `pnpm dev --port 3100` y ejecutar `node --env-file=.env.local scripts/test-order-integration.mjs`.
+
 ### Carritos persistentes
 
 Antes de desplegar esta funcionalidad, aplicar `database/carritos.sql` en la base de datos del entorno. Con las variables de conexión en `.env.local`, ejecutar `node --env-file=.env.local scripts/migrate-carts.mjs`. La migración crea una tabla nueva y puede ejecutarse nuevamente.
