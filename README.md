@@ -51,6 +51,16 @@ e2e/           Tests end-to-end
 
 ## Convenciones
 
+### Carritos persistentes
+
+Antes de desplegar esta funcionalidad, aplicar `database/carritos.sql` en la base de datos del entorno. Con las variables de conexión en `.env.local`, ejecutar `node --env-file=.env.local scripts/migrate-carts.mjs`. La migración crea una tabla nueva y puede ejecutarse nuevamente.
+
+El servidor guarda variantes y cantidades, valida el stock y controla la versión del carrito. Los visitantes usan una cookie HttpOnly de 180 días; los clientes recuperan el carrito de su cuenta. Al iniciar sesión se fusiona el carrito anónimo una sola vez. Al cerrar sesión se conserva el carrito de la cuenta en el servidor y se cambia al respaldo local del visitante. LocalStorage utiliza claves separadas por cuenta.
+
+`/admin/carritos` está disponible para administradores, vendedores y supervisores. Un carrito con productos se muestra como abandonado después de 24 horas sin modificaciones. Consultarlo no reinicia ese plazo. El panel muestra hasta 200 carritos recientes y calcula totales con precios actuales. Los recordatorios y la conversión a pedido quedan pendientes de implementar el cierre del pedido.
+
+Prueba de integración opcional: iniciar `pnpm dev --port 3100` y ejecutar `node --env-file=.env.local scripts/test-cart-integration.mjs`. Requiere las tablas de productos, usuarios y sesiones y un producto activo con stock de al menos 5 unidades. La prueba crea y elimina una cuenta y carritos temporales, sin modificar productos.
+
 - Server Components por defecto.
 - Usar Client Components solo para interaccion, estado local o APIs del navegador.
 - Validar variables de entorno en `src/config/env.ts`.

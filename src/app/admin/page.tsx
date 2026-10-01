@@ -8,6 +8,7 @@ const modules = [
   ["Roles y permisos", "Configurar accesos por módulo", "/admin/roles", "administrador"],
   ["Categorías", "Organizar el catálogo", "/admin/categorias", "administrador"],
   ["Productos", "Gestionar productos y precios", "/admin/productos", "comercial"],
+  ["Carritos", "Consultar carritos activos y abandonados", "/admin/carritos", "comercial"],
   ["Clientes", "Consultar clientes", "/admin/clientes", "comercial"],
   ["Pedidos", "Gestionar pedidos", "/admin/pedidos", "comercial"],
 ] as const;

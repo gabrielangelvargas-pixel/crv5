@@ -2,7 +2,7 @@ import type { Product } from "../data/products";
 
 export type CartItem = { productId: string; quantity: number };
 
-export function getCartUnitPrice(product: Product, quantity: number) {
+export function getCartUnitPrice(product: Pick<Product, "salePrice" | "offerPrice" | "priceTiers">, quantity: number) {
   return Math.min(product.salePrice, product.offerPrice ?? product.salePrice,
     ...product.priceTiers.filter((tier) => quantity >= tier.minimumQuantity).map((tier) => tier.unitPrice));
 }

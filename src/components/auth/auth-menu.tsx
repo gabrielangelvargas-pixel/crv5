@@ -12,6 +12,7 @@ const adminLinks = [
   ["Roles y permisos", "/admin/roles"],
   ["Categorías", "/admin/categorias"],
   ["Productos", "/admin/productos"],
+  ["Carritos", "/admin/carritos"],
   ["Clientes", "/admin/clientes"],
   ["Pedidos", "/admin/pedidos"],
 ] as const;
@@ -19,6 +20,7 @@ const adminLinks = [
 const sellerLinks = [
   ["Panel", "/admin"],
   ["Productos", "/admin/productos"],
+  ["Carritos", "/admin/carritos"],
   ["Clientes", "/admin/clientes"],
   ["Pedidos", "/admin/pedidos"],
 ] as const;

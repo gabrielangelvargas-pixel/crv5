@@ -63,7 +63,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     >
       <body className="flex min-h-full flex-col">
         <AuthProvider initialUser={user}>
-          <CartProvider products={products}>
+          <CartProvider key={user?.id ?? "guest"} userId={user?.id ?? null} products={products}>
           <PwaRegister />
           <Navbar categories={categories} products={products} />
           <div className="pt-20">{children}</div>

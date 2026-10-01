@@ -7,13 +7,14 @@ import { getCartUnitPrice } from "@/lib/cart";
 const money = (value: number) => value.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 
 export function CartContent() {
-  const { items, products, ready, storageError, setQuantity, removeItem } = useCart();
+  const { items, products, ready, storageError, syncError, setQuantity, removeItem } = useCart();
   const lines = items.flatMap((item) => {
     const product = products.find((entry) => entry.id === item.productId);
     return product ? [{ ...item, product, unitPrice: getCartUnitPrice(product, item.quantity) }] : [];
   });
   return <main className="mx-auto max-w-4xl px-4 py-8 text-foreground">
     <h1 className="text-2xl font-black uppercase">Mi carrito</h1>
+    {syncError ? <p role="status" className="mt-4 text-sm">La sincronización está pendiente o el carrito cambió desde otro dispositivo. Revisá las cantidades; reintentaremos guardar automáticamente.</p> : null}
     {storageError ? <p role="status" className="mt-4 text-sm">No pudimos guardar el carrito en este navegador. Podés seguir usándolo durante esta visita.</p> : null}
     {!ready ? <p className="mt-6" role="status">Cargando carrito…</p> : lines.length === 0 ? <p className="mt-6">Tu carrito está vacío.</p> : <>
       <ul className="mt-6 space-y-4">{lines.map(({ product, quantity, unitPrice }) =>
