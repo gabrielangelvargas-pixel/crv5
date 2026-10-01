@@ -37,3 +37,20 @@ it("emite la cookie anónima protegida y no expone el token en JSON", async () =
   expect(response.headers.get("set-cookie")).toContain("SameSite=lax");
   expect(await response.json()).toEqual({ items: [], version: 0 });
 });
+
+it("acepta el dominio público detrás de un proxy aunque la URL interna sea localhost", async () => {
+  const response = await POST(new Request("http://localhost:3000/api/cart", {
+    method: "POST", headers: { "Content-Type": "application/json", Origin: "https://crv4mayorista.com.ar", "X-Forwarded-Host": "crv4mayorista.com.ar", "X-Forwarded-Proto": "https", Host: "localhost:3000" }, body: JSON.stringify({ items: [] }),
+  }));
+  expect(response.status).toBe(200);
+  expect(mocks.sync).toHaveBeenCalledOnce();
+});
+
+it("acepta Host público sin forwarded-host y rechaza dominios ajenos detrás del proxy", async () => {
+  const headers = { "Content-Type": "application/json", Origin: "https://crv4mayorista.com.ar", Host: "crv4mayorista.com.ar" };
+  expect((await POST(new Request("http://localhost:3000/api/cart", { method: "POST", headers, body: '{"items":[]}' }))).status).toBe(200);
+  mocks.sync.mockClear();
+  headers.Origin = "https://otro.example";
+  expect((await POST(new Request("http://localhost:3000/api/cart", { method: "POST", headers: { ...headers, "X-Forwarded-Host": "crv4mayorista.com.ar" }, body: '{"items":[]}' }))).status).toBe(403);
+  expect(mocks.sync).not.toHaveBeenCalled();
+});

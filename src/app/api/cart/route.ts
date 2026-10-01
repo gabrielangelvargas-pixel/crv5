@@ -7,9 +7,21 @@ import { CART_COOKIE, synchronizeCart } from "@/lib/carts-repository";
 export const runtime = "nodejs";
 const schema = z.object({ items: z.array(z.object({ productId: z.string().regex(/^[1-9][0-9]*$/).max(20), quantity: z.number().int().positive().max(1000000) })).max(500), version: z.number().int().nonnegative().optional() });
 
-export async function POST(request: Request) {
+function hasAllowedOrigin(request: Request) {
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "Origen no autorizado" }, { status: 403 });
+  if (!origin) return true;
+  // TLS and the public URL may terminate at the reverse proxy. Match the
+  // public host, as Next.js does for Server Actions, rather than its internal URL.
+  const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim()
+    || request.headers.get("host") || new URL(request.url).host;
+  try {
+    const url = new URL(origin);
+    return (url.protocol === "https:" || url.protocol === "http:") && url.host === host.toLowerCase();
+  } catch { return false; }
+}
+
+export async function POST(request: Request) {
+  if (!hasAllowedOrigin(request)) return NextResponse.json({ error: "Origen no autorizado" }, { status: 403 });
   const input = schema.safeParse(await request.json().catch(() => null));
   if (!input.success) return NextResponse.json({ error: "Carrito inválido" }, { status: 400 });
   try {
