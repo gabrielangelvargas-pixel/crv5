@@ -14,7 +14,7 @@ async function post(route, body, cookie = "") {
   return { status: response.status, data: await response.json(), cookie: response.headers.get("set-cookie")?.split(";")[0] ?? "", cookieHeader: response.headers.get("set-cookie") };
 }
 try {
-  const [rows] = await db.query("SELECT p.id, p.stock, p.precio_venta, p.precio_oferta FROM productos p JOIN categorias c ON c.id = p.categoria_id WHERE p.activo = 1 AND c.activa = 1 AND p.stock >= 2 AND p.precio_venta < 70000 LIMIT 1");
+  const [rows] = await db.query("SELECT p.id, p.stock, p.precio_venta, p.precio_oferta FROM productos p JOIN categorias c ON c.id = p.categoria_id WHERE p.activo = 1 AND c.activa = 1 AND p.stock >= 2 AND p.stock < 1000000 AND p.precio_venta < 70000 LIMIT 1");
   assert(rows.length, "Se necesita un producto activo con stock >= 2 y precio < $70.000");
   const product = rows[0];
   const productId = String(product.id);
@@ -57,14 +57,22 @@ try {
   const [roles] = await db.query("SELECT id FROM roles WHERE codigo IN ('admin','administrador') AND activo = 1 LIMIT 1");
   assert(roles.length, "Se requiere rol administrador");
   await db.query("INSERT INTO usuarios_roles (id_usuario, id_rol, activo) VALUES (?, ?, 1)", [userId, roles[0].id]);
-  const updated = await edit({ version: current.data.version, items: [{ productId, quantity: 2 }] });
+  const updated = await edit({ version: current.data.version, items: [{ productId, quantity: 2, reserved: true }] });
   assert.equal(updated.status, 200, JSON.stringify(updated.data));
   assert.equal((await edit({ version: current.data.version, items: [{ productId, quantity: 1 }] })).status, 409);
   const revised = await post("/api/cart", { items: [] }, session);
   assert.equal(revised.data.status, "actualizado");
   assert.equal(revised.data.items[0].quantity, 2);
+  assert.equal(revised.data.lines[0].reserved, true);
+  const pendingQuantity = Number(product.stock) + 1;
+  assert.equal((await edit({ version: revised.data.version, items: [{ productId, quantity: pendingQuantity, reserved: true }] })).status, 409);
+  const pending = await edit({ version: revised.data.version, items: [{ productId, quantity: pendingQuantity, reserved: false }] });
+  assert.equal(pending.status, 200, JSON.stringify(pending.data));
+  const pendingRead = await post("/api/cart", { items: [] }, session);
+  assert.equal(pendingRead.data.items[0].quantity, pendingQuantity);
+  assert.equal(pendingRead.data.lines[0].reserved, false);
   assert.equal((await post("/api/cart/confirm", { ...orderInput, version: revised.data.version }, session)).status, 409, "No aceptar revisiones administrativas en esta etapa");
-  const clientEdit = await post("/api/cart", { version: revised.data.version, items: [{ productId, quantity: 1 }] }, session);
+  const clientEdit = await post("/api/cart", { version: pendingRead.data.version, items: [{ productId, quantity: 1 }] }, session);
   assert.equal(clientEdit.data.status, "activo");
   assert.equal(clientEdit.data.total, null);
   const second = await post("/api/cart/confirm", { ...orderInput, version: clientEdit.data.version }, session);

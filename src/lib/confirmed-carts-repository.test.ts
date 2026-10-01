@@ -32,7 +32,7 @@ it("actualiza cantidades con precio por variante y deja pendiente la aceptación
 it("rechaza versiones anteriores y falta de stock", async () => {
  state = "actualizado"; version = 2;
  await expect(updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 2 }] })).rejects.toThrow("cambió");
- await expect(updateConfirmedCart("cart", { version: 2, items: [{ productId: "1", quantity: 6 }] })).rejects.toThrow("Stock");
+ await expect(updateConfirmedCart("cart", { version: 2, items: [{ productId: "1", quantity: 6, reserved: true }] })).rejects.toThrow("Stock");
 });
 it("no permite que la confirmación inicial acepte cambios administrativos", async () => {
  state = "actualizado";
@@ -42,4 +42,18 @@ it("rechaza precios diferentes y carritos vacíos", async () => {
  await expect(confirmCart("7", { ...input, expectedTotalCents: 1 })).rejects.toThrow("precios cambiaron");
  state = "confirmado";
  await expect(updateConfirmedCart("cart", { version: 1, items: [] })).rejects.toThrow("al menos");
+});
+
+it("permite dejar productos pendientes por encima del stock, conservando la marca booleana", async () => {
+ state = "confirmado";
+ const result = await updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 6, reserved: false }] });
+ expect(result.lines[0]?.reserved).toBe(false);
+ expect(result.lines[0]?.quantity).toBe(6);
+ expect(db.query.mock.calls.some(([sql]) => sql.startsWith("UPDATE productos"))).toBe(false);
+});
+it("guarda reservado verdadero en el detalle, sin alterar el stock ni los items del cliente", async () => {
+ state = "confirmado";
+ const result = await updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 2, reserved: true }] });
+ expect(result.lines[0]?.reserved).toBe(true);
+ expect(db.query).toHaveBeenCalledWith(expect.stringContaining("UPDATE carritos SET items"), expect.arrayContaining([JSON.stringify([{ productId: "1", quantity: 2 }])]));
 });

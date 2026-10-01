@@ -57,7 +57,7 @@ Aplicar la migración con `node --env-file=.env.local scripts/migrate-confirmed-
 
 Desde `/carrito/confirmar` el cliente inicia sesión o se registra (sesión persistente de 30 días) y envía su carrito. El mismo registro queda `confirmado`, mantiene propietario y productos y no genera pedidos. No hay mínimo y no reserva ni descuenta stock. La antigua ruta `/pedido/confirmar` redirige al carrito; la API de creación de pedidos responde 410.
 
-En Administración → Carritos se editan cantidades, se quitan productos y se agregan variantes buscando por nombre o código. Guardar verifica la versión, disponibilidad y precios y deja el carrito `actualizado`. El cliente ve los cambios y el total guardado; la aceptación final se implementará en el próximo paso. Si modifica los productos vuelve a `activo` y debe enviarlo nuevamente. Consultarlo no altera el estado. Los pedidos anteriores permanecen como historial.
+En Administración → Carritos se editan cantidades, se quitan productos y se agregan variantes buscando por nombre o código. Guardar verifica la versión y los precios y deja el carrito `actualizado`. El cliente ve los cambios y el total guardado; la aceptación final se implementará en el próximo paso. Si modifica los productos vuelve a `activo` y debe enviarlo nuevamente. Consultarlo no altera el estado. Los pedidos anteriores permanecen como historial.
 
 Prueba real con registros temporales: iniciar `pnpm dev --port 3100` y ejecutar `node --env-file=.env.local scripts/test-confirmed-cart-integration.mjs`. La prueba elimina sus cuentas/carritos temporales y verifica que no se creen pedidos ni se modifique el stock.
 
@@ -96,3 +96,7 @@ El módulo Pedidos conserva el historial generado antes del cambio de flujo. Los
 La aplicación reutiliza un único pool MySQL por proceso, también en producción (máximo 10 conexiones, hasta 2 inactivas). La sincronización guarda cambios del carrito de inmediato y consulta revisiones cada 15 segundos mientras la ventana está visible. Al volver a la ventana refresca el carrito.
 
 Para comprobar las pantallas autenticadas y el límite de conexiones con la BD remota, iniciar el build con `pnpm start --port 3100` y ejecutar `node --env-file=.env.local scripts/test-production-db.mjs`. Crea y elimina una cuenta, sesión y carrito temporales. Tras desplegar esta corrección se debe reiniciar el proceso Node para liberar los pools del proceso anterior.
+
+### Preparación de productos durante la revisión
+
+La edición de carritos usa botones +/− y papelera. Cada línea guarda `reserved` como booleano dentro de `productos_confirmados`, sin migración adicional. “Reservado” es una marca de preparación manual y no bloquea ni descuenta stock. Para marcarla se exige stock suficiente. Las líneas pendientes pueden superar el stock actual para esperar un ingreso; la búsqueda permite agregar productos activos sin stock. Cambiar una cantidad desde el editor desmarca esa línea. El cliente ve Reservado/Pendiente y las cantidades revisadas se conservan al consultar.

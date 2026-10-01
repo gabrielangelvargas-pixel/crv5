@@ -4,7 +4,7 @@ import { getDatabasePool } from "./db";
 import type { CartItem } from "./cart";
 
 export type OrderDelivery = { method: "retiro" | "envio"; phone: string; address: string; notes: string };
-export type OrderLine = { productId: string; code: string; name: string; variant: string | null; quantity: number; unitPrice: number; subtotal: number };
+export type OrderLine = { reserved?: boolean; productId: string; code: string; name: string; variant: string | null; quantity: number; unitPrice: number; subtotal: number };
 export type Order = { id: string; customer: string; status: string; lines: OrderLine[]; delivery: OrderDelivery; estimatedTotal: number; confirmedTotal: number | null; created: string };
 export class OrderError extends Error { }
 export async function updateOrder(id: string, original: OrderLine[], items: CartItem[]) {

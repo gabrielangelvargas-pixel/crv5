@@ -32,6 +32,7 @@ export function CartContent() {
               <p className="mt-1 break-all text-xs text-foreground/60 sm:text-sm">SKU: {product.code}</p>
               {product.variantName ? <p className="mt-1 text-xs text-foreground/60 sm:text-sm">{product.variantName}</p> : null}
               <p className="mt-2 text-sm">{money(unitPrice)} por unidad</p>
+              {status !== "activo" ? <p className="mt-1 text-xs font-bold text-foreground/60">{confirmedLines?.find(line => line.productId === product.id)?.reserved ? "Reservado" : "Pendiente de preparación"}</p> : null}
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-black/10 pt-3">

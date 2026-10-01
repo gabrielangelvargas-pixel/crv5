@@ -32,7 +32,7 @@ export default async function AdminCartsPage() {
           if (!product) return <li key={item.productId}>{item.quantity} × Producto no disponible ({item.productId})</li>;
           const subtotal = (cart.lines?.find(line => line.productId === item.productId)?.unitPrice ?? getCartUnitPrice(product, item.quantity)) * item.quantity;
           total += subtotal;
-          return <li key={item.productId} className="flex flex-wrap justify-between gap-2 text-sm"><span>{item.quantity} × {product.name} · {product.variantName ?? product.code}{!product.active || item.quantity > product.stock ? " · Revisar disponibilidad" : ""}</span><strong>{money(subtotal)}</strong></li>;
+          return <li key={item.productId} className="flex flex-wrap justify-between gap-2 text-sm"><span>{item.quantity} × {product.name} · {product.variantName ?? product.code}{!product.active || item.quantity > product.stock ? " · Pendiente de ingreso" : ""} · {cart.lines?.find(line => line.productId === item.productId)?.reserved ? "Reservado: Sí" : "Reservado: No"}</span><strong>{money(subtotal)}</strong></li>;
         })}</ul>
         <p className="mt-4 text-right font-bold">Total estimado: {money(cart.total ?? total)}</p>
         {cart.delivery ? <p className="mt-3 text-sm">{cart.delivery.method === "envio" ? `Envío a ${cart.delivery.address}` : "Retiro"} · Teléfono: {cart.delivery.phone}{cart.delivery.notes ? ` · ${cart.delivery.notes}` : ""}</p> : null}
