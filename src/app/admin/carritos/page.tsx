@@ -24,7 +24,7 @@ export default async function AdminCartsPage() {
       let total = 0;
       return <details key={cart.id} className="border border-black/10 bg-white p-4">
         <summary className="cursor-pointer"><strong>{cart.customer ?? "Visitante anónimo"}</strong> · {cart.status === "abandonado" ? "Abandonado" : "Activo"} · {cart.items.reduce((sum, item) => sum + item.quantity, 0)} unidades
-          <span className="mt-1 block text-xs text-foreground/60">{cart.username ? `${cart.username} · ` : ""}Última modificación: {new Date(cart.lastActivity).toLocaleString("es-AR", { timeZone: "America/Buenos_Aires" })}</span>
+          <span className="mt-1 block text-xs text-foreground/60">{cart.username ? `${cart.username} · ` : ""}Última modificación: {new Date(cart.lastActivity).toLocaleString("es-AR", { timeZone: "America/Buenos_Aires", hourCycle: "h23" })}</span>
         </summary>
         <ul className="mt-4 space-y-2">{cart.items.map((item) => {
           const product = products.find((entry) => entry.id === item.productId);
