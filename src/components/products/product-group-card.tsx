@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { FaBoxOpen, FaXmark } from "react-icons/fa6";
 import type { ProductGroup } from "@/data/products";
-import Link from "next/link";
 import { useCart } from "@/components/cart/cart-provider";
 import { getCartUnitPrice } from "@/lib/cart";
 
@@ -16,7 +15,7 @@ function formatPrice(value: number) {
 
 export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
   const { items, addItem, ready } = useCart();
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(0);
   const [message, setMessage] = useState("");
   const product = productGroup.product;
   const [isOpen, setIsOpen] = useState(false);
@@ -35,6 +34,8 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
   const titleId = `product-group-title-${productGroup.id}`;
 
   function openModal() {
+    setQuantity(0);
+    setMessage("");
     modalUrlRef.current = window.location.href;
     window.history.pushState({ crv4ProductModal: true }, "", modalUrlRef.current);
     modalHistoryRef.current = true;
@@ -113,7 +114,7 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
                     <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">Variantes</p>
                     <div className="grid grid-cols-2 gap-2">
                       {productGroup.variants.map((variant) => (
-                        <button key={variant.id} type="button" onClick={() => { setSelectedId(variant.id); setQuantity(1); setMessage(""); }} className={`border px-3 py-3 text-left text-sm font-bold uppercase ${selected.id === variant.id ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950" : "border-black/10 dark:border-white/10"}`}>
+                        <button key={variant.id} type="button" onClick={() => { setSelectedId(variant.id); setQuantity(0); setMessage(""); }} className={`border px-3 py-3 text-left text-sm font-bold uppercase ${selected.id === variant.id ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950" : "border-black/10 dark:border-white/10"}`}>
                           {variant.variantName ?? variant.code}
                         </button>
                       ))}
@@ -131,15 +132,18 @@ export function ProductGroupCard({ productGroup }: ProductGroupCardProps) {
                   if (!ready || !validQuantity) return;
                   addItem(selected.id, quantity);
                   setMessage(`${quantity} unidades de ${selected.variantName ?? selected.name} agregadas al carrito.`);
+                  setQuantity(0);
                 }}>
-                  <label className="block text-sm font-bold">Cantidad
-                    <input type="number" min={1} max={remaining} step={1} required disabled={!ready || remaining === 0} value={quantity} onChange={(event) => { setQuantity(Number(event.target.value)); setMessage(""); }} className="ml-3 w-24 border border-black/20 bg-transparent px-3 py-2 dark:border-white/20" />
-                  </label>
+                  <div role="group" aria-label="Cantidad" className="flex items-center gap-3">
+                    <span className="text-sm font-bold">Cantidad</span>
+                    <button type="button" aria-label="Aumentar cantidad" disabled={!ready || quantity >= remaining} onClick={() => { setQuantity((current) => Math.min(current + 1, remaining)); setMessage(""); }} className="flex size-11 items-center justify-center border border-black/20 text-xl font-bold disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20">+</button>
+                    <output aria-label="Cantidad seleccionada" aria-live="polite" className="min-w-10 text-center text-lg font-bold">{quantity}</output>
+                    <button type="button" aria-label="Disminuir cantidad" disabled={!ready || quantity === 0} onClick={() => { setQuantity((current) => Math.max(0, current - 1)); setMessage(""); }} className="flex size-11 items-center justify-center border border-black/20 text-xl font-bold disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20">−</button>
+                  </div>
                   {inCart > 0 ? <p className="text-sm">Ya tenés {inCart} unidades de esta variante en el carrito.</p> : null}
                   {validQuantity ? <p className="text-sm">Precio aplicado: <strong>{formatPrice(unitPrice)} c/u</strong></p> : null}
-                  <button type="submit" disabled={!ready || !validQuantity} className="w-full bg-emerald-500 px-4 py-3 font-bold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-50">{remaining === 0 ? selected.stock === 0 ? "Sin stock" : "Stock disponible ya agregado" : "Agregar al carrito"}</button>
+                  <button type="submit" disabled={!ready || !validQuantity} className="w-full bg-emerald-500 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{remaining === 0 ? selected.stock === 0 ? "Sin stock" : "Stock disponible ya agregado" : "Agregar al carrito"}</button>
                   <p role="status" aria-live="polite" className="text-sm">{message}</p>
-                  <Link href="/carrito" className="inline-block text-sm font-bold underline">Ver carrito</Link>
                 </form>
 
                 <div>
