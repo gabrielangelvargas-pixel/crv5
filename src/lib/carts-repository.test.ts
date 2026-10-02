@@ -12,7 +12,7 @@ describe("persistencia del carrito", () => {
       if (sql.includes("token_hash = ? AND usuario_id IS NULL")) return [[{ id: "guest", items: [{ productId: "1", quantity: 4 }, { productId: "2", quantity: 1 }], version: 1 }]];
       if (sql.includes("WHERE usuario_id = ?")) return [[{ id: "account", items: [{ productId: "1", quantity: 3 }], version: 2 }]];
       if (sql.includes("SELECT p.id")) return [[{ id: 1, stock: 5 }, { id: 2, stock: 2 }]];
-      return [{}];
+      return [[]];
     });
     const result = await synchronizeCart("7", "a".repeat(64), { items: [] });
     expect(result.items).toEqual([{ productId: "1", quantity: 5 }, { productId: "2", quantity: 1 }]);
@@ -26,7 +26,7 @@ describe("persistencia del carrito", () => {
     db.query.mockImplementation(async (sql: string) => {
       if (sql.includes("token_hash = ?")) return [[{ id: "guest", items: [{ productId: "1", quantity: 2 }], version: 4 }]];
       if (sql.includes("SELECT p.id")) return [[{ id: 1, stock: 5 }]];
-      return [{}];
+      return [[]];
     });
     const result = await synchronizeCart(null, "a".repeat(64), { items: [{ productId: "1", quantity: 5 }], version: 3 });
     expect(result.conflict).toBe(true);
@@ -82,4 +82,17 @@ it("una modificación del cliente reactiva el carrito y descarta el total revisa
   expect(result.status).toBe("activo");
   expect(result.version).toBe(3);
   expect(result.lines).toBeNull();
+});
+
+it("iniciar sesión con un carrito visitante vacío conserva las reservas de la cuenta", async () => {
+  db.query.mockImplementation(async (sql: string) => {
+    if (sql.includes("token_hash = ?")) return [[{ id: "guest", items: [], version: 1 }]];
+    if (sql.includes("WHERE usuario_id = ?")) return [[{ id: "cart", estado: "actualizado", items: [{ productId: "1", quantity: 3 }], version: 2, productos_confirmados: [{ productId: "1", reserved: true }] }]];
+    if (sql.includes("SELECT p.id")) return [[{ id: 1, stock: 5 }]];
+    return [[]];
+  });
+  const result = await synchronizeCart("7", "a".repeat(64), { items: [] });
+  expect(result.status).toBe("actualizado");
+  expect(result.version).toBe(2);
+  expect(db.query.mock.calls.some(([sql]) => sql.startsWith("DELETE FROM carrito_reservas"))).toBe(false);
 });

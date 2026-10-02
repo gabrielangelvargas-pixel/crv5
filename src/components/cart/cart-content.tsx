@@ -32,7 +32,7 @@ export function CartContent() {
               <p className="mt-1 break-all text-xs text-foreground/60 sm:text-sm">SKU: {product.code}</p>
               {product.variantName ? <p className="mt-1 text-xs text-foreground/60 sm:text-sm">{product.variantName}</p> : null}
               <p className="mt-2 text-sm">{money(unitPrice)} por unidad</p>
-              {status !== "activo" ? <p className="mt-1 text-xs font-bold text-foreground/60">{confirmedLines?.find(line => line.productId === product.id)?.reserved ? "Reservado" : "Pendiente de preparación"}</p> : null}
+              {status !== "activo" ? <p className="mt-1 text-xs font-bold text-foreground/60">{confirmedLines?.find(line => line.productId === product.id)?.reserved ? "Reservado" : "Agregado"}</p> : null}
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-black/10 pt-3">
@@ -48,7 +48,7 @@ export function CartContent() {
           </div>
         </li>)}</ul>
       <p className="mt-6 text-right text-xl font-bold">Total: {money(confirmedTotal ?? lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0))}</p>
-      <p className="mt-3 text-sm text-foreground/60">El carrito no reserva stock. Los precios y la disponibilidad se verificarán al confirmar el carrito.</p>
+      <p className="mt-3 text-sm text-foreground/60">{status === "activo" ? "Agregar productos no reserva stock. Los precios y la disponibilidad se verificarán al confirmar el carrito." : "Las líneas marcadas como Reservado bloquean sus unidades para otros clientes hasta que se libere la reserva."}</p>
       {status === "activo" ? <Link href="/carrito/confirmar" className="mt-5 inline-block bg-emerald-600 px-5 py-3 font-bold text-white">Confirmar carrito</Link> : null}
     </>}
     <Link href="/" className="mt-6 inline-block border border-black/20 px-4 py-3 font-bold dark:border-white/20">Seguir comprando</Link>

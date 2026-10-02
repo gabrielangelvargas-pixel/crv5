@@ -1,3 +1,4 @@
+import { availableStock } from "./stock-reservations";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { RowDataPacket } from "mysql2";
 import type { PoolConnection } from "mysql2/promise";
@@ -10,11 +11,9 @@ type CartRow = RowDataPacket & { id: string; usuario_id: string | number | null;
 const hash = (token: string) => createHash("sha256").update(token).digest("hex");
 function readItems(row: CartRow): CartItem[] { return typeof row.items === "string" ? JSON.parse(row.items) : row.items; }
 
-async function validateItems(connection: PoolConnection, items: CartItem[]) {
+async function validateItems(connection: PoolConnection, items: CartItem[], ownCartId: string) {
   if (!items.length) return [];
-  const [rows] = await connection.query<RowDataPacket[]>(
-    "SELECT p.id, p.stock FROM productos p JOIN categorias c ON c.id = p.categoria_id WHERE p.activo = 1 AND c.activa = 1 AND p.id IN (?)", [items.map((item) => item.productId)]);
-  const stock = new Map(rows.map((row) => [String(row.id), Number(row.stock)]));
+  const stock = await availableStock(connection, items.map(item => item.productId), ownCartId);
   const quantities = new Map<string, number>();
   for (const item of items) {
     const quantity = Math.min(stock.get(item.productId) ?? 0, (quantities.get(item.productId) ?? 0) + item.quantity);
@@ -42,7 +41,7 @@ export async function synchronizeCart(userId: string | null, token: string | und
     let merged = false;
     if (userId && guest) {
       items = [...items, ...readItems(guest)];
-      merged = true;
+      merged = readItems(guest).length > 0;
       await connection.query("UPDATE carritos SET estado = 'fusionado', token_hash = NULL, items = JSON_ARRAY() WHERE id = ?", [guest.id]);
     }
     // Import the old browser cart once, only when no visitor identity exists.
@@ -59,12 +58,14 @@ export async function synchronizeCart(userId: string | null, token: string | und
     }
     const conflict = input.version !== undefined && (input.version !== Number(cart.version) || merged);
     if (input.version !== undefined && !conflict) items = input.items;
-    if (!cart.estado || cart.estado === "activo" || merged || (input.version !== undefined && !conflict)) items = await validateItems(connection, items);
+    if (!cart.estado || cart.estado === "activo" || merged || (input.version !== undefined && !conflict)) items = await validateItems(connection, items, cart.id);
     const changed = JSON.stringify(items) !== JSON.stringify(readItems(cart));
     const version = Number(cart.version) + (changed || merged ? 1 : 0);
+    if (changed || merged) await connection.query("DELETE FROM carrito_reservas WHERE carrito_id = ?", [cart.id]);
     if (changed || merged) await connection.query("UPDATE carritos SET items = ?, version = ?, ultima_actividad = NOW(), estado = 'activo', productos_confirmados = NULL, total_estimado = NULL, confirmado_en = NULL WHERE id = ?", [JSON.stringify(items), version, cart.id]);
+    const stock = await availableStock(connection, items.map(item => item.productId), cart.id);
     await connection.commit();
-    return { id: cart.id, items, version, conflict, newToken, clearToken: Boolean(userId && token), status: changed || merged ? "activo" : cart.estado ?? "activo", lines: changed || merged ? null : (typeof cart.productos_confirmados === "string" ? JSON.parse(cart.productos_confirmados) : cart.productos_confirmados ?? null) as OrderLine[] | null, total: changed || merged || cart.total_estimado == null ? null : Number(cart.total_estimado) };
+    return { stock: Object.fromEntries(stock), id: cart.id, items, version, conflict, newToken, clearToken: Boolean(userId && token), status: changed || merged ? "activo" : cart.estado ?? "activo", lines: changed || merged ? null : (typeof cart.productos_confirmados === "string" ? JSON.parse(cart.productos_confirmados) : cart.productos_confirmados ?? null) as OrderLine[] | null, total: changed || merged || cart.total_estimado == null ? null : Number(cart.total_estimado) };
   } catch (error) {
     await connection.rollback();
     throw error;

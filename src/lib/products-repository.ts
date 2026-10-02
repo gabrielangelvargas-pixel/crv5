@@ -78,7 +78,7 @@ export const getProducts = cache(async (): Promise<Product[]> => {
         p.descripcion,
         p.precio_venta,
         p.precio_oferta,
-        p.stock,
+        GREATEST(p.stock - COALESCE((SELECT SUM(r.cantidad) FROM carrito_reservas r WHERE r.producto_id = p.id), 0), 0) AS stock,
         p.imagen_url,
         p.etiquetas
       FROM productos p

@@ -19,7 +19,7 @@ export default async function AdminCartsPage() {
   const [carts, products] = data;
   return <main className="mx-auto max-w-6xl px-4 py-10">
     <h1 className="text-3xl font-black uppercase">Carritos</h1>
-    <p className="mt-2 text-sm text-foreground/60">Abandonado: con productos y sin modificaciones durante 24 horas. Se muestran hasta 200 carritos recientes. Los totales usan precios actuales y no reservan stock.</p>
+    <p className="mt-2 text-sm text-foreground/60">Abandonado: con productos y sin modificaciones durante 24 horas. Se muestran hasta 200 carritos recientes. Los productos marcados como reservados bloquean unidades para otros clientes, sin descontar el stock físico.</p>
     <p className="mt-4 font-bold">{carts.filter((cart) => cart.status === "abandonado").length} abandonados · {carts.filter((cart) => cart.status === "activo").length} activos · {carts.filter(cart => cart.status === "confirmado").length} confirmados · {carts.filter(cart => cart.status === "actualizado").length} actualizados</p>
     <div className="mt-6 space-y-4">{carts.map((cart) => {
       let total = 0;
@@ -32,11 +32,11 @@ export default async function AdminCartsPage() {
           if (!product) return <li key={item.productId}>{item.quantity} × Producto no disponible ({item.productId})</li>;
           const subtotal = (cart.lines?.find(line => line.productId === item.productId)?.unitPrice ?? getCartUnitPrice(product, item.quantity)) * item.quantity;
           total += subtotal;
-          return <li key={item.productId} className="flex flex-wrap justify-between gap-2 text-sm"><span>{item.quantity} × {product.name} · {product.variantName ?? product.code}{!product.active || item.quantity > product.stock ? " · Pendiente de ingreso" : ""} · {cart.lines?.find(line => line.productId === item.productId)?.reserved ? "Reservado: Sí" : "Reservado: No"}</span><strong>{money(subtotal)}</strong></li>;
+          return <li key={item.productId} className="flex flex-wrap justify-between gap-2 text-sm"><span>{item.quantity} × {product.name} · {product.variantName ?? product.code}{!product.active || item.quantity > product.stock ? " · Agregado · Esperando ingreso" : ""} · {cart.lines?.find(line => line.productId === item.productId)?.reserved ? "Reservado: Sí" : "Reservado: No"}</span><strong>{money(subtotal)}</strong></li>;
         })}</ul>
         <p className="mt-4 text-right font-bold">Total estimado: {money(cart.total ?? total)}</p>
         {cart.delivery ? <p className="mt-3 text-sm">{cart.delivery.method === "envio" ? `Envío a ${cart.delivery.address}` : "Retiro"} · Teléfono: {cart.delivery.phone}{cart.delivery.notes ? ` · ${cart.delivery.notes}` : ""}</p> : null}
-        {cart.status === "confirmado" || cart.status === "actualizado" ? <OrderEditor cartVersion={cart.version} products={products.filter(p => p.active)} order={{ id: cart.id, customer: cart.customer ?? "", status: cart.status, created: cart.lastActivity, lines: cart.lines ?? [], estimatedTotal: cart.total ?? total, confirmedTotal: null, delivery: cart.delivery ?? { method: "retiro", phone: "", address: "", notes: "" } }} /> : null}
+        {cart.status === "confirmado" || cart.status === "actualizado" ? <OrderEditor cartVersion={cart.version} products={products.filter(p => p.active).map(p => ({ ...p, stock: p.availableStock + (cart.lines?.find(l => l.productId === p.id && l.reserved)?.quantity ?? 0) }))} order={{ id: cart.id, customer: cart.customer ?? "", status: cart.status, created: cart.lastActivity, lines: cart.lines ?? [], estimatedTotal: cart.total ?? total, confirmedTotal: null, delivery: cart.delivery ?? { method: "retiro", phone: "", address: "", notes: "" } }} /> : null}
       </details>;
     })}</div>
     {!carts.length ? <p className="mt-6">No hay carritos con productos.</p> : null}

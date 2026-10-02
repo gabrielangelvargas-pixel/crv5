@@ -57,3 +57,20 @@ it("guarda reservado verdadero en el detalle, sin alterar el stock ni los items 
  expect(result.lines[0]?.reserved).toBe(true);
  expect(db.query).toHaveBeenCalledWith(expect.stringContaining("UPDATE carritos SET items"), expect.arrayContaining([JSON.stringify([{ productId: "1", quantity: 2 }])]));
 });
+
+it("crea el bloqueo de unidades al marcar reservado y lo libera al dejar pendiente", async () => {
+ state = "confirmado";
+ await updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 2, reserved: true }] });
+ expect(db.query).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO carrito_reservas"), ["cart", "1", 2]);
+ db.query.mockClear();
+ await updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 2, reserved: false }] });
+ expect(db.query).toHaveBeenCalledWith("DELETE FROM carrito_reservas WHERE carrito_id = ?", ["cart"]);
+ expect(db.query.mock.calls.some(([sql]) => sql.startsWith("INSERT INTO carrito_reservas"))).toBe(false);
+});
+it("no reserva unidades bloqueadas por otro cliente", async () => {
+ state = "confirmado";
+ const original = db.query.getMockImplementation()!;
+ db.query.mockImplementation(async (sql: string, args: unknown[]) => sql.includes("SELECT producto_id, cantidad FROM carrito_reservas") ? [[{ producto_id: 1, cantidad: 4 }]] : original(sql, args));
+ await expect(updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 2, reserved: true }] })).rejects.toThrow("Stock");
+ expect(db.query.mock.calls.some(([sql]) => sql.startsWith("INSERT INTO carrito_reservas"))).toBe(false);
+});

@@ -18,6 +18,7 @@ export type AdminProduct = {
   salePrice: number;
   offerPrice: number | null;
   stock: number;
+  availableStock: number;
   imageUrl: string | null;
   order: number;
   active: boolean;
@@ -40,6 +41,7 @@ type ProductRow = RowDataPacket & {
   precio_venta: number | string;
   precio_oferta: number | string | null;
   stock: number | string;
+  stock_disponible: number | string;
   imagen_url: string | null;
   orden: number | string;
   activo: number;
@@ -53,7 +55,7 @@ export async function getAdminProducts() {
   const [rows] = await pool.query<ProductRow[]>(`
     SELECT p.id, p.grupo_id, g.nombre AS grupo_nombre, p.categoria_id, c.nombre AS categoria_nombre,
       p.codigo, p.nombre, p.variante, p.slug, p.descripcion, p.precio_venta, p.precio_oferta,
-      p.stock, p.imagen_url, p.orden, p.activo
+      p.stock, GREATEST(p.stock - COALESCE((SELECT SUM(r.cantidad) FROM carrito_reservas r WHERE r.producto_id = p.id), 0), 0) AS stock_disponible, p.imagen_url, p.orden, p.activo
     FROM productos p
     INNER JOIN categorias c ON c.id = p.categoria_id
     LEFT JOIN producto_grupos g ON g.id = p.grupo_id
@@ -73,7 +75,7 @@ export async function getAdminProducts() {
     id: String(row.id), groupId: row.grupo_id === null ? null : String(row.grupo_id), groupName: row.grupo_nombre,
     categoryId: String(row.categoria_id), categoryName: row.categoria_nombre, code: row.codigo, name: row.nombre,
     variantName: row.variante, slug: row.slug, description: row.descripcion, salePrice: Number(row.precio_venta),
-    offerPrice: row.precio_oferta === null ? null : Number(row.precio_oferta), stock: Number(row.stock),
+    offerPrice: row.precio_oferta === null ? null : Number(row.precio_oferta), stock: Number(row.stock), availableStock: Number(row.stock_disponible),
     imageUrl: row.imagen_url, order: Number(row.orden), active: Boolean(row.activo), priceTiers: prices.get(String(row.id)) ?? [],
   }));
 }
@@ -120,6 +122,10 @@ export async function saveAdminProduct(input: ProductInput) {
     const values = [groupId, input.categoryId, input.code.trim(), input.name.trim(), input.variantName.trim() || null, input.slug.trim(), input.description.trim() || null, input.salePrice, input.offerPrice, input.stock, input.imageUrl.trim() || null, input.order, input.active ? 1 : 0];
     let productId = input.id;
     if (productId) {
+      await connection.query("SELECT id FROM productos WHERE id = ? FOR UPDATE", [productId]);
+      const [reserved] = await connection.query<RowDataPacket[]>("SELECT cantidad FROM carrito_reservas WHERE producto_id = ? FOR UPDATE", [productId]);
+      if (input.stock < reserved.reduce((sum, row) => sum + Number(row.cantidad), 0)) throw new Error("El stock no puede ser menor que las unidades reservadas.");
+
       await connection.query(
         `UPDATE productos SET grupo_id = ?, categoria_id = ?, codigo = ?, nombre = ?, variante = ?, slug = ?, descripcion = ?, precio_venta = ?, precio_oferta = ?, stock = ?, imagen_url = ?, orden = ?, activo = ? WHERE id = ?`,
         [...values, productId],
