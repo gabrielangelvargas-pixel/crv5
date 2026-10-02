@@ -37,7 +37,6 @@ export default async function AdminCartsPage({ searchParams }: { searchParams: P
         })}</ul>
         <p className="mt-4 text-right font-bold">Total estimado: {money(cart.total ?? total)}</p>{cart.lines?.filter(line => line.exhausted).map(line => <p key={line.productId} className="mt-2 text-sm">{line.quantity} × {line.name} · SKU: {line.code} · Agotado (no suma al total)</p>)}</> : null}
         {cart.status === "confirmado" || cart.status === "actualizado" ? <OrderEditor adjustments={cart.adjustments} key={cart.version} cartVersion={cart.version} products={products.filter(p => p.active).map(p => ({ ...p, stock: p.availableStock + (cart.lines?.find(l => l.productId === p.id && l.reserved)?.quantity ?? 0) }))} order={{ id: cart.id, customer: cart.customer ?? "", status: cart.status, created: cart.lastActivity, lines: cart.lines ?? [], estimatedTotal: cart.total ?? total, confirmedTotal: null, delivery: cart.delivery ?? { method: "retiro", phone: "", address: "", notes: "" } }} /> : null}
-        {cart.delivery ? <p className="mt-3 text-sm">{cart.delivery.method === "envio" ? `Envío a ${cart.delivery.address}` : "Retiro"} · Teléfono: {cart.delivery.phone}{cart.delivery.notes ? ` · ${cart.delivery.notes}` : ""}</p> : null}
       </details>;
     })}</div>
     {!carts.length ? <p className="mt-6">No hay carritos con productos.</p> : null}
