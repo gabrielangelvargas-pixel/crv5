@@ -9,12 +9,13 @@ import { getCartUnitPrice } from "@/lib/cart";
 export const dynamic = "force-dynamic";
 const money = (value: number) => value.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 
-export default async function AdminCartsPage() {
+export default async function AdminCartsPage({ searchParams }: { searchParams: Promise<{ carrito?: string }> }) {
+  const { carrito } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (!hasRole(user, "admin", "administrador", "vendedor", "supervisor")) redirect("/perfil");
   let data;
-  try { data = await Promise.all([getAdminCarts(), getAdminProducts()]); }
+  try { data = await Promise.all([getAdminCarts(carrito), getAdminProducts()]); }
   catch { return <main className="mx-auto max-w-6xl px-4 py-10"><h1 className="text-3xl font-black">Carritos</h1><p className="mt-4">No se pudieron cargar los carritos. Verificá la conexión y la migración database/carritos.sql.</p></main>; }
   const [carts, products] = data;
   return <main className="mx-auto max-w-6xl px-4 py-10">
@@ -23,7 +24,7 @@ export default async function AdminCartsPage() {
     <p className="mt-4 font-bold">{carts.filter((cart) => cart.status === "abandonado").length} abandonados · {carts.filter((cart) => cart.status === "activo").length} activos · {carts.filter(cart => cart.status === "confirmado").length} confirmados · {carts.filter(cart => cart.status === "actualizado").length} actualizados</p>
     <div className="mt-6 space-y-4">{carts.map((cart) => {
       let total = 0;
-      return <details key={cart.id} className="border border-black/10 bg-white p-4">
+      return <details key={cart.id} id={`carrito-${cart.id}`} open={cart.id === carrito} className="scroll-mt-24 border border-black/10 bg-white p-4">
         <summary className="cursor-pointer"><strong>{cart.customer ?? "Visitante anónimo"}</strong> · {({ abandonado: "Abandonado", activo: "Activo", confirmado: "Confirmado", actualizado: "Actualizado por administración" }[cart.status] ?? cart.status)} · {cart.items.reduce((sum, item) => sum + item.quantity, 0)} unidades
           <span className="mt-1 block text-xs text-foreground/60">{cart.username ? `${cart.username} · ` : ""}Última modificación: {new Date(cart.lastActivity).toLocaleString("es-AR", { timeZone: "America/Buenos_Aires", hourCycle: "h23" })}</span>
         </summary>

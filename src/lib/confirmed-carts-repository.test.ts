@@ -74,3 +74,11 @@ it("no reserva unidades bloqueadas por otro cliente", async () => {
  await expect(updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 2, reserved: true }] })).rejects.toThrow("Stock");
  expect(db.query.mock.calls.some(([sql]) => sql.startsWith("INSERT INTO carrito_reservas"))).toBe(false);
 });
+
+it("notifica cada envío nuevo pero no duplica avisos en un reintento", async () => {
+ await confirmCart("7", input);
+ expect(db.query.mock.calls.filter(([sql]) => sql.includes("INSERT INTO notificaciones_carritos"))).toHaveLength(1);
+ db.query.mockClear(); state = "confirmado"; version = 2;
+ await confirmCart("7", input);
+ expect(db.query.mock.calls.some(([sql]) => sql.includes("INSERT INTO notificaciones_carritos"))).toBe(false);
+});

@@ -8,6 +8,7 @@ import type { CategoryNode } from "@/data/categories";
 import type { Product } from "@/data/products";
 import { getCategoryIcon } from "@/lib/category-icons";
 import { AuthMenu } from "@/components/auth/auth-menu";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import {
   FaBars,
   FaFire,
@@ -140,12 +141,13 @@ export function Navbar({ categories, products }: NavbarProps) {
                 priority
                 className="size-12"
               />
-              <span className="text-base font-semibold tracking-wide text-foreground/55">
+              <span className="hidden text-base font-semibold tracking-wide text-foreground/55 min-[420px]:inline">
                 Mayorista
               </span>
             </Link>
           </div>
           <AuthMenu />
+          <NotificationBell />
           <Link href="/carrito" aria-label={`Carrito, ${cartCount} unidades`} className="ml-2 flex items-center gap-1 text-sm font-bold">Carrito <span className="rounded-full bg-emerald-500 px-2 py-1 text-zinc-950">{cartCount}</span></Link>
         </nav>
       </header>

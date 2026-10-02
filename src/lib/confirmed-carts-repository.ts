@@ -1,4 +1,5 @@
 import { availableStock } from "./stock-reservations";
+import { notifyCartSubmitted } from "./cart-notifications";
 import type { RowDataPacket } from "mysql2";
 import type { PoolConnection } from "mysql2/promise";
 import type { CartItem } from "./cart";
@@ -38,6 +39,7 @@ export async function confirmCart(userId: string, input: { version: number; expe
     const priced = await priceItems(connection, items, false, String(cart.id));
     if (Math.round(priced.total * 100) !== input.expectedTotalCents) throw new ConfirmedCartError("Los precios cambiaron. Actualizá la página y revisá el total.");
     await connection.query("UPDATE carritos SET estado = 'confirmado', entrega = ?, productos_confirmados = ?, total_estimado = ?, confirmado_en = NOW(), ultima_actividad = NOW(), version = version + 1 WHERE id = ?", [JSON.stringify(input.delivery), JSON.stringify(priced.lines), priced.total, cart.id]);
+    await notifyCartSubmitted(connection, { cartId: String(cart.id), userId, version: Number(cart.version) + 1, products: items.length, units: items.reduce((sum, item) => sum + item.quantity, 0), total: priced.total });
     await connection.commit();
     return { id: String(cart.id), version: Number(cart.version) + 1 };
   } catch (error) { await connection.rollback(); throw error; }
