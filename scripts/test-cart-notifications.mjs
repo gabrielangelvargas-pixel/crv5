@@ -38,7 +38,7 @@ try {
   const notices=await call("/api/notifications","GET",undefined,sessions[i]);assert.equal(notices.status,200);assert.equal(notices.data.unread,1);
   assert.equal(notices.data.notifications[0].cartId,cartId);
  }
- assert.equal((await call("/api/notifications","GET",undefined,sessions[0])).status,403);
+ assert.equal((await call("/api/notifications","GET",undefined,sessions[0])).status,200);
  assert.equal((await call("/api/notifications","GET",undefined)).status,401);
  const adminId=String(rows.find(r=>String(r.usuario_id)===users[1]).id), sellerId=String(rows.find(r=>String(r.usuario_id)===users[2]).id);
  await call("/api/notifications","PATCH",{id:sellerId},sessions[1]);

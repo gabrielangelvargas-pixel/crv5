@@ -1,6 +1,8 @@
 "use client";
 
 import { cartPayableCents } from "@/lib/cart-adjustments";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { FaBoxOpen, FaMinus, FaPlus, FaRegTrashAlt } from "react-icons/fa";
@@ -10,15 +12,32 @@ import { getCartUnitPrice } from "@/lib/cart";
 const money = (value: number) => value.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 
 export function CartContent() {
-  const { adjustments, items, products, ready, status, confirmedLines, confirmedTotal, storageError, syncError, setQuantity, removeItem } = useCart();
+  const { cartId, prepareCheckout, refreshCart, adjustments, items, products, ready, status, confirmedLines, confirmedTotal, storageError, syncError, setQuantity, removeItem } = useCart();
   const lines = items.flatMap((item) => {
     const product = products.find((entry) => entry.id === item.productId);
     return product ? [{ ...item, product, unitPrice: confirmedLines?.find(line => line.productId === item.productId)?.unitPrice ?? getCartUnitPrice(product, item.quantity) }] : [];
   });
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState("");
+  async function respond(action: "continue" | "accept") {
+    if (busy) return;
+    setBusy(true); setActionError("");
+    try {
+      const current = await prepareCheckout();
+      const response = await fetch("/api/cart/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cartId, version: current.version, action, expectedTotalCents: cartPayableCents(subtotal, adjustments) }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      refreshCart();
+      router.push(action === "accept" ? `/pedidos?confirmado=${result.orderId}` : "/");
+      router.refresh();
+    } catch (error) { setActionError(error instanceof Error ? error.message : "No se pudo procesar el carrito."); refreshCart(); }
+    finally { setBusy(false); }
+  }
   const subtotal = confirmedTotal ?? lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0);
   return <main className="mx-auto max-w-4xl px-4 py-8 text-foreground">
     <h1 className="text-2xl font-black uppercase">Mi carrito</h1>
-    {status === "confirmado" ? <p role="status" className="mt-4 border border-emerald-200 bg-emerald-50 p-4">Carrito confirmado y enviado a administración. Conserva sus productos y no genera un pedido.</p> : status === "actualizado" ? <p role="status" className="mt-4 border border-amber-200 bg-amber-50 p-4">Administración actualizó tu carrito. Revisá los productos y cantidades. La aceptación se habilitará en el próximo paso.</p> : null}
+    {status === "confirmado" ? <p role="status" className="mt-4 border border-emerald-200 bg-emerald-50 p-4">Carrito confirmado y enviado a administración. Conserva sus productos y no genera un pedido.</p> : status === "actualizado" ? <p role="status" className="mt-4 border border-amber-200 bg-amber-50 p-4">Administración revisó tu carrito. Podés seguir comprando o confirmar el pedido para pagar.</p> : null}
     {status !== "activo" ? <p className="mt-2 text-sm">Si modificás los productos, el carrito vuelve a estar activo para revisión.</p> : null}
     {syncError ? <p role="status" className="mt-4 text-sm">La sincronización está pendiente o el carrito cambió desde otro dispositivo. Revisá las cantidades; reintentaremos guardar automáticamente.</p> : null}
     {storageError ? <p role="status" className="mt-4 text-sm">No pudimos guardar el carrito en este navegador. Podés seguir usándolo durante esta visita.</p> : null}
@@ -55,6 +74,10 @@ export function CartContent() {
     </>}
     {confirmedLines?.some(line => line.exhausted) ? <section className="mt-6 border border-red-200 bg-red-50 p-4"><h2 className="font-bold">Productos agotados</h2><ul className="mt-2 space-y-2">{confirmedLines.filter(line => line.exhausted).map(line => <li key={line.productId}>{line.quantity} × {line.name} · SKU: {line.code} · Agotado (no suma al total)</li>)}</ul></section> : null}
     {ready ? <div className="mt-4 space-y-2 border-t border-black/10 pt-4">{adjustments.map((item, index) => <p key={index} className="flex justify-between gap-3"><span>{item.description}</span><strong>{money(item.amountCents / 100)}</strong></p>)}<p className="text-right text-xl font-bold">Total a pagar: {money(cartPayableCents(subtotal, adjustments) / 100)}</p></div> : null}
-    <Link href="/" className="mt-6 inline-block border border-black/20 px-4 py-3 font-bold dark:border-white/20">Seguir comprando</Link>
+    {actionError ? <p role="alert" className="mt-4 text-red-700">{actionError}</p> : null}
+    <div className="mt-6 flex flex-wrap gap-3">
+      {status === "actualizado" ? <button type="button" disabled={busy || !ready || !items.length} onClick={() => void respond("accept")} className="bg-emerald-600 px-4 py-3 font-bold text-white disabled:opacity-40">{busy ? "Procesando…" : "Confirmar & Pagar"}</button> : null}
+      {status === "actualizado" || status === "confirmado" ? <button type="button" disabled={busy || !ready} onClick={() => void respond("continue")} className="border border-black/20 px-4 py-3 font-bold disabled:opacity-40">Seguir comprando</button> : <Link href="/" className="inline-block border border-black/20 px-4 py-3 font-bold">Seguir comprando</Link>}
+    </div>
   </main>;
 }

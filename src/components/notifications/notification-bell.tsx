@@ -3,13 +3,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaBell, FaXmark, FaVolumeHigh, FaVolumeXmark } from "react-icons/fa6";
 import { useAuth } from "@/components/auth/auth-provider";
-import { hasRole } from "@/lib/authorization";
 import type { CartNotification } from "@/lib/cart-notifications";
 import { playNotificationSound } from "@/lib/notification-sound";
 
 export function NotificationBell() {
   const { user } = useAuth();
-  return user && hasRole(user, "admin", "administrador", "vendedor") ? <Notifications key={user.id} userId={user.id} /> : null;
+  return user ? <Notifications key={user.id} userId={user.id} /> : null;
 }
 
 function Notifications({ userId }: { userId: string }) {
@@ -122,11 +121,11 @@ function Notifications({ userId }: { userId: string }) {
       {data.unread > 0 ? <button type="button" disabled={saving} className="m-3 text-sm underline disabled:opacity-40" onClick={() => void read()}>Marcar todas como leídas</button> : null}
       {error ? <p role="alert" className="px-3 py-2 text-sm text-red-700">{error}</p> : null}
       <ul className="max-h-[60vh] overflow-y-auto">{data.notifications.map(n => <li key={n.id} className={`border-t p-3 ${n.read ? "" : "bg-emerald-50"}`}>
-        <Link href={`/admin/carritos?carrito=${n.cartId}#carrito-${n.cartId}`} className="block" onClick={() => { if (!n.read) void read(n.id); setOpen(false); }}>
-          <p className="text-sm font-bold">{n.customer} envió un carrito a revisión{!n.read ? <span className="ml-2 inline-block size-2 rounded-full bg-emerald-600" aria-label="Sin leer" /> : null}</p>
+        <Link href={n.kind === "actualizacion" ? "/carrito" : n.kind === "pedido" ? `/admin/pedidos?pedido=${n.orderId}#pedido-${n.orderId}` : `/admin/carritos?carrito=${n.cartId}#carrito-${n.cartId}`} className="block" onClick={() => { if (!n.read) void read(n.id); setOpen(false); }}>
+          <p className="text-sm font-bold">{n.kind === "actualizacion" ? "Administración actualizó tu carrito" : n.kind === "pedido" ? `${n.customer} confirmó un pedido para pagar` : `${n.customer} envió un carrito a revisión`}{!n.read ? <span className="ml-2 inline-block size-2 rounded-full bg-emerald-600" aria-label="Sin leer" /> : null}</p>
           <p className="mt-1 text-xs">{n.products} {n.products === 1 ? "producto" : "productos"} · {n.units} unidades · {n.total.toLocaleString("es-AR", { style: "currency", currency: "ARS" })}</p>
           <p className="mt-1 text-xs text-foreground/60">{new Date(n.created).toLocaleString("es-AR", { timeZone: "America/Buenos_Aires", hourCycle: "h23" })}</p>
-          <span className="mt-2 block text-xs font-bold text-emerald-700">Ver carrito →</span>
+          <span className="mt-2 block text-xs font-bold text-emerald-700">{n.kind === "pedido" ? "Ver pedido →" : "Ver carrito →"}</span>
         </Link>
       </li>)}</ul>
       {!data.notifications.length ? <p className="p-4 text-sm">{loaded ? "No tenés notificaciones todavía." : "Cargando avisos…"}</p> : null}

@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const user = await getCurrentUser();
     const token = (await cookies()).get(CART_COOKIE)?.value;
     const result = await synchronizeCart(user?.id ?? null, token, input.data);
-    const response = NextResponse.json({ adjustments: result.adjustments ?? [], items: result.items, version: result.version, status: result.status, lines: result.lines, total: result.total, stock: result.stock ?? {} }, { status: result.conflict ? 409 : 200, headers: { "Cache-Control": "no-store" } });
+    const response = NextResponse.json({ id: result.id, adjustments: result.adjustments ?? [], items: result.items, version: result.version, status: result.status, lines: result.lines, total: result.total, stock: result.stock ?? {} }, { status: result.conflict ? 409 : 200, headers: { "Cache-Control": "no-store" } });
     if (result.newToken) response.cookies.set(CART_COOKIE, result.newToken, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 180 });
     if (result.clearToken) response.cookies.delete(CART_COOKIE);
     return response;

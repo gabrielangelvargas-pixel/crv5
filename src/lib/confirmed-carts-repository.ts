@@ -1,6 +1,6 @@
 import { cartPayableCents, type CartAdjustment } from "./cart-adjustments";
 import { availableStock } from "./stock-reservations";
-import { notifyCartSubmitted } from "./cart-notifications";
+import { notifyCartSubmitted, notifyCartReviewed } from "./cart-notifications";
 import type { RowDataPacket } from "mysql2";
 import type { PoolConnection } from "mysql2/promise";
 import type { CartItem } from "./cart";
@@ -35,7 +35,7 @@ export async function confirmCart(userId: string, input: { version: number; expe
     // Retry of the same submission is harmless; an administrative revision is never accepted here.
     if (cart.estado === "confirmado" && Number(cart.version) === input.version + 1) { await connection.commit(); return { id: String(cart.id), version: Number(cart.version) }; }
     if (Number(cart.version) !== input.version) throw new ConfirmedCartError("El carrito cambió. Revisá las cantidades antes de confirmar.");
-    if (cart.estado !== "activo") throw new ConfirmedCartError("El carrito ya fue enviado. La aceptación de cambios se habilitará en el próximo paso.");
+    if (cart.estado !== "activo") throw new ConfirmedCartError("El carrito ya fue enviado. Revisá los cambios y usá Confirmar & Pagar desde tu carrito.");
     const items: CartItem[] = typeof cart.items === "string" ? JSON.parse(cart.items) : cart.items;
     const priced = await priceItems(connection, items, false, String(cart.id));
     if (Math.round(priced.total * 100) !== input.expectedTotalCents) throw new ConfirmedCartError("Los precios cambiaron. Actualizá la página y revisá el total.");
@@ -53,9 +53,9 @@ export async function updateConfirmedCart(id: string, input: { version: number; 
   const connection = await getDatabasePool().getConnection();
   try {
     await connection.beginTransaction();
-    const [rows] = await connection.query<RowDataPacket[]>("SELECT estado, version, ajustes FROM carritos WHERE id = ? FOR UPDATE", [id]);
+    const [rows] = await connection.query<RowDataPacket[]>("SELECT estado, version, ajustes, usuario_id, pedido_id FROM carritos WHERE id = ? FOR UPDATE", [id]);
     const cart = rows[0];
-    if (!cart || !["confirmado", "actualizado"].includes(cart.estado)) throw new ConfirmedCartError("Solo se pueden editar carritos confirmados o actualizados.");
+    if (!cart || cart.pedido_id || !["confirmado", "actualizado"].includes(cart.estado)) throw new ConfirmedCartError("Solo se pueden editar carritos confirmados o actualizados.");
     if (Number(cart.version) !== input.version) throw new ConfirmedCartError("El carrito cambió. Actualizá la página antes de editarlo.");
     const priced = await priceItems(connection, input.items, true, id);
     const adjustments: CartAdjustment[] = input.adjustments ?? (typeof cart.ajustes === "string" ? JSON.parse(cart.ajustes) : cart.ajustes ?? []);
@@ -65,6 +65,8 @@ export async function updateConfirmedCart(id: string, input: { version: number; 
     await connection.query("DELETE FROM carrito_reservas WHERE carrito_id = ?", [id]);
     for (const line of priced.lines.filter(l => l.reserved)) await connection.query("INSERT INTO carrito_reservas (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)", [id, line.productId, line.quantity]);
     await connection.query("UPDATE carritos SET items = ?, productos_confirmados = ?, ajustes = ?, total_estimado = ?, estado = 'actualizado', version = version + 1, ultima_actividad = NOW() WHERE id = ?", [JSON.stringify(input.items.filter(item => !item.exhausted).map(({ productId, quantity }) => ({ productId, quantity }))), JSON.stringify(priced.lines), JSON.stringify(adjustments), priced.total, id]);
+    const activeLines = priced.lines.filter(line => !line.exhausted);
+    if (cart.usuario_id) await notifyCartReviewed(connection, { cartId: id, userId: String(cart.usuario_id), version: Number(cart.version) + 1, products: activeLines.length, units: activeLines.reduce((sum, line) => sum + line.quantity, 0), total: payableCents / 100 });
     await connection.commit();
     return { ...priced, adjustments, payableTotal: payableCents / 100, version: Number(cart.version) + 1 };
   } catch (error) { await connection.rollback(); throw error; }

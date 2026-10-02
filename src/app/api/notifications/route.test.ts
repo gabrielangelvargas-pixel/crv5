@@ -5,10 +5,10 @@ vi.mock("@/lib/auth", () => ({ getCurrentUser: mocks.user }));
 vi.mock("@/lib/cart-notifications", () => ({ canReceiveCartNotifications: (user: { roles: string[] }) => user.roles.includes("admin"), getCartNotifications: mocks.list, readCartNotification: mocks.read }));
 const request = (body: object, origin = "http://localhost:3000") => new Request("http://localhost:3000/api/notifications", { method: "PATCH", headers: { Origin: origin, "Content-Type": "application/json" }, body: JSON.stringify(body) });
 beforeEach(() => { vi.clearAllMocks(); mocks.user.mockResolvedValue({ id: "7", roles: ["admin"] }); mocks.list.mockResolvedValue({ unread: 1, notifications: [] }); });
-it("exige sesión y rol autorizado", async () => {
+it("exige sesión y permite consultar al cliente sus propios avisos", async () => {
  mocks.user.mockResolvedValue(null); expect((await GET()).status).toBe(401);
- mocks.user.mockResolvedValue({ id: "7", roles: ["cliente"] }); expect((await GET()).status).toBe(403);
- expect(mocks.list).not.toHaveBeenCalled();
+ mocks.user.mockResolvedValue({ id: "7", roles: ["cliente"] }); expect((await GET()).status).toBe(200);
+ expect(mocks.list).toHaveBeenCalledWith("7");
 });
 it("lista únicamente avisos de la sesión", async () => { expect((await GET()).status).toBe(200); expect(mocks.list).toHaveBeenCalledWith("7"); });
 it("marca uno o todos únicamente para el usuario autenticado", async () => {

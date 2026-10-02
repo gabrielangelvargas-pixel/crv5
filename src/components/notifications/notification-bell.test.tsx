@@ -17,8 +17,8 @@ it("muestra contador y permite marcar los avisos como leídos", async () => {
  await waitFor(() => expect(screen.getByLabelText("Notificaciones, 0 sin leer")).toBeInTheDocument());
  expect(fetchMock.mock.calls.some(([, options]) => options?.method === "PATCH")).toBe(true);
 });
-it("no muestra campana a clientes", () => {
- auth.useAuth.mockReturnValue({ user: { id: "8", roles: ["cliente"] } });
+it("no muestra campana sin sesión", () => {
+ auth.useAuth.mockReturnValue({ user: null });
  render(<NotificationBell />);
  expect(screen.queryByRole("button")).not.toBeInTheDocument();
 });
@@ -58,4 +58,14 @@ it("sonido solo para avisos nuevos, con activación y opción de silenciar", asy
  fireEvent.click(screen.getByLabelText("Notificaciones, 1 sin leer"));
  await new Promise(resolve => setTimeout(resolve, 25));
  expect(start).toHaveBeenCalledTimes(4);
+});
+
+it("el cliente recibe la revisión con enlace a su carrito", async () => {
+ auth.useAuth.mockReturnValue({ user: { id: "8", roles: ["cliente"] } });
+ vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ unread: 1, notifications: [{ id: "5", kind: "actualizacion", cartId: "cart", customer: "Cliente", products: 1, units: 2, total: 100, created: "2026-10-01T20:00:00Z", read: false }] }) })));
+ render(<NotificationBell />);
+ await waitFor(() => expect(screen.getByLabelText("Notificaciones, 1 sin leer")).toBeInTheDocument());
+ fireEvent.click(screen.getByLabelText("Notificaciones, 1 sin leer"));
+ expect(screen.getByText("Administración actualizó tu carrito")).toBeInTheDocument();
+ expect(screen.getByRole("link")).toHaveAttribute("href", "/carrito");
 });

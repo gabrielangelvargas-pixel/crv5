@@ -17,8 +17,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       <section className="mx-auto w-full max-w-6xl">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-foreground/45">Cuenta</p>
         <h1 className="mt-2 text-3xl font-black uppercase tracking-[0.05em]">Mis pedidos</h1>
-        {orders.some((order) => order.id === confirmado) ? <p role="status" className="mt-4 border border-emerald-200 bg-emerald-50 p-4">Pedido recibido. Te confirmaremos el importe total antes del pago.</p> : null}
-        <OrdersList orders={orders} />
+        {orders.some((order) => order.id === confirmado) ? <p role="status" className="mt-4 border border-emerald-200 bg-emerald-50 p-4">Pedido confirmado y pendiente de pago. Nos comunicaremos con vos por WhatsApp para indicarte cómo pagar.</p> : null}
+        <OrdersList orders={orders} selectedId={confirmado} />
       </section>
     </main>
   );

@@ -66,7 +66,7 @@ export function OrderEditor({ order, products, cartVersion, adjustments = [] }: 
         {payableCents < 0 ? <p role="alert" className="text-sm text-red-700">El total a pagar no puede ser negativo.</p> : null}
         <p className="text-xl font-bold">Total a pagar: {money(payableCents / 100)}</p>
       </div> : null}
-      <div className="flex gap-3"><button className="bg-black px-4 py-2 text-white disabled:opacity-40" disabled={!changed || !validAdjustments || payableCents < 0 || !items.length || items.some(i => !Number.isInteger(i.quantity) || i.quantity < 1)} onClick={save}>{busy ? "Guardando…" : "Guardar cambios"}</button><button className="border px-4 py-2" onClick={() => { setItems(initialItems()); setExtraItems(initialAdjustments()); setError(""); setSearch(""); if (cartVersion === undefined) setOpen(false); }}>Cancelar</button></div>
+      <div className="flex gap-3"><button className="bg-black px-4 py-2 text-white disabled:opacity-40" disabled={(!changed && !(cartVersion !== undefined && order.status === "confirmado")) || !validAdjustments || payableCents < 0 || !items.length || items.some(i => !Number.isInteger(i.quantity) || i.quantity < 1)} onClick={save}>{busy ? "Guardando…" : "Guardar cambios"}</button><button className="border px-4 py-2" onClick={() => { setItems(initialItems()); setExtraItems(initialAdjustments()); setError(""); setSearch(""); if (cartVersion === undefined) setOpen(false); }}>Cancelar</button></div>
     </fieldset>
     {conceptOpen ? <AdjustmentModal onClose={() => setConceptOpen(false)} onAdd={item => { setExtraItems([...extraItems, item]); setConceptOpen(false); }} /> : null}
     {error && <p role="alert" className="mt-3 text-red-700">{error}</p>}

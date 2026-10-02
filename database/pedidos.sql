@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
   estado ENUM('pendiente_revision','esperando_pago','cerrado','cancelado') NOT NULL DEFAULT 'pendiente_revision',
   productos JSON NOT NULL,
   entrega JSON NOT NULL,
+  ajustes JSON NULL,
   total_estimado DECIMAL(14,2) NOT NULL,
   total_confirmado DECIMAL(14,2) NULL,
   creado DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { OrderEditor } from "@/components/orders/order-editor";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
@@ -36,7 +37,8 @@ export default async function AdminCartsPage({ searchParams }: { searchParams: P
           return <li key={item.productId} className="flex flex-wrap justify-between gap-2 text-sm"><span>{item.quantity} × {product.name} · {product.variantName ?? product.code}{!product.active || item.quantity > product.stock ? " · Agregado · Esperando ingreso" : ""} · {cart.lines?.find(line => line.productId === item.productId)?.reserved ? "Reservado: Sí" : "Reservado: No"}</span><strong>{money(subtotal)}</strong></li>;
         })}</ul>
         <p className="mt-4 text-right font-bold">Total estimado: {money(cart.total ?? total)}</p>{cart.lines?.filter(line => line.exhausted).map(line => <p key={line.productId} className="mt-2 text-sm">{line.quantity} × {line.name} · SKU: {line.code} · Agotado (no suma al total)</p>)}</> : null}
-        {cart.status === "confirmado" || cart.status === "actualizado" ? <OrderEditor adjustments={cart.adjustments} key={cart.version} cartVersion={cart.version} products={products.filter(p => p.active).map(p => ({ ...p, stock: p.availableStock + (cart.lines?.find(l => l.productId === p.id && l.reserved)?.quantity ?? 0) }))} order={{ id: cart.id, customer: cart.customer ?? "", status: cart.status, created: cart.lastActivity, lines: cart.lines ?? [], estimatedTotal: cart.total ?? total, confirmedTotal: null, delivery: cart.delivery ?? { method: "retiro", phone: "", address: "", notes: "" } }} /> : null}
+        {!cart.orderId && (cart.status === "confirmado" || cart.status === "actualizado") ? <OrderEditor adjustments={cart.adjustments} key={cart.version} cartVersion={cart.version} products={products.filter(p => p.active).map(p => ({ ...p, stock: p.availableStock + (cart.lines?.find(l => l.productId === p.id && l.reserved)?.quantity ?? 0) }))} order={{ id: cart.id, customer: cart.customer ?? "", status: cart.status, created: cart.lastActivity, lines: cart.lines ?? [], estimatedTotal: cart.total ?? total, confirmedTotal: null, delivery: cart.delivery ?? { method: "retiro", phone: "", address: "", notes: "" } }} /> : null}
+        {cart.orderId ? <Link className="mt-4 inline-block font-bold underline" href={`/admin/pedidos?pedido=${cart.orderId}#pedido-${cart.orderId}`}>Pedido generado · Ver pedido</Link> : null}
       </details>;
     })}</div>
     {!carts.length ? <p className="mt-6">No hay carritos con productos.</p> : null}

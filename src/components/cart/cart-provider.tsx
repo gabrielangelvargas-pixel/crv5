@@ -7,7 +7,7 @@ import type { Product } from "@/data/products";
 import { normalizeCart, type CartItem } from "@/lib/cart";
 
 type CartContextValue = {
-  adjustments: CartAdjustment[]; status: string; confirmedLines: OrderLine[] | null; confirmedTotal: number | null; items: CartItem[]; products: Product[]; ready: boolean; storageError: boolean; syncError: boolean;
+  cartId: string; adjustments: CartAdjustment[]; status: string; confirmedLines: OrderLine[] | null; confirmedTotal: number | null; items: CartItem[]; products: Product[]; ready: boolean; storageError: boolean; syncError: boolean;
   addItem: (productId: string, quantity: number) => void;
   setQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
@@ -20,6 +20,7 @@ export function CartProvider({ products, children, userId = null }: { products: 
   const storageKey = userId ? `crv4-cart-user-${userId}` : "crv4-cart-v1";
   const [stock, setStock] = useState<Record<string, number>>({});
   const availableProducts = products.map(p => stock[p.id] === undefined ? p : { ...p, stock: stock[p.id]! });
+  const [cartId, setCartId] = useState("");
   const [items, setItems] = useState<CartItem[]>([]);
   const [adjustments, setAdjustments] = useState<CartAdjustment[]>([]);
   const [status, setStatus] = useState("activo");
@@ -66,6 +67,7 @@ export function CartProvider({ products, children, userId = null }: { products: 
         if (!response.ok && response.status !== 409) throw new Error("sync");
         const data = await response.json();
         if (!Array.isArray(data.items) || !Number.isInteger(data.version)) throw new Error("response");
+        setCartId(data.id ?? "");
         setAdjustments(data.adjustments ?? []);
         setStatus(data.status ?? "activo");
         setStock(data.stock ?? {});
@@ -182,7 +184,7 @@ export function CartProvider({ products, children, userId = null }: { products: 
     setStatus("activo"); setConfirmedLines(null); setConfirmedTotal(null);
     setItems((current) => current.filter((item) => item.productId !== productId));
   }
-  return <CartContext.Provider value={{ adjustments, status, confirmedLines, confirmedTotal, items, products: availableProducts, ready, storageError, syncError, addItem, setQuantity, removeItem, prepareCheckout: () => checkoutRef.current(), refreshCart: () => { version.current = undefined; syncNow.current(); } }}>{children}</CartContext.Provider>;
+  return <CartContext.Provider value={{ cartId, adjustments, status, confirmedLines, confirmedTotal, items, products: availableProducts, ready, storageError, syncError, addItem, setQuantity, removeItem, prepareCheckout: () => checkoutRef.current(), refreshCart: () => { version.current = undefined; syncNow.current(); } }}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

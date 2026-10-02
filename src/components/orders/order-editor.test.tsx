@@ -88,3 +88,9 @@ it("cancela el modal sin agregar conceptos y permite descontar sin teclear el si
  expect(screen.queryByText(/Se aplican los precios/)).not.toBeInTheDocument();
  cleanup();
 });
+
+it("permite enviar la revisión inicial aunque no cambien cantidades o importes", () => {
+ render(<OrderEditor order={{ ...order, status: "confirmado" }} products={products} cartVersion={1} />);
+ expect(screen.getByText("Guardar cambios")).toBeEnabled();
+ cleanup();
+});

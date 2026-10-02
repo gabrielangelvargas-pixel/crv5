@@ -1,3 +1,4 @@
+import type { CartAdjustment } from "./cart-adjustments";
 import { randomUUID } from "node:crypto";
 import type { RowDataPacket } from "mysql2";
 import { getDatabasePool } from "./db";
@@ -5,7 +6,7 @@ import type { CartItem } from "./cart";
 
 export type OrderDelivery = { method: "retiro" | "envio"; phone: string; address: string; notes: string };
 export type OrderLine = { reserved?: boolean; exhausted?: boolean; productId: string; code: string; name: string; variant: string | null; quantity: number; unitPrice: number; subtotal: number };
-export type Order = { id: string; customer: string; status: string; lines: OrderLine[]; delivery: OrderDelivery; estimatedTotal: number; confirmedTotal: number | null; created: string };
+export type Order = { adjustments?: CartAdjustment[]; id: string; customer: string; status: string; lines: OrderLine[]; delivery: OrderDelivery; estimatedTotal: number; confirmedTotal: number | null; created: string };
 export class OrderError extends Error { }
 export async function updateOrder(id: string, original: OrderLine[], items: CartItem[]) {
   const connection = await getDatabasePool().getConnection();
@@ -70,7 +71,7 @@ export async function createOrder(userId: string, input: { key: string; version:
 
 export async function getOrders(userId?: string) {
   const [rows] = await getDatabasePool().query<RowDataPacket[]>(`SELECT p.*, u.nombre FROM pedidos p JOIN usuarios u ON u.id = p.usuario_id ${userId ? "WHERE p.usuario_id = ?" : ""} ORDER BY p.creado DESC LIMIT 200`, userId ? [userId] : []);
-  return rows.map((row): Order => ({ id: String(row.id), customer: String(row.nombre), status: String(row.estado), lines: parseJSON(row.productos), delivery: parseJSON(row.entrega), estimatedTotal: Number(row.total_estimado), confirmedTotal: row.total_confirmado === null ? null : Number(row.total_confirmado), created: new Date(row.creado).toISOString() }));
+  return rows.map((row): Order => ({ adjustments: parseJSON(row.ajustes ?? []), id: String(row.id), customer: String(row.nombre), status: String(row.estado), lines: parseJSON(row.productos), delivery: parseJSON(row.entrega), estimatedTotal: Number(row.total_estimado), confirmedTotal: row.total_confirmado === null ? null : Number(row.total_confirmado), created: new Date(row.creado).toISOString() }));
 }
 
 export async function getOrderContact(userId: string) {

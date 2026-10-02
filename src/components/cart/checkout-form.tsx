@@ -45,7 +45,7 @@ export function CheckoutForm({ contact }: { contact: { phone: string; address: s
   return <form onSubmit={submit} className="mt-6 space-y-5">
     <ul className="space-y-3">{lines.map((line) => <li key={line.productId} className="flex justify-between gap-3 border-b border-black/10 pb-3 text-sm"><span>{line.quantity} × {line.product.name} · {line.product.variantName ?? line.product.code}</span><strong>{money(Math.round(line.price * 100) * line.quantity / 100)}</strong></li>)}</ul>
     <p className="text-right text-xl font-bold">Total estimado: {money(totalCents / 100)}</p>
-    <p className="text-sm text-foreground/70">El carrito se enviará a administración para revisión y conservará sus productos. No genera un pedido ni reserva stock. La aceptación de los cambios se habilitará en el próximo paso. No hay un mínimo para enviar el carrito.</p>
+    <p className="text-sm text-foreground/70">El carrito se enviará a administración para revisión y conservará sus productos. No genera un pedido ni reserva stock. Después de la revisión podrás seguir comprando o confirmar el pedido para pagar. No hay un mínimo para enviar el carrito.</p>
     <fieldset disabled={saving} className="grid gap-4 sm:grid-cols-2">
       <label className="text-sm font-bold">Entrega<select value={method} onChange={(event) => setMethod(event.target.value as "retiro" | "envio")} className="mt-2 w-full border border-black/20 bg-white p-3"><option value="retiro">Retiro</option><option value="envio">Envío</option></select></label>
       <label className="text-sm font-bold">Teléfono de contacto<input required minLength={6} maxLength={30} type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="mt-2 w-full border border-black/20 p-3" /></label>

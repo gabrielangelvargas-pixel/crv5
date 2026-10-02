@@ -36,7 +36,7 @@ it("rechaza versiones anteriores y falta de stock", async () => {
 });
 it("no permite que la confirmación inicial acepte cambios administrativos", async () => {
  state = "actualizado";
- await expect(confirmCart("7", input)).rejects.toThrow("próximo paso");
+ await expect(confirmCart("7", input)).rejects.toThrow("Confirmar & Pagar");
 });
 it("rechaza precios diferentes y carritos vacíos", async () => {
  await expect(confirmCart("7", { ...input, expectedTotalCents: 1 })).rejects.toThrow("precios cambiaron");

@@ -77,13 +77,13 @@ export async function synchronizeCart(userId: string | null, token: string | und
 
 export async function getAdminCarts(selectedId?: string) {
   const [rows] = await getDatabasePool().query<RowDataPacket[]>(`
-    SELECT c.id, c.items, c.version, c.entrega, c.productos_confirmados, c.total_estimado, c.ajustes, c.ultima_actividad, u.nombre, u.usuario,
+    SELECT c.id, c.pedido_id, c.items, c.version, c.entrega, c.productos_confirmados, c.total_estimado, c.ajustes, c.ultima_actividad, u.nombre, u.usuario,
       CASE WHEN c.estado IN ('confirmado','actualizado') THEN c.estado WHEN c.ultima_actividad <= DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 'abandonado' ELSE 'activo' END AS estado
-    FROM carritos c LEFT JOIN usuarios u ON u.id = c.usuario_id
+    FROM carritos c LEFT JOIN pedidos p ON p.id = c.pedido_id LEFT JOIN usuarios u ON u.id = COALESCE(c.usuario_id, p.usuario_id)
     WHERE c.estado IN ('activo','confirmado','actualizado') AND (JSON_LENGTH(c.items) > 0 OR JSON_LENGTH(c.productos_confirmados) > 0)
     ORDER BY (c.id = ?) DESC, c.ultima_actividad DESC LIMIT 200
   `, [selectedId ?? ""]);
-  return rows.map((row) => ({ id: String(row.id), items: (typeof row.items === "string" ? JSON.parse(row.items) : row.items) as CartItem[],
+  return rows.map((row) => ({ orderId: row.pedido_id ? String(row.pedido_id) : null, id: String(row.id), items: (typeof row.items === "string" ? JSON.parse(row.items) : row.items) as CartItem[],
     customer: row.nombre ? String(row.nombre) : null, username: row.usuario ? String(row.usuario) : null,
     adjustments: (typeof row.ajustes === "string" ? JSON.parse(row.ajustes) : row.ajustes ?? []) as CartAdjustment[], version: Number(row.version), delivery: (typeof row.entrega === "string" ? JSON.parse(row.entrega) : row.entrega) as OrderDelivery | null, lines: (typeof row.productos_confirmados === "string" ? JSON.parse(row.productos_confirmados) : row.productos_confirmados) as OrderLine[] | null, total: row.total_estimado == null ? null : Number(row.total_estimado), lastActivity: new Date(row.ultima_actividad).toISOString(), status: String(row.estado) }));
 }

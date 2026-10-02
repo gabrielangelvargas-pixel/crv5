@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS notificaciones_carritos (
   usuario_id BIGINT UNSIGNED NOT NULL,
   carrito_id CHAR(36) NOT NULL,
   version INT UNSIGNED NOT NULL,
+  tipo ENUM('revision','actualizacion','pedido') NOT NULL DEFAULT 'revision',
+  pedido_id CHAR(36) NULL,
   cliente VARCHAR(180) NOT NULL,
   productos INT UNSIGNED NOT NULL,
   unidades INT UNSIGNED NOT NULL,
