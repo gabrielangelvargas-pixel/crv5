@@ -91,3 +91,20 @@ it("persiste agotado en el historial pero lo excluye de items, total y reservas"
  expect(db.query).toHaveBeenCalledWith(expect.stringContaining("UPDATE carritos SET items"), expect.arrayContaining(["[]", JSON.stringify(result.lines), 0, "cart"]));
  expect(db.query.mock.calls.some(([sql]) => sql.startsWith("INSERT INTO carrito_reservas"))).toBe(false);
 });
+
+it("guarda varios ajustes con centavos sin cambiar el subtotal de productos", async () => {
+ state = "confirmado";
+ const adjustments = [{ description: "Redondeo", amountCents: -510 }, { description: "Envío", amountCents: 112000 }];
+ const result = await updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 3 }], adjustments });
+ expect(result.total).toBe(210);
+ expect(result.payableTotal).toBe(1324.9);
+ expect(result.adjustments).toEqual(adjustments);
+ expect(db.query).toHaveBeenCalledWith(expect.stringContaining("ajustes = ?"), expect.arrayContaining([JSON.stringify(adjustments)]));
+});
+it("rechaza ajustes inválidos y un total negativo antes de tocar reservas", async () => {
+ state = "confirmado";
+ for (const adjustment of [{ description: "Descuento", amountCents: -100000 }, { description: "", amountCents: 100 }, { description: "Envío", amountCents: 1.5 }]) {
+  await expect(updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 1 }], adjustments: [adjustment] })).rejects.toThrow();
+ }
+ expect(db.query.mock.calls.some(([sql]) => sql.startsWith("DELETE FROM carrito_reservas"))).toBe(false);
+});

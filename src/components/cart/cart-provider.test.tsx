@@ -21,7 +21,7 @@ it("recupera la cuenta desde el servidor sin reimportar su copia local", async (
   vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ items: [{ productId: "a", quantity: 4 }], version: 3 }) })));
   render(<CartProvider products={products} userId="7"><Controls /></CartProvider>);
   await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("4"));
-  expect(JSON.parse(localStorage.getItem("crv4-cart-user-7")!)).toEqual([{ productId: "a", quantity: 4 }]);
+  await waitFor(() => expect(JSON.parse(localStorage.getItem("crv4-cart-user-7")!)).toEqual([{ productId: "a", quantity: 4 }]));
 });
 
 it("continúa usando el respaldo local cuando el servidor falla", async () => {

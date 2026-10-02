@@ -41,7 +41,25 @@ it("conserva agotados sin sumar su importe y desmarca su reserva", () => {
  fireEvent.click(screen.getByLabelText("Agotado: Aro"));
  expect(screen.getByLabelText("Reservado: Aro")).not.toBeChecked();
  expect(screen.getByLabelText("Reservado: Aro")).toBeDisabled();
- expect(screen.getByText("Total estimado: $ 0,00")).toBeInTheDocument();
+ expect(screen.getByText("Subtotal: $ 0,00")).toBeInTheDocument();
  expect(screen.getByLabelText("Cantidad de Aro")).toHaveTextContent("1");
+ cleanup();
+});
+
+it("agrega varios conceptos, calcula el total y permite quitarlos", () => {
+ render(<OrderEditor order={order} products={products} cartVersion={1} />);
+ fireEvent.click(screen.getByText("Agregar concepto"));
+ expect(screen.getByText("Guardar cambios")).toBeDisabled();
+ fireEvent.change(screen.getByLabelText("Concepto 1"), { target: { value: "Redondeo" } });
+ fireEvent.change(screen.getByLabelText("Importe 1"), { target: { value: "-5,10" } });
+ fireEvent.click(screen.getByText("Agregar concepto"));
+ fireEvent.change(screen.getByLabelText("Concepto 2"), { target: { value: "Envío" } });
+ fireEvent.change(screen.getByLabelText("Importe 2"), { target: { value: "1120" } });
+ expect(screen.getByText("Total a pagar: $ 1.214,90")).toBeInTheDocument();
+ expect(screen.getByText("Guardar cambios")).toBeEnabled();
+ fireEvent.click(screen.getByLabelText("Eliminar concepto 2"));
+ expect(screen.getByText("Total a pagar: $ 94,90")).toBeInTheDocument();
+ fireEvent.click(screen.getByText("Cancelar"));
+ expect(screen.queryByLabelText("Concepto 1")).not.toBeInTheDocument();
  cleanup();
 });

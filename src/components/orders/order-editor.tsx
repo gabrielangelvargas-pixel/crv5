@@ -1,34 +1,41 @@
 "use client";
+import { cartPayableCents, parseAdjustmentAmount, type CartAdjustment } from "@/lib/cart-adjustments";
 import { FaMinus, FaPlus, FaRegTrashAlt } from "react-icons/fa";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Order } from "@/lib/orders-repository";
 import type { Product } from "@/data/products";
 const money = (v: number) => v.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
-export function OrderEditor({ order, products, cartVersion }: { order: Order; products: Pick<Product, "id" | "name" | "code" | "variantName" | "stock" | "salePrice" | "offerPrice" | "priceTiers">[]; cartVersion?: number }) {
+export function OrderEditor({ order, products, cartVersion, adjustments = [] }: { order: Order; products: Pick<Product, "id" | "name" | "code" | "variantName" | "stock" | "salePrice" | "offerPrice" | "priceTiers">[]; cartVersion?: number; adjustments?: CartAdjustment[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(cartVersion !== undefined);
   const initialItems = () => order.lines.map(l => ({ productId: l.productId, quantity: l.quantity, reserved: l.reserved ?? false, exhausted: l.exhausted ?? false }));
   const [items, setItems] = useState(initialItems);
+  const initialAdjustments = () => adjustments.map(item => ({ description: item.description, amount: (item.amountCents / 100).toFixed(2) }));
+  const [extraItems, setExtraItems] = useState(initialAdjustments);
+  const validAdjustments = extraItems.every(item => item.description.trim().length > 0 && item.description.trim().length <= 120 && parseAdjustmentAmount(item.amount) !== null);
+  const parsedAdjustments = extraItems.map(item => ({ description: item.description.trim(), amountCents: parseAdjustmentAmount(item.amount) ?? 0 }));
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const changed = JSON.stringify(items) !== JSON.stringify(initialItems());
+  const changed = JSON.stringify(items) !== JSON.stringify(initialItems()) || JSON.stringify(extraItems) !== JSON.stringify(initialAdjustments());
   const price = (id: string, quantity: number) => {
     const p = products.find(p => p.id === id);
     return p ? Math.min(p.salePrice, p.offerPrice ?? p.salePrice, ...p.priceTiers.filter(t => t.minimumQuantity <= quantity).map(t => t.unitPrice)) : order.lines.find(l => l.productId === id)?.unitPrice ?? 0;
   };
+  const subtotal = items.reduce((sum, item) => sum + (item.exhausted ? 0 : Math.round(price(item.productId, item.quantity) * 100) * item.quantity), 0) / 100;
+  const payableCents = cartPayableCents(subtotal, parsedAdjustments);
   async function save() {
     setBusy(true); setError("");
     try {
-      const response = await fetch(cartVersion === undefined ? `/api/orders/${order.id}` : `/api/admin/carts/${order.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ original: order.lines, items, version: cartVersion }) });
+      const response = await fetch(cartVersion === undefined ? `/api/orders/${order.id}` : `/api/admin/carts/${order.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ original: order.lines, items, adjustments: parsedAdjustments, version: cartVersion }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       if (cartVersion === undefined) setOpen(false); router.refresh();
     } catch (e) { setError(e instanceof Error ? e.message : "No se pudo guardar."); }
     finally { setBusy(false); }
   }
-  if (!open) return <button className="mt-4 border px-4 py-2 font-bold" onClick={() => { setItems(initialItems()); setError(""); setSearch(""); setOpen(true); }}>{cartVersion === undefined ? "Editar pedido" : "Editar carrito"}</button>;
+  if (!open) return <button className="mt-4 border px-4 py-2 font-bold" onClick={() => { setItems(initialItems()); setExtraItems(initialAdjustments()); setError(""); setSearch(""); setOpen(true); }}>{cartVersion === undefined ? "Editar pedido" : "Editar carrito"}</button>;
   return <section className="mt-4 border p-4" aria-label={cartVersion === undefined ? "Editar pedido" : "Editar carrito"}>
     <fieldset disabled={busy} className="space-y-4">
       <div className="hidden grid-cols-[1fr_auto_auto_auto] gap-4 border-b pb-2 text-xs font-bold uppercase text-foreground/60 sm:grid"><span>Producto</span><span className="w-32 text-center">Cantidad</span><span className="w-28 text-center">Reservado</span><span className="w-32 text-right">Subtotal</span></div>
@@ -46,10 +53,21 @@ export function OrderEditor({ order, products, cartVersion }: { order: Order; pr
       </div>; })}
       <label className="block">Agregar producto<input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, código o variante" className="mt-2 block w-full border p-2" /></label>
       {search.trim() && <ul className="max-h-64 overflow-auto">{products.filter(p => (cartVersion !== undefined || p.stock > 0) && !items.some(i => i.productId === p.id) && `${p.name} ${p.code} ${p.variantName ?? ""}`.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 30).map(p => <li key={p.id} className="flex items-center justify-between gap-3 border-b py-2"><span>{p.name} · {p.variantName ?? p.code} · Stock {p.stock}</span><button className="border px-3 py-2" onClick={() => { setItems([...items, { productId: p.id, quantity: 1, reserved: false, exhausted: false }]); setSearch(""); }}>Agregar</button></li>)}</ul>}
-      <p className="font-bold">Total estimado: {money(items.reduce((s, i) => s + (i.exhausted ? 0 : Math.round(price(i.productId, i.quantity) * 100) * i.quantity), 0) / 100)}</p>
+      <p className="font-bold">Subtotal: {money(subtotal)}</p>
+      {cartVersion !== undefined ? <div className="space-y-3 border-y border-black/10 py-4">
+        {extraItems.map((item, index) => <div key={index} className="grid grid-cols-[1fr_2.5rem] gap-2 sm:grid-cols-[1fr_10rem_2.5rem]">
+          <input aria-label={`Concepto ${index + 1}`} maxLength={120} value={item.description} placeholder="Concepto (ej. envío o redondeo)" className="min-w-0 border p-2" onChange={e => setExtraItems(extraItems.map((entry, i) => i === index ? { ...entry, description: e.target.value } : entry))} />
+          <input aria-label={`Importe ${index + 1}`} type="text" value={item.amount} placeholder="Importe (+ o −)" className="col-start-1 row-start-2 min-w-0 border p-2 sm:col-start-auto sm:row-start-auto" onChange={e => setExtraItems(extraItems.map((entry, i) => i === index ? { ...entry, amount: e.target.value } : entry))} />
+          <button type="button" aria-label={`Eliminar concepto ${index + 1}`} className="col-start-2 row-start-1 flex size-10 items-center justify-center text-red-600 sm:col-start-auto" onClick={() => setExtraItems(extraItems.filter((_, i) => i !== index))}><FaRegTrashAlt aria-hidden="true" /></button>
+        </div>)}
+        <button type="button" disabled={extraItems.length >= 50} className="flex items-center gap-2 border px-3 py-2 font-bold" onClick={() => setExtraItems([...extraItems, { description: "", amount: "" }])}><FaPlus aria-hidden="true" />Agregar concepto</button>
+        <p className="text-xs text-foreground/60">Los importes positivos suman y los negativos descuentan. Usá punto o coma para los centavos.</p>
+        {(!validAdjustments || payableCents < 0) ? <p className="text-sm text-red-700">Completá cada concepto con un importe válido. El total a pagar no puede ser negativo.</p> : null}
+        <p className="text-xl font-bold">Total a pagar: {money(payableCents / 100)}</p>
+      </div> : null}
       <p className="text-sm">Se aplican los precios actuales por variante y cantidad. El stock no se descuenta al editar.</p>
       {cartVersion !== undefined ? <p className="text-sm">Los productos agotados se conservan en el historial, sin sumar unidades ni importe y sin reservar stock. Cambiar una cantidad vuelve a dejar esa línea agregada, sin reserva. Se guardará como actualizado por administración. La aceptación del cliente se habilitará en el próximo paso.</p> : null}
-      <div className="flex gap-3"><button className="bg-black px-4 py-2 text-white disabled:opacity-40" disabled={!changed || !items.length || items.some(i => !Number.isInteger(i.quantity) || i.quantity < 1)} onClick={save}>{busy ? "Guardando…" : "Guardar cambios"}</button><button className="border px-4 py-2" onClick={() => { setItems(initialItems()); setError(""); setSearch(""); if (cartVersion === undefined) setOpen(false); }}>Cancelar</button></div>
+      <div className="flex gap-3"><button className="bg-black px-4 py-2 text-white disabled:opacity-40" disabled={!changed || !validAdjustments || payableCents < 0 || !items.length || items.some(i => !Number.isInteger(i.quantity) || i.quantity < 1)} onClick={save}>{busy ? "Guardando…" : "Guardar cambios"}</button><button className="border px-4 py-2" onClick={() => { setItems(initialItems()); setExtraItems(initialAdjustments()); setError(""); setSearch(""); if (cartVersion === undefined) setOpen(false); }}>Cancelar</button></div>
     </fieldset>
     {error && <p role="alert" className="mt-3 text-red-700">{error}</p>}
   </section>;

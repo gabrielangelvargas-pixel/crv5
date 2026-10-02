@@ -1,3 +1,4 @@
+import type { CartAdjustment } from "./cart-adjustments";
 import { availableStock } from "./stock-reservations";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { RowDataPacket } from "mysql2";
@@ -7,7 +8,7 @@ import type { OrderDelivery, OrderLine } from "./orders-repository";
 import type { CartItem } from "./cart";
 
 export const CART_COOKIE = "crv4_cart";
-type CartRow = RowDataPacket & { id: string; usuario_id: string | number | null; items: string | CartItem[]; version: number; estado?: string; productos_confirmados?: string | OrderLine[] | null; total_estimado?: number | null };
+type CartRow = RowDataPacket & { id: string; usuario_id: string | number | null; items: string | CartItem[]; version: number; estado?: string; ajustes?: string | CartAdjustment[] | null; productos_confirmados?: string | OrderLine[] | null; total_estimado?: number | null };
 const hash = (token: string) => createHash("sha256").update(token).digest("hex");
 function readItems(row: CartRow): CartItem[] { return typeof row.items === "string" ? JSON.parse(row.items) : row.items; }
 
@@ -67,7 +68,7 @@ export async function synchronizeCart(userId: string | null, token: string | und
     if (changed || merged) await connection.query("UPDATE carritos SET items = ?, version = ?, ultima_actividad = NOW(), estado = 'activo', productos_confirmados = ?, total_estimado = NULL, confirmado_en = NULL WHERE id = ?", [JSON.stringify(items), version, history.length ? JSON.stringify(history) : null, cart.id]);
     const stock = await availableStock(connection, items.map(item => item.productId), cart.id);
     await connection.commit();
-    return { stock: Object.fromEntries(stock), id: cart.id, items, version, conflict, newToken, clearToken: Boolean(userId && token), status: changed || merged ? "activo" : cart.estado ?? "activo", lines: changed || merged ? (history.length ? history : null) : (typeof cart.productos_confirmados === "string" ? JSON.parse(cart.productos_confirmados) : cart.productos_confirmados ?? null) as OrderLine[] | null, total: changed || merged || cart.total_estimado == null ? null : Number(cart.total_estimado) };
+    return { adjustments: (typeof cart.ajustes === "string" ? JSON.parse(cart.ajustes) : cart.ajustes ?? []) as CartAdjustment[], stock: Object.fromEntries(stock), id: cart.id, items, version, conflict, newToken, clearToken: Boolean(userId && token), status: changed || merged ? "activo" : cart.estado ?? "activo", lines: changed || merged ? (history.length ? history : null) : (typeof cart.productos_confirmados === "string" ? JSON.parse(cart.productos_confirmados) : cart.productos_confirmados ?? null) as OrderLine[] | null, total: changed || merged || cart.total_estimado == null ? null : Number(cart.total_estimado) };
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -76,7 +77,7 @@ export async function synchronizeCart(userId: string | null, token: string | und
 
 export async function getAdminCarts(selectedId?: string) {
   const [rows] = await getDatabasePool().query<RowDataPacket[]>(`
-    SELECT c.id, c.items, c.version, c.entrega, c.productos_confirmados, c.total_estimado, c.ultima_actividad, u.nombre, u.usuario,
+    SELECT c.id, c.items, c.version, c.entrega, c.productos_confirmados, c.total_estimado, c.ajustes, c.ultima_actividad, u.nombre, u.usuario,
       CASE WHEN c.estado IN ('confirmado','actualizado') THEN c.estado WHEN c.ultima_actividad <= DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 'abandonado' ELSE 'activo' END AS estado
     FROM carritos c LEFT JOIN usuarios u ON u.id = c.usuario_id
     WHERE c.estado IN ('activo','confirmado','actualizado') AND (JSON_LENGTH(c.items) > 0 OR JSON_LENGTH(c.productos_confirmados) > 0)
@@ -84,5 +85,5 @@ export async function getAdminCarts(selectedId?: string) {
   `, [selectedId ?? ""]);
   return rows.map((row) => ({ id: String(row.id), items: (typeof row.items === "string" ? JSON.parse(row.items) : row.items) as CartItem[],
     customer: row.nombre ? String(row.nombre) : null, username: row.usuario ? String(row.usuario) : null,
-    version: Number(row.version), delivery: (typeof row.entrega === "string" ? JSON.parse(row.entrega) : row.entrega) as OrderDelivery | null, lines: (typeof row.productos_confirmados === "string" ? JSON.parse(row.productos_confirmados) : row.productos_confirmados) as OrderLine[] | null, total: row.total_estimado == null ? null : Number(row.total_estimado), lastActivity: new Date(row.ultima_actividad).toISOString(), status: String(row.estado) }));
+    adjustments: (typeof row.ajustes === "string" ? JSON.parse(row.ajustes) : row.ajustes ?? []) as CartAdjustment[], version: Number(row.version), delivery: (typeof row.entrega === "string" ? JSON.parse(row.entrega) : row.entrega) as OrderDelivery | null, lines: (typeof row.productos_confirmados === "string" ? JSON.parse(row.productos_confirmados) : row.productos_confirmados) as OrderLine[] | null, total: row.total_estimado == null ? null : Number(row.total_estimado), lastActivity: new Date(row.ultima_actividad).toISOString(), status: String(row.estado) }));
 }

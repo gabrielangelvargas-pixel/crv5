@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS carritos (
   estado ENUM('activo', 'fusionado', 'convertido', 'confirmado', 'actualizado') NOT NULL DEFAULT 'activo',
   entrega JSON NULL,
   productos_confirmados JSON NULL,
+  ajustes JSON NULL,
   total_estimado DECIMAL(14,2) NULL,
   confirmado_en DATETIME NULL,
   creado DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

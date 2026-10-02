@@ -28,14 +28,14 @@ it("responde con conflicto y datos actuales para una versión desactualizada", a
   mocks.sync.mockResolvedValue({ items: [{ productId: "1", quantity: 3 }], version: 4, conflict: true });
   const response = await POST(request({ items: [], version: 2 }));
   expect(response.status).toBe(409);
-  expect(await response.json()).toEqual({ items: [{ productId: "1", quantity: 3 }], version: 4, stock: {} });
+  expect(await response.json()).toEqual({ adjustments: [], items: [{ productId: "1", quantity: 3 }], version: 4, stock: {} });
 });
 it("emite la cookie anónima protegida y no expone el token en JSON", async () => {
   mocks.sync.mockResolvedValue({ items: [], version: 0, newToken: "token-secreto", conflict: false });
   const response = await POST(request({ items: [] }));
   expect(response.headers.get("set-cookie")).toContain("HttpOnly");
   expect(response.headers.get("set-cookie")).toContain("SameSite=lax");
-  expect(await response.json()).toEqual({ items: [], version: 0, stock: {} });
+  expect(await response.json()).toEqual({ adjustments: [], items: [], version: 0, stock: {} });
 });
 
 it("acepta el dominio público detrás de un proxy aunque la URL interna sea localhost", async () => {
