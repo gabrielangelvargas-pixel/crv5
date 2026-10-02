@@ -7,8 +7,8 @@ import type { Product } from "@/data/products";
 const money = (v: number) => v.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 export function OrderEditor({ order, products, cartVersion }: { order: Order; products: Pick<Product, "id" | "name" | "code" | "variantName" | "stock" | "salePrice" | "offerPrice" | "priceTiers">[]; cartVersion?: number }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const initialItems = () => order.lines.map(l => ({ productId: l.productId, quantity: l.quantity, reserved: l.reserved ?? false }));
+  const [open, setOpen] = useState(cartVersion !== undefined);
+  const initialItems = () => order.lines.map(l => ({ productId: l.productId, quantity: l.quantity, reserved: l.reserved ?? false, exhausted: l.exhausted ?? false }));
   const [items, setItems] = useState(initialItems);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
@@ -24,7 +24,7 @@ export function OrderEditor({ order, products, cartVersion }: { order: Order; pr
       const response = await fetch(cartVersion === undefined ? `/api/orders/${order.id}` : `/api/admin/carts/${order.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ original: order.lines, items, version: cartVersion }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      setOpen(false); router.refresh();
+      if (cartVersion === undefined) setOpen(false); router.refresh();
     } catch (e) { setError(e instanceof Error ? e.message : "No se pudo guardar."); }
     finally { setBusy(false); }
   }
@@ -39,15 +39,17 @@ export function OrderEditor({ order, products, cartVersion }: { order: Order; pr
           <span aria-live="polite" className="font-bold">{item.quantity}</span>
           <button type="button" disabled={cartVersion === undefined ? item.quantity >= (p?.stock ?? 0) : item.quantity >= 1000000} aria-label={`Sumar una unidad de ${name}`} className="flex size-11 items-center justify-center hover:bg-black/5 disabled:opacity-30" onClick={() => setItems(items.map(i => i.productId === item.productId ? { ...i, quantity: i.quantity + 1, reserved: false } : i))}><FaPlus aria-hidden="true" className="size-3" /></button>
         </div>
-        {cartVersion !== undefined ? <label className="flex min-h-11 w-28 items-center gap-2 text-sm sm:justify-center"><input type="checkbox" checked={item.reserved} aria-label={`Reservado: ${name}`} className="size-5 accent-emerald-600" onChange={e => setItems(items.map(i => i.productId === item.productId ? { ...i, reserved: e.target.checked } : i))} />{item.reserved ? "Reservado" : "Agregado"}</label> : <span className="hidden w-28 sm:block" />}
-        <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-1 sm:w-32"><strong className="text-sm">{money(Math.round(price(item.productId, item.quantity) * 100) * item.quantity / 100)}</strong><button type="button" aria-label={`Eliminar ${name}`} title="Eliminar producto" className="flex size-11 shrink-0 items-center justify-center text-foreground/60 hover:bg-red-50 hover:text-red-600" onClick={() => setItems(items.filter(i => i.productId !== item.productId))}><FaRegTrashAlt aria-hidden="true" className="size-4" /></button></div>
+        {cartVersion !== undefined ? <label className="flex min-h-11 w-28 items-center gap-2 text-sm sm:justify-center"><input type="checkbox" checked={item.reserved} disabled={item.exhausted} aria-label={`Reservado: ${name}`} className="size-5 accent-emerald-600" onChange={e => setItems(items.map(i => i.productId === item.productId ? { ...i, reserved: e.target.checked } : i))} />Reservado</label> : <span className="hidden w-28 sm:block" />}
+
+        <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-1 sm:w-32"><strong className="text-sm">{money(Math.round((item.exhausted ? 0 : price(item.productId, item.quantity)) * 100) * item.quantity / 100)}</strong><button type="button" aria-label={`Eliminar ${name}`} title="Eliminar producto" className="flex size-11 shrink-0 items-center justify-center text-foreground/60 hover:bg-red-50 hover:text-red-600" onClick={() => setItems(items.filter(i => i.productId !== item.productId))}><FaRegTrashAlt aria-hidden="true" className="size-4" /></button></div>
+        {cartVersion !== undefined ? <label className="col-span-2 flex min-h-11 items-center gap-2 text-sm sm:col-span-4"><input type="checkbox" checked={item.exhausted} aria-label={`Agotado: ${name}`} className="size-5 accent-red-600" onChange={e => setItems(items.map(i => i.productId === item.productId ? { ...i, exhausted: e.target.checked, reserved: false } : i))} />Agotado · Se conserva en el historial y no suma al total</label> : null}
       </div>; })}
       <label className="block">Agregar producto<input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, código o variante" className="mt-2 block w-full border p-2" /></label>
-      {search.trim() && <ul className="max-h-64 overflow-auto">{products.filter(p => (cartVersion !== undefined || p.stock > 0) && !items.some(i => i.productId === p.id) && `${p.name} ${p.code} ${p.variantName ?? ""}`.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 30).map(p => <li key={p.id} className="flex items-center justify-between gap-3 border-b py-2"><span>{p.name} · {p.variantName ?? p.code} · Stock {p.stock}</span><button className="border px-3 py-2" onClick={() => { setItems([...items, { productId: p.id, quantity: 1, reserved: false }]); setSearch(""); }}>Agregar</button></li>)}</ul>}
-      <p className="font-bold">Total estimado: {money(items.reduce((s, i) => s + Math.round(price(i.productId, i.quantity) * 100) * i.quantity, 0) / 100)}</p>
+      {search.trim() && <ul className="max-h-64 overflow-auto">{products.filter(p => (cartVersion !== undefined || p.stock > 0) && !items.some(i => i.productId === p.id) && `${p.name} ${p.code} ${p.variantName ?? ""}`.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 30).map(p => <li key={p.id} className="flex items-center justify-between gap-3 border-b py-2"><span>{p.name} · {p.variantName ?? p.code} · Stock {p.stock}</span><button className="border px-3 py-2" onClick={() => { setItems([...items, { productId: p.id, quantity: 1, reserved: false, exhausted: false }]); setSearch(""); }}>Agregar</button></li>)}</ul>}
+      <p className="font-bold">Total estimado: {money(items.reduce((s, i) => s + (i.exhausted ? 0 : Math.round(price(i.productId, i.quantity) * 100) * i.quantity), 0) / 100)}</p>
       <p className="text-sm">Se aplican los precios actuales por variante y cantidad. El stock no se descuenta al editar.</p>
-      {cartVersion !== undefined ? <p className="text-sm">Los productos sin stock pueden quedar agregados a la espera de ingreso. Cambiar una cantidad vuelve a dejar esa línea agregada, sin reserva. Se guardará como actualizado por administración. La aceptación del cliente se habilitará en el próximo paso.</p> : null}
-      <div className="flex gap-3"><button className="bg-black px-4 py-2 text-white disabled:opacity-40" disabled={!changed || !items.length || items.some(i => !Number.isInteger(i.quantity) || i.quantity < 1)} onClick={save}>{busy ? "Guardando…" : "Guardar cambios"}</button><button className="border px-4 py-2" onClick={() => setOpen(false)}>Cancelar</button></div>
+      {cartVersion !== undefined ? <p className="text-sm">Los productos agotados se conservan en el historial, sin sumar unidades ni importe y sin reservar stock. Cambiar una cantidad vuelve a dejar esa línea agregada, sin reserva. Se guardará como actualizado por administración. La aceptación del cliente se habilitará en el próximo paso.</p> : null}
+      <div className="flex gap-3"><button className="bg-black px-4 py-2 text-white disabled:opacity-40" disabled={!changed || !items.length || items.some(i => !Number.isInteger(i.quantity) || i.quantity < 1)} onClick={save}>{busy ? "Guardando…" : "Guardar cambios"}</button><button className="border px-4 py-2" onClick={() => { setItems(initialItems()); setError(""); setSearch(""); if (cartVersion === undefined) setOpen(false); }}>Cancelar</button></div>
     </fieldset>
     {error && <p role="alert" className="mt-3 text-red-700">{error}</p>}
   </section>;

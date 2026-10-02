@@ -59,13 +59,15 @@ export async function synchronizeCart(userId: string | null, token: string | und
     const conflict = input.version !== undefined && (input.version !== Number(cart.version) || merged);
     if (input.version !== undefined && !conflict) items = input.items;
     if (!cart.estado || cart.estado === "activo" || merged || (input.version !== undefined && !conflict)) items = await validateItems(connection, items, cart.id);
+    const previousLines = (typeof cart.productos_confirmados === "string" ? JSON.parse(cart.productos_confirmados) : cart.productos_confirmados ?? []) as OrderLine[];
+    const history = previousLines.filter(line => line.exhausted && !items.some(item => item.productId === line.productId));
     const changed = JSON.stringify(items) !== JSON.stringify(readItems(cart));
     const version = Number(cart.version) + (changed || merged ? 1 : 0);
     if (changed || merged) await connection.query("DELETE FROM carrito_reservas WHERE carrito_id = ?", [cart.id]);
-    if (changed || merged) await connection.query("UPDATE carritos SET items = ?, version = ?, ultima_actividad = NOW(), estado = 'activo', productos_confirmados = NULL, total_estimado = NULL, confirmado_en = NULL WHERE id = ?", [JSON.stringify(items), version, cart.id]);
+    if (changed || merged) await connection.query("UPDATE carritos SET items = ?, version = ?, ultima_actividad = NOW(), estado = 'activo', productos_confirmados = ?, total_estimado = NULL, confirmado_en = NULL WHERE id = ?", [JSON.stringify(items), version, history.length ? JSON.stringify(history) : null, cart.id]);
     const stock = await availableStock(connection, items.map(item => item.productId), cart.id);
     await connection.commit();
-    return { stock: Object.fromEntries(stock), id: cart.id, items, version, conflict, newToken, clearToken: Boolean(userId && token), status: changed || merged ? "activo" : cart.estado ?? "activo", lines: changed || merged ? null : (typeof cart.productos_confirmados === "string" ? JSON.parse(cart.productos_confirmados) : cart.productos_confirmados ?? null) as OrderLine[] | null, total: changed || merged || cart.total_estimado == null ? null : Number(cart.total_estimado) };
+    return { stock: Object.fromEntries(stock), id: cart.id, items, version, conflict, newToken, clearToken: Boolean(userId && token), status: changed || merged ? "activo" : cart.estado ?? "activo", lines: changed || merged ? (history.length ? history : null) : (typeof cart.productos_confirmados === "string" ? JSON.parse(cart.productos_confirmados) : cart.productos_confirmados ?? null) as OrderLine[] | null, total: changed || merged || cart.total_estimado == null ? null : Number(cart.total_estimado) };
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -77,7 +79,7 @@ export async function getAdminCarts(selectedId?: string) {
     SELECT c.id, c.items, c.version, c.entrega, c.productos_confirmados, c.total_estimado, c.ultima_actividad, u.nombre, u.usuario,
       CASE WHEN c.estado IN ('confirmado','actualizado') THEN c.estado WHEN c.ultima_actividad <= DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 'abandonado' ELSE 'activo' END AS estado
     FROM carritos c LEFT JOIN usuarios u ON u.id = c.usuario_id
-    WHERE c.estado IN ('activo','confirmado','actualizado') AND JSON_LENGTH(c.items) > 0
+    WHERE c.estado IN ('activo','confirmado','actualizado') AND (JSON_LENGTH(c.items) > 0 OR JSON_LENGTH(c.productos_confirmados) > 0)
     ORDER BY (c.id = ?) DESC, c.ultima_actividad DESC LIMIT 200
   `, [selectedId ?? ""]);
   return rows.map((row) => ({ id: String(row.id), items: (typeof row.items === "string" ? JSON.parse(row.items) : row.items) as CartItem[],

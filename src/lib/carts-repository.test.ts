@@ -50,7 +50,7 @@ describe("persistencia del carrito", () => {
     const result = await synchronizeCart(null, "a".repeat(64), { items: [], version: 1 });
     expect(result.items).toEqual([]);
     expect(result.version).toBe(2);
-    expect(db.query).toHaveBeenCalledWith(expect.stringContaining("ultima_actividad = NOW()"), ["[]", 2, "guest"]);
+    expect(db.query).toHaveBeenCalledWith(expect.stringContaining("ultima_actividad = NOW()"), ["[]", 2, null, "guest"]);
   });
 
   it("hace rollback y libera la conexión si falla la base de datos", async () => {
@@ -95,4 +95,13 @@ it("iniciar sesión con un carrito visitante vacío conserva las reservas de la 
   expect(result.status).toBe("actualizado");
   expect(result.version).toBe(2);
   expect(db.query.mock.calls.some(([sql]) => sql.startsWith("DELETE FROM carrito_reservas"))).toBe(false);
+});
+
+it("conserva el historial agotado cuando el cliente modifica otros productos", async () => {
+ const original = db.query.getMockImplementation()!;
+ const history = { productId: "2", quantity: 2, exhausted: true, reserved: false, subtotal: 0 };
+ db.query.mockImplementation(async (sql: string, args: unknown[]) => sql.includes("WHERE usuario_id = ?") ? [[{ id: "cart", estado: "actualizado", items: [{ productId: "1", quantity: 3 }], version: 2, productos_confirmados: [history] }]] : original(sql, args));
+ const result = await synchronizeCart("7", undefined, { items: [{ productId: "1", quantity: 1 }], version: 2 });
+ expect(result.lines).toEqual([history]);
+ expect(db.query).toHaveBeenCalledWith(expect.stringContaining("productos_confirmados = ?"), expect.arrayContaining([JSON.stringify([history])]));
 });

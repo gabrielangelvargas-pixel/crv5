@@ -25,12 +25,23 @@ it("permite cambiar cantidad, quitar y buscar una variante nueva", () => {
 });
 it("marca reservado y vuelve a pendiente al cambiar la cantidad", () => {
  render(<OrderEditor order={order} products={products} cartVersion={1} />);
- fireEvent.click(screen.getByText("Editar carrito"));
+ expect(screen.queryByText("Editar carrito")).not.toBeInTheDocument();
  const reserved = screen.getByLabelText("Reservado: Aro");
  fireEvent.click(reserved);
  expect(reserved).toBeChecked();
  expect(screen.getByText("Guardar cambios")).toBeEnabled();
  fireEvent.click(screen.getByLabelText("Sumar una unidad de Aro"));
  expect(reserved).not.toBeChecked();
+ cleanup();
+});
+
+it("conserva agotados sin sumar su importe y desmarca su reserva", () => {
+ render(<OrderEditor order={order} products={products} cartVersion={1} />);
+ fireEvent.click(screen.getByLabelText("Reservado: Aro"));
+ fireEvent.click(screen.getByLabelText("Agotado: Aro"));
+ expect(screen.getByLabelText("Reservado: Aro")).not.toBeChecked();
+ expect(screen.getByLabelText("Reservado: Aro")).toBeDisabled();
+ expect(screen.getByText("Total estimado: $ 0,00")).toBeInTheDocument();
+ expect(screen.getByLabelText("Cantidad de Aro")).toHaveTextContent("1");
  cleanup();
 });

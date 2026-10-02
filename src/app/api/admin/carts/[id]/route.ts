@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/lib/authorization";
 import { hasAllowedOrigin } from "@/lib/request-origin";
 import { ConfirmedCartError, updateConfirmedCart } from "@/lib/confirmed-carts-repository";
-const schema = z.object({ version: z.number().int().nonnegative(), items: z.array(z.object({ productId: z.string().regex(/^[1-9][0-9]*$/).max(20), quantity: z.number().int().min(1).max(1000000), reserved: z.boolean().optional() })).min(1).max(500) }).refine(v => new Set(v.items.map(i => i.productId)).size === v.items.length);
+const schema = z.object({ version: z.number().int().nonnegative(), items: z.array(z.object({ productId: z.string().regex(/^[1-9][0-9]*$/).max(20), quantity: z.number().int().min(1).max(1000000), reserved: z.boolean().optional(), exhausted: z.boolean().optional() })).min(1).max(500) }).refine(v => new Set(v.items.map(i => i.productId)).size === v.items.length);
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!hasAllowedOrigin(request)) return NextResponse.json({ error: "Origen no autorizado" }, { status: 403 });
   try {

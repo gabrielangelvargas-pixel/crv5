@@ -51,6 +51,7 @@ export function CartContent() {
       <p className="mt-3 text-sm text-foreground/60">{status === "activo" ? "Agregar productos no reserva stock. Los precios y la disponibilidad se verificarán al confirmar el carrito." : "Las líneas marcadas como Reservado bloquean sus unidades para otros clientes hasta que se libere la reserva."}</p>
       {status === "activo" ? <Link href="/carrito/confirmar" className="mt-5 inline-block bg-emerald-600 px-5 py-3 font-bold text-white">Confirmar carrito</Link> : null}
     </>}
+    {confirmedLines?.some(line => line.exhausted) ? <section className="mt-6 border border-red-200 bg-red-50 p-4"><h2 className="font-bold">Productos agotados</h2><ul className="mt-2 space-y-2">{confirmedLines.filter(line => line.exhausted).map(line => <li key={line.productId}>{line.quantity} × {line.name} · SKU: {line.code} · Agotado (no suma al total)</li>)}</ul></section> : null}
     <Link href="/" className="mt-6 inline-block border border-black/20 px-4 py-3 font-bold dark:border-white/20">Seguir comprando</Link>
   </main>;
 }

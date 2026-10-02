@@ -82,3 +82,12 @@ it("notifica cada envío nuevo pero no duplica avisos en un reintento", async ()
  await confirmCart("7", input);
  expect(db.query.mock.calls.some(([sql]) => sql.includes("INSERT INTO notificaciones_carritos"))).toBe(false);
 });
+
+it("persiste agotado en el historial pero lo excluye de items, total y reservas", async () => {
+ state = "confirmado";
+ const result = await updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 6, reserved: true, exhausted: true }] });
+ expect(result.total).toBe(0);
+ expect(result.lines[0]).toMatchObject({ exhausted: true, reserved: false, quantity: 6, subtotal: 0 });
+ expect(db.query).toHaveBeenCalledWith(expect.stringContaining("UPDATE carritos SET items"), expect.arrayContaining(["[]", JSON.stringify(result.lines), 0, "cart"]));
+ expect(db.query.mock.calls.some(([sql]) => sql.startsWith("INSERT INTO carrito_reservas"))).toBe(false);
+});
