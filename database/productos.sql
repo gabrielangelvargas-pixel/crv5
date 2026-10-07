@@ -7,6 +7,7 @@ CREATE TABLE productos (
   variante VARCHAR(80) NULL,
   slug VARCHAR(200) NOT NULL,
   descripcion TEXT NULL,
+  precio_costo DECIMAL(12,2) NOT NULL DEFAULT 0,
   precio_venta DECIMAL(12,2) NOT NULL,
   precio_oferta DECIMAL(12,2) NULL,
   stock INT UNSIGNED NOT NULL DEFAULT 0,

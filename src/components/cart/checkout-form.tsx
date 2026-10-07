@@ -6,12 +6,13 @@ import { useState, type FormEvent } from "react";
 import { useCart } from "./cart-provider";
 import { getCartUnitPrice } from "@/lib/cart";
 
-export function CheckoutForm({ contact }: { contact: { phone: string; address: string } }) {
+export function CheckoutForm({ contact }: { contact: { phone: string; address: string; addresses: { id: string; label: string }[] } }) {
   const { items, products, ready, prepareCheckout, refreshCart, status } = useCart();
   const router = useRouter();
   const [method, setMethod] = useState<"retiro" | "envio">("retiro");
   const [phone, setPhone] = useState(contact.phone);
-  const [address, setAddress] = useState(contact.address);
+  const [addressId, setAddressId] = useState(contact.addresses[0]?.id ?? "");
+  const address = contact.addresses.find(entry => entry.id === addressId)?.label ?? "";
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -29,7 +30,7 @@ export function CheckoutForm({ contact }: { contact: { phone: string; address: s
       const snapshot = JSON.stringify(items);
       const saved = await prepareCheckout();
       if (JSON.stringify(saved.items) !== snapshot) throw new Error("El carrito cambió. Revisá las cantidades antes de confirmar.");
-      const response = await fetch("/api/cart/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ version: saved.version, expectedTotalCents: totalCents, delivery: { method, phone, address: method === "envio" ? address : "", notes } }) });
+      const response = await fetch("/api/cart/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ version: saved.version, expectedTotalCents: totalCents, delivery: { method, phone, addressId: method === "envio" ? addressId : null, address: method === "envio" ? address : "", notes } }) });
       const data = await response.json();
       if (response.status === 401) { router.push("/login?next=/carrito/confirmar"); return; }
       if (!response.ok) { throw new Error(data.error ?? "No se pudo confirmar el carrito."); }
@@ -49,7 +50,7 @@ export function CheckoutForm({ contact }: { contact: { phone: string; address: s
     <fieldset disabled={saving} className="grid gap-4 sm:grid-cols-2">
       <label className="text-sm font-bold">Entrega<select value={method} onChange={(event) => setMethod(event.target.value as "retiro" | "envio")} className="mt-2 w-full border border-black/20 bg-white p-3"><option value="retiro">Retiro</option><option value="envio">Envío</option></select></label>
       <label className="text-sm font-bold">Teléfono de contacto<input required minLength={6} maxLength={30} type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="mt-2 w-full border border-black/20 p-3" /></label>
-      {method === "envio" ? <label className="text-sm font-bold sm:col-span-2">Dirección, localidad y provincia<input required minLength={5} maxLength={500} value={address} onChange={(event) => setAddress(event.target.value)} className="mt-2 w-full border border-black/20 p-3" /></label> : null}
+      {method === "envio" ? <label className="text-sm font-bold sm:col-span-2">Dirección de envío<select required value={addressId} onChange={(event) => setAddressId(event.target.value)} className="mt-2 w-full border border-black/20 bg-white p-3"><option value="">Elegir dirección guardada</option>{contact.addresses.map(entry => <option key={entry.id} value={entry.id}>{entry.label}</option>)}</select>{!contact.addresses.length ? <span className="mt-2 block font-normal">No tenés una dirección guardada. Contactá a administración para cargarla o elegí retiro.</span> : null}</label> : null}
       <label className="text-sm font-bold sm:col-span-2">Observaciones<textarea maxLength={1000} value={notes} onChange={(event) => setNotes(event.target.value)} className="mt-2 w-full border border-black/20 p-3" /></label>
     </fieldset>
     {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}

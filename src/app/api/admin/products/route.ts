@@ -7,7 +7,7 @@ import { saveAdminProduct } from "@/lib/admin-products-repository";
 const productSchema = z.object({
   id: z.string().optional(), groupId: z.string().nullable(), newGroupName: z.string().max(180), newGroupSlug: z.string().max(200), categoryId: z.string(),
   code: z.string().trim().min(1).max(13), name: z.string().trim().min(2).max(180), variantName: z.string().max(80), slug: z.string().trim().min(2).max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  description: z.string().max(5000), salePrice: z.number().nonnegative(), offerPrice: z.number().nonnegative().nullable(), stock: z.number().int().nonnegative(), imageUrl: z.string().max(500), order: z.number().int().nonnegative(), active: z.boolean(),
+  description: z.string().max(5000), costPrice: z.number().nonnegative().max(9999999999.99), salePrice: z.number().nonnegative(), offerPrice: z.number().nonnegative().nullable(), stock: z.number().int().nonnegative(), imageUrl: z.string().max(500), order: z.number().int().nonnegative(), active: z.boolean(),
   priceTiers: z.array(z.object({ minimumQuantity: z.number().int().positive(), unitPrice: z.number().nonnegative() })).max(20),
 });
 

@@ -1,0 +1,33 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import mysql from "mysql2/promise";
+const db = await mysql.createConnection({ host: process.env.DATABASE_HOST, port: Number(process.env.DATABASE_PORT ?? 3306), database: process.env.DATABASE_NAME, user: process.env.DATABASE_USER, password: process.env.DATABASE_PASSWORD });
+try {
+ const [columns] = await db.query("SHOW COLUMNS FROM pedidos");
+ const names = columns.map(column => column.Field);
+ for (const name of ["subtotal_venta", "subtotal_costo", "total_venta", "total_costo", "entrega", "modalidad_entrega"]) assert(names.includes(name));
+ assert(!names.includes("total_estimado") && !names.includes("total_confirmado"));
+ const [foreignKeys] = await db.query("SELECT REFERENCED_TABLE_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'pedidos' AND COLUMN_NAME = 'entrega'");
+ assert.equal(foreignKeys[0].REFERENCED_TABLE_NAME, "usuarios_direcciones");
+ await db.beginTransaction();
+ const [counter] = await db.query("SELECT ultimo_numero FROM pedido_numeracion WHERE id = 1 FOR UPDATE");
+ const next = Number(counter[0].ultimo_numero) + 1;
+ await db.query("UPDATE pedido_numeracion SET ultimo_numero = ? WHERE id = 1", [next]);
+ const detail = [{ producto_id: "1", codigo: "PRUEBA", variante: "Azul", descripcion: "Prueba transaccional", nombre: "Prueba", cantidad: 3, precio_costo: 25.15, precio_venta: 70, subtotal_costo: 75.45, subtotal_venta: 210 }];
+ const insert = "INSERT INTO pedidos (id, numero, usuario_id, carrito_id, clave_confirmacion, productos, entrega, modalidad_entrega, telefono_entrega, subtotal_venta, subtotal_costo, total_venta, total_costo) VALUES (?, ?, 0, ?, ?, ?, ?, 'retiro', '123456', 210, 75.45, 200, 75.45)";
+ const id = randomUUID();
+ const values = [id, next, randomUUID(), randomUUID(), JSON.stringify(detail), null];
+ await db.query(insert, values);
+ const [rows] = await db.query("SELECT productos, subtotal_costo, total_costo, total_venta, entrega FROM pedidos WHERE id = ?", [id]);
+ assert.deepEqual(typeof rows[0].productos === "string" ? JSON.parse(rows[0].productos) : rows[0].productos, detail);
+ assert.equal(Number(rows[0].total_costo), 75.45);
+ assert.equal(Number(rows[0].total_venta), 200);
+ assert.equal(rows[0].entrega, null);
+ await db.query("DELETE FROM pedidos WHERE id = ?", [id]);
+ await assert.rejects(db.query(insert, [...values.slice(0, 4), "[]", null]), error => error.sqlState === "45000");
+ await assert.rejects(db.query(insert, [...values.slice(0, 5), "18446744073709551614"]), error => error.code === "ER_NO_REFERENCED_ROW_2");
+ await db.rollback();
+ const [after] = await db.query("SELECT ultimo_numero FROM pedido_numeracion WHERE id = 1");
+ assert.equal(String(after[0].ultimo_numero), String(counter[0].ultimo_numero));
+ console.log("Verificados: campos, FK, importes y detalle JSON, rechazo de pedido vacío y dirección inexistente. Prueba revertida; numeración sin cambios.");
+} finally { await db.rollback(); await db.end(); }

@@ -4,7 +4,7 @@ import type { AdminProduct } from "@/lib/admin-products-repository";
 import type { AdminCategory } from "@/lib/admin-categories-repository";
 import { ProductsManager } from "./products-manager";
 
-const product: AdminProduct = { id: "1", groupId: "g", groupName: "Grupo", categoryId: "c", categoryName: "Aros", code: "ARO-1", name: "Aro plata", variantName: "Plata", slug: "aro-1", description: "Descripción", salePrice: 100, offerPrice: 90, stock: 5, availableStock: 5, imageUrl: "/productos/aro-1.webp", order: 2, active: true, priceTiers: [{ minimumQuantity: 3, unitPrice: 80 }] };
+const product: AdminProduct = { id: "1", groupId: "g", groupName: "Grupo", categoryId: "c", categoryName: "Aros", code: "ARO-1", name: "Aro plata", variantName: "Plata", slug: "aro-1", description: "Descripción", costPrice: 25, salePrice: 100, offerPrice: 90, stock: 5, availableStock: 5, imageUrl: "/productos/aro-1.webp", order: 2, active: true, priceTiers: [{ minimumQuantity: 3, unitPrice: 80 }] };
 function setup() {
   render(<ProductsManager initialProducts={[product]} categories={[{ id: "c", name: "Aros", depth: 0 } as AdminCategory]} groups={[{ id: "g", name: "Grupo", slug: "grupo", categoryId: "c" }]} />);
 }

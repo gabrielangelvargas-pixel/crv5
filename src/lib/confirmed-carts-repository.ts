@@ -1,3 +1,5 @@
+import { resolveOrderAddress } from "./order-address";
+import { OrderError } from "./orders-repository";
 import { cartPayableCents, type CartAdjustment } from "./cart-adjustments";
 import { availableStock } from "./stock-reservations";
 import { notifyCartSubmitted, notifyCartReviewed } from "./cart-notifications";
@@ -39,6 +41,8 @@ export async function confirmCart(userId: string, input: { version: number; expe
     const items: CartItem[] = typeof cart.items === "string" ? JSON.parse(cart.items) : cart.items;
     const priced = await priceItems(connection, items, false, String(cart.id));
     if (Math.round(priced.total * 100) !== input.expectedTotalCents) throw new ConfirmedCartError("Los precios cambiaron. Actualizá la página y revisá el total.");
+    try { input.delivery.addressId = await resolveOrderAddress(connection, userId, input.delivery); }
+    catch (error) { if (error instanceof OrderError) throw new ConfirmedCartError(error.message); throw error; }
     const previousLines = (typeof cart.productos_confirmados === "string" ? JSON.parse(cart.productos_confirmados) : cart.productos_confirmados ?? []) as OrderLine[];
     priced.lines.push(...previousLines.filter(line => line.exhausted && !items.some(item => item.productId === line.productId)));
     await connection.query("UPDATE carritos SET estado = 'confirmado', entrega = ?, productos_confirmados = ?, total_estimado = ?, confirmado_en = NOW(), ultima_actividad = NOW(), version = version + 1 WHERE id = ?", [JSON.stringify(input.delivery), JSON.stringify(priced.lines), priced.total, cart.id]);

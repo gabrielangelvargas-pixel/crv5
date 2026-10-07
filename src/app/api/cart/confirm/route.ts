@@ -5,7 +5,7 @@ import { confirmCart, ConfirmedCartError } from "@/lib/confirmed-carts-repositor
 import { hasAllowedOrigin } from "@/lib/request-origin";
 
 export const runtime = "nodejs";
-const schema = z.object({ version: z.number().int().nonnegative(), expectedTotalCents: z.number().int().nonnegative().max(99999999999999), delivery: z.object({ method: z.enum(["retiro", "envio"]), phone: z.string().trim().min(6).max(30), address: z.string().trim().max(500), notes: z.string().trim().max(1000) }).refine((value) => value.method === "retiro" || value.address.length >= 5) });
+const schema = z.object({ version: z.number().int().nonnegative(), expectedTotalCents: z.number().int().nonnegative().max(99999999999999), delivery: z.object({ method: z.enum(["retiro", "envio"]), addressId: z.string().regex(/^\d+$/).max(20).nullable().optional(), phone: z.string().trim().min(6).max(30), address: z.string().trim().max(500), notes: z.string().trim().max(1000) }).refine((value) => value.method === "retiro" || Boolean(value.addressId)) });
 
 export async function POST(request: Request) {
   if (!hasAllowedOrigin(request)) return NextResponse.json({ error: "Origen no autorizado" }, { status: 403 });

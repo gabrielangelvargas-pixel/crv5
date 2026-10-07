@@ -7,8 +7,10 @@ beforeEach(() => {
  vi.clearAllMocks();
  cart = { id: "cart", usuario_id: "7", estado: "actualizado", version: 2, entrega: { method: "retiro", phone: "1111111", address: "", notes: "" }, ajustes: [{ description: "Envío", amountCents: 112000 }, { description: "Redondeo", amountCents: -510 }], productos_confirmados: [{ productId: "1", quantity: 2, code: "A", name: "Aro", variant: null, unitPrice: 100, subtotal: 200 }, { productId: "2", quantity: 1, exhausted: true, subtotal: 0 }] };
  db.query.mockImplementation(async (sql: string) => {
+  if (sql.includes("FROM pedido_numeracion")) return [[{ ultimo_numero: 0 }]];
   if (sql.includes("FROM carritos")) return [[cart]];
   if (sql.includes("SELECT p.id, p.stock")) return [[{ id: 1, stock: 5 }]];
+  if (sql.includes("FROM productos")) return [[{ id: 1, descripcion: "Aro de acero", precio_costo: 25 }]];
   if (sql.includes("FROM pedidos")) return [[{ id: "order" }]];
   return [[]];
  });
@@ -49,5 +51,32 @@ it("no genera un pedido antes de la revisión ni cuando falta stock o todos est�
  await expect(respondToCartReview("7", input)).rejects.toThrow("disponibilidad");
  cart.productos_confirmados = [{ productId: "1", quantity: 2, exhausted: true, subtotal: 0 }];
  await expect(respondToCartReview("7", input)).rejects.toThrow("disponibles");
+ expect(db.query.mock.calls.some(([sql]) => sql.startsWith("INSERT INTO pedidos"))).toBe(false);
+});
+
+it("revierte la numeración si falla el guardado del pedido", async () => {
+ const original = db.query.getMockImplementation()!;
+ db.query.mockImplementation(async (sql: string) => {
+  if (sql.startsWith("INSERT INTO pedidos")) throw new Error("fallo de guardado");
+  return original(sql);
+ });
+ await expect(respondToCartReview("7", input)).rejects.toThrow("fallo de guardado");
+ expect(db.query).toHaveBeenCalledWith("UPDATE pedido_numeracion SET ultimo_numero = ? WHERE id = 1", ["1"]);
+ expect(db.rollback).toHaveBeenCalledOnce();
+ expect(db.commit).not.toHaveBeenCalled();
+});
+
+it("guarda el detalle de venta y costos sin incluir agotados ni aplicar ajustes al costo", async () => {
+ await respondToCartReview("7", input);
+ const insert = db.query.mock.calls.find(([sql]) => sql.startsWith("INSERT INTO pedidos"))!;
+ const values = insert[1];
+ expect(JSON.parse(values[5])).toEqual([{ producto_id: "1", codigo: "A", variante: null, descripcion: "Aro de acero", nombre: "Aro", cantidad: 2, precio_costo: 25, precio_venta: 100, subtotal_costo: 50, subtotal_venta: 200 }]);
+ expect(values.slice(-4)).toEqual([200, 50, 1314.9, 50]);
+ expect(values[6]).toBeNull();
+});
+it("rechaza la dirección de envío de otra cuenta y revierte las reservas", async () => {
+ cart.entrega = { method: "envio", addressId: "999", phone: "1111111", address: "Otra dirección", notes: "" };
+ await expect(respondToCartReview("7", input)).rejects.toThrow("dirección");
+ expect(db.rollback).toHaveBeenCalledOnce();
  expect(db.query.mock.calls.some(([sql]) => sql.startsWith("INSERT INTO pedidos"))).toBe(false);
 });

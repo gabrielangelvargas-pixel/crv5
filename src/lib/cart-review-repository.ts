@@ -1,3 +1,6 @@
+import { snapshotOrderLines, orderCostSubtotal } from "./order-detail";
+import { resolveOrderAddress } from "./order-address";
+import { nextOrderNumber } from "./order-number";
 import { randomUUID } from "node:crypto";
 import type { RowDataPacket } from "mysql2";
 import { getDatabasePool } from "./db";
@@ -5,6 +8,7 @@ import { availableStock } from "./stock-reservations";
 import { ConfirmedCartError } from "./confirmed-carts-repository";
 import { cartPayableCents, type CartAdjustment } from "./cart-adjustments";
 import { notifyOrderAccepted } from "./cart-notifications";
+import { OrderError } from "./orders-repository";
 import type { OrderLine, OrderDelivery } from "./orders-repository";
 const json = <T>(value: string | T): T => typeof value === "string" ? JSON.parse(value) : value;
 export async function respondToCartReview(userId: string, input: { cartId: string; version: number; action: "continue" | "accept"; expectedTotalCents?: number | undefined }) {
@@ -30,7 +34,7 @@ export async function respondToCartReview(userId: string, input: { cartId: strin
   if (cart.estado !== "actualizado") throw new ConfirmedCartError("Administración debe revisar el carrito antes de confirmar y pagar.");
   const lines = json<OrderLine[]>(cart.productos_confirmados ?? []);
   const active = lines.filter(line => !line.exhausted);
-  if (!active.length) throw new ConfirmedCartError("El carrito no tiene productos disponibles para generar un pedido.");
+  if (!active.length || active.some(line => !Number.isSafeInteger(line.quantity) || line.quantity <= 0)) throw new ConfirmedCartError("El carrito no tiene productos disponibles para generar un pedido.");
   const subtotal = active.reduce((sum, line) => sum + Math.round(line.subtotal * 100), 0) / 100;
   const adjustments = json<CartAdjustment[]>(cart.ajustes ?? []);
   const totalCents = cartPayableCents(subtotal, adjustments);
@@ -43,12 +47,16 @@ export async function respondToCartReview(userId: string, input: { cartId: strin
    await connection.query("INSERT INTO carrito_reservas (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)", [cart.id, line.productId, line.quantity]);
   }
   const delivery = json<OrderDelivery>(cart.entrega);
+  const addressId = await resolveOrderAddress(connection, userId, delivery);
+  const detail = await snapshotOrderLines(connection, active);
+  const cost = orderCostSubtotal(detail);
   const orderId = randomUUID();
-  await connection.query("INSERT INTO pedidos (id, usuario_id, carrito_id, clave_confirmacion, estado, productos, entrega, ajustes, total_estimado, total_confirmado) VALUES (?, ?, ?, ?, 'esperando_pago', ?, ?, ?, ?, ?)", [orderId, userId, cart.id, cart.id, JSON.stringify(lines), JSON.stringify(delivery), JSON.stringify(adjustments), subtotal, totalCents / 100]);
+  const number = await nextOrderNumber(connection);
+  await connection.query("INSERT INTO pedidos (id, numero, usuario_id, carrito_id, clave_confirmacion, estado, productos, entrega, modalidad_entrega, telefono_entrega, observaciones_entrega, ajustes, subtotal_venta, subtotal_costo, total_venta, total_costo) VALUES (?, ?, ?, ?, ?, 'esperando_pago', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [orderId, number, userId, cart.id, cart.id, JSON.stringify(detail), addressId, delivery.method, delivery.phone, delivery.notes, JSON.stringify(adjustments), subtotal, cost, totalCents / 100, cost]);
   // The confirmed cart remains as the order snapshot and reservation owner. Free the account slot for future purchases.
   await connection.query("UPDATE carritos SET estado = 'confirmado', pedido_id = ?, usuario_id = NULL, productos_confirmados = ?, version = version + 1, ultima_actividad = NOW() WHERE id = ?", [orderId, JSON.stringify(lines), cart.id]);
   await notifyOrderAccepted(connection, { cartId: String(cart.id), orderId, userId, version: Number(cart.version) + 1, products: active.length, units: active.reduce((sum, line) => sum + line.quantity, 0), total: totalCents / 100 });
   await connection.commit(); return { status: "confirmado", orderId };
- } catch (error) { await connection.rollback(); throw error; }
+ } catch (error) { await connection.rollback(); if (error instanceof OrderError) throw new ConfirmedCartError(error.message); throw error; }
  finally { connection.release(); }
 }

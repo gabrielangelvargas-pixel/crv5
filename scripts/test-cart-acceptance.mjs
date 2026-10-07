@@ -51,7 +51,7 @@ try {
  await db.query("DELETE FROM notificaciones_carritos WHERE carrito_id=? AND usuario_id NOT IN (?)",[cartId,users]);
  assert.equal(accepted.status,200,JSON.stringify(accepted.data)); orderId = accepted.data.orderId;
  const retry = await call("/api/cart/review","POST",acceptedBody,sessions[0]); assert.equal(retry.data.orderId,orderId);
- const [orders] = await db.query("SELECT * FROM pedidos WHERE carrito_id=?",[cartId]); assert.equal(orders.length,1); assert.equal(orders[0].estado,"esperando_pago"); assert.equal(Number(orders[0].total_confirmado),1314.9);
+ const [orders] = await db.query("SELECT * FROM pedidos WHERE carrito_id=?",[cartId]); assert.equal(orders.length,1); assert.equal(orders[0].estado,"esperando_pago"); assert.equal(Number(orders[0].total_venta),1314.9);
  const orderAdjustments = typeof orders[0].ajustes === 'string' ? JSON.parse(orders[0].ajustes) : orders[0].ajustes; assert.deepEqual(orderAdjustments,adjustments);
  const [physical] = await db.query("SELECT stock FROM productos WHERE id=?",[products[0]]); assert.equal(Number(physical[0].stock),5);
  const [reserved] = await db.query("SELECT cantidad FROM carrito_reservas WHERE carrito_id=?",[cartId]); assert.equal(Number(reserved[0].cantidad),2);

@@ -7,8 +7,8 @@ let status: string;
 beforeEach(() => {
   vi.clearAllMocks(); status = "pendiente_revision";
   db.query.mockImplementation(async (sql: string) => {
-    if (sql.includes("FROM pedidos")) return [[{ estado: status, productos: original }]];
-    if (sql.includes("FROM productos")) return [[{ id: 1, codigo: "A", nombre: "Aro", variante: null, precio_venta: 100, precio_oferta: 80, stock: 5 }, { id: 2, codigo: "B", nombre: "Bolso", variante: "Azul", precio_venta: 200, precio_oferta: null, stock: 10 }]];
+    if (sql.includes("FROM pedidos")) return [[{ estado: status, productos: original.map(line => ({ producto_id: line.productId, codigo: line.code, nombre: line.name, descripcion: line.name, variante: line.variant, cantidad: line.quantity, precio_costo: 25, precio_venta: line.unitPrice, subtotal_costo: 25, subtotal_venta: line.subtotal })) }]];
+    if (sql.includes("FROM productos")) return [[{ id: 1, codigo: "A", nombre: "Aro", variante: null, precio_costo: 25, precio_venta: 100, precio_oferta: 80, stock: 5 }, { id: 2, codigo: "B", nombre: "Bolso", variante: "Azul", precio_costo: 50, precio_venta: 200, precio_oferta: null, stock: 10 }]];
     if (sql.includes("FROM producto_precios")) return [[{ producto_id: 1, cantidad_minima: 3, precio_unitario: 70 }]];
     return [{}];
   });
@@ -34,6 +34,11 @@ it("impide sobrescribir otra edición", async () => {
 });
 it("revierte el pedido completo si falta stock", async () => {
   await expect(updateOrder("order", original, [{ productId: "1", quantity: 6 }])).rejects.toThrow("Stock");
+  expect(db.query.mock.calls.some(([sql]) => sql.startsWith("UPDATE"))).toBe(false);
+  expect(db.rollback).toHaveBeenCalledOnce();
+});
+it("rechaza una edición vacía sin guardar cambios", async () => {
+  await expect(updateOrder("order", original, [])).rejects.toThrow("cancelalo");
   expect(db.query.mock.calls.some(([sql]) => sql.startsWith("UPDATE"))).toBe(false);
   expect(db.rollback).toHaveBeenCalledOnce();
 });

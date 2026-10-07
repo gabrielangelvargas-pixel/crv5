@@ -15,6 +15,7 @@ export type AdminProduct = {
   variantName: string | null;
   slug: string;
   description: string | null;
+  costPrice: number;
   salePrice: number;
   offerPrice: number | null;
   stock: number;
@@ -38,6 +39,7 @@ type ProductRow = RowDataPacket & {
   variante: string | null;
   slug: string;
   descripcion: string | null;
+  precio_costo: number | string;
   precio_venta: number | string;
   precio_oferta: number | string | null;
   stock: number | string;
@@ -54,7 +56,7 @@ export async function getAdminProducts() {
   const pool = getDatabasePool();
   const [rows] = await pool.query<ProductRow[]>(`
     SELECT p.id, p.grupo_id, g.nombre AS grupo_nombre, p.categoria_id, c.nombre AS categoria_nombre,
-      p.codigo, p.nombre, p.variante, p.slug, p.descripcion, p.precio_venta, p.precio_oferta,
+      p.codigo, p.nombre, p.variante, p.slug, p.descripcion, p.precio_costo, p.precio_venta, p.precio_oferta,
       p.stock, GREATEST(p.stock - COALESCE((SELECT SUM(r.cantidad) FROM carrito_reservas r WHERE r.producto_id = p.id), 0), 0) AS stock_disponible, p.imagen_url, p.orden, p.activo
     FROM productos p
     INNER JOIN categorias c ON c.id = p.categoria_id
@@ -74,7 +76,7 @@ export async function getAdminProducts() {
   return rows.map((row): AdminProduct => ({
     id: String(row.id), groupId: row.grupo_id === null ? null : String(row.grupo_id), groupName: row.grupo_nombre,
     categoryId: String(row.categoria_id), categoryName: row.categoria_nombre, code: row.codigo, name: row.nombre,
-    variantName: row.variante, slug: row.slug, description: row.descripcion, salePrice: Number(row.precio_venta),
+    variantName: row.variante, slug: row.slug, description: row.descripcion, costPrice: Number(row.precio_costo), salePrice: Number(row.precio_venta),
     offerPrice: row.precio_oferta === null ? null : Number(row.precio_oferta), stock: Number(row.stock), availableStock: Number(row.stock_disponible),
     imageUrl: row.imagen_url, order: Number(row.orden), active: Boolean(row.activo), priceTiers: prices.get(String(row.id)) ?? [],
   }));
@@ -87,7 +89,7 @@ export async function getAdminProductGroups() {
 
 export type ProductInput = {
   id: string | undefined; groupId: string | null; newGroupName: string; newGroupSlug: string; categoryId: string;
-  code: string; name: string; variantName: string; slug: string; description: string; salePrice: number;
+  code: string; name: string; variantName: string; slug: string; description: string; costPrice: number; salePrice: number;
   offerPrice: number | null; stock: number; imageUrl: string; order: number; active: boolean; priceTiers: AdminProductPrice[];
 };
 
@@ -119,7 +121,7 @@ export async function saveAdminProduct(input: ProductInput) {
     await connection.beginTransaction();
     await ensureCategory(connection, input.categoryId);
     const groupId = await resolveGroup(connection, input);
-    const values = [groupId, input.categoryId, input.code.trim(), input.name.trim(), input.variantName.trim() || null, input.slug.trim(), input.description.trim() || null, input.salePrice, input.offerPrice, input.stock, input.imageUrl.trim() || null, input.order, input.active ? 1 : 0];
+    const values = [groupId, input.categoryId, input.code.trim(), input.name.trim(), input.variantName.trim() || null, input.slug.trim(), input.description.trim() || null, input.costPrice, input.salePrice, input.offerPrice, input.stock, input.imageUrl.trim() || null, input.order, input.active ? 1 : 0];
     let productId = input.id;
     if (productId) {
       await connection.query("SELECT id FROM productos WHERE id = ? FOR UPDATE", [productId]);
@@ -127,12 +129,12 @@ export async function saveAdminProduct(input: ProductInput) {
       if (input.stock < reserved.reduce((sum, row) => sum + Number(row.cantidad), 0)) throw new Error("El stock no puede ser menor que las unidades reservadas.");
 
       await connection.query(
-        `UPDATE productos SET grupo_id = ?, categoria_id = ?, codigo = ?, nombre = ?, variante = ?, slug = ?, descripcion = ?, precio_venta = ?, precio_oferta = ?, stock = ?, imagen_url = ?, orden = ?, activo = ? WHERE id = ?`,
+        `UPDATE productos SET grupo_id = ?, categoria_id = ?, codigo = ?, nombre = ?, variante = ?, slug = ?, descripcion = ?, precio_costo = ?, precio_venta = ?, precio_oferta = ?, stock = ?, imagen_url = ?, orden = ?, activo = ? WHERE id = ?`,
         [...values, productId],
       );
     } else {
       const [result] = await connection.query<ResultSetHeader>(
-        `INSERT INTO productos (grupo_id, categoria_id, codigo, nombre, variante, slug, descripcion, precio_venta, precio_oferta, stock, imagen_url, orden, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO productos (grupo_id, categoria_id, codigo, nombre, variante, slug, descripcion, precio_costo, precio_venta, precio_oferta, stock, imagen_url, orden, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         values,
       );
       productId = String(result.insertId);
