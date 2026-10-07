@@ -1,13 +1,32 @@
+import { createHash } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { hasAllowedOrigin } from "@/lib/request-origin";
 import { getCurrentUser } from "@/lib/auth";
-import { CART_COOKIE, synchronizeCart } from "@/lib/carts-repository";
+import { CART_COOKIE, readCart, synchronizeCart } from "@/lib/carts-repository";
 import { getCartProducts } from "@/lib/products-repository";
 
 export const runtime = "nodejs";
 const schema = z.object({ items: z.array(z.object({ productId: z.string().regex(/^[1-9][0-9]*$/).max(20), quantity: z.number().int().positive().max(1000000) })).max(500), version: z.number().int().nonnegative().optional() });
+
+/** Lightweight read used for periodic polling. The ETag lets unchanged carts answer 304 without a body. */
+export async function GET(request: Request) {
+  try {
+    const user = await getCurrentUser();
+    const token = (await cookies()).get(CART_COOKIE)?.value;
+    const result = await readCart(user?.id ?? null, token);
+    const products = await getCartProducts(result.items.map((item) => item.productId), result.stock);
+    const body = JSON.stringify({ ...result, products });
+    const etag = `"${createHash("sha1").update(body).digest("base64url")}"`;
+    const headers = { "Cache-Control": "private, no-cache", ETag: etag, Vary: "Cookie" };
+    if (request.headers.get("if-none-match") === etag) return new Response(null, { status: 304, headers });
+    return new Response(body, { headers: { ...headers, "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error("No se pudo leer el carrito", error);
+    return NextResponse.json({ error: "No se pudo leer el carrito" }, { status: 503 });
+  }
+}
 
 export async function POST(request: Request) {
   if (!hasAllowedOrigin(request)) return NextResponse.json({ error: "Origen no autorizado" }, { status: 403 });

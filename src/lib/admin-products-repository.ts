@@ -141,8 +141,8 @@ export async function saveAdminProduct(input: ProductInput) {
     }
 
     await connection.query("DELETE FROM producto_precios WHERE producto_id = ?", [productId]);
-    for (const tier of input.priceTiers) {
-      await connection.query("INSERT INTO producto_precios (producto_id, cantidad_minima, precio_unitario, activo) VALUES (?, ?, ?, 1)", [productId, tier.minimumQuantity, tier.unitPrice]);
+    if (input.priceTiers.length) {
+      await connection.query("INSERT INTO producto_precios (producto_id, cantidad_minima, precio_unitario, activo) VALUES ?", [input.priceTiers.map((tier) => [productId, tier.minimumQuantity, tier.unitPrice, 1])]);
     }
     await connection.commit();
   } catch (error) {

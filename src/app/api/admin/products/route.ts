@@ -2,7 +2,7 @@ import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
-import { hasRole } from "@/lib/authorization";
+import { canAccessAdmin } from "@/lib/authorization";
 import { saveAdminProduct } from "@/lib/admin-products-repository";
 import { CATALOG_TAG } from "@/lib/products-repository";
 
@@ -15,7 +15,7 @@ const productSchema = z.object({
 
 async function requireCommercialUser() {
   const user = await getCurrentUser();
-  return user && hasRole(user, "admin", "administrador", "vendedor", "supervisor") ? user : null;
+  return user && canAccessAdmin(user) ? user : null;
 }
 
 export async function POST(request: Request) {

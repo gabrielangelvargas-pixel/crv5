@@ -4,7 +4,7 @@ import sharp from "sharp";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
-import { hasRole } from "@/lib/authorization";
+import { canAccessAdmin } from "@/lib/authorization";
 import { contentVersion } from "@/lib/asset-url";
 
 export const runtime = "nodejs";
@@ -19,7 +19,7 @@ function getAssetRoot() {
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user, "admin", "administrador", "vendedor", "supervisor")) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  if (!user || !canAccessAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   const formData = await request.formData();
   const file = formData.get("file");
   const slug = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).safeParse(formData.get("slug"));

@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { canAccessAdmin, hasRole } from "@/lib/authorization";
+import { canAccessAdmin, isAdministrator } from "@/lib/authorization";
 import { getAdminRoles as getUserRoles, getAdminUsers } from "@/lib/users-repository";
 import { UsersManager } from "@/components/admin/users-manager";
 import { getAdminPermissions, getAdminRoles as getRoles } from "@/lib/roles-repository";
@@ -31,10 +31,10 @@ export default async function AdminModulePage({ params }: { params: Promise<{ mo
   if (!user) redirect("/login");
   if (!canAccessAdmin(user)) redirect("/perfil");
 
-  const isAdministrator = hasRole(user, "administrador", "admin");
-  const allowed = isAdministrator || (commercialModules.has(module) && hasRole(user, "vendedor", "supervisor"));
+  const administrator = isAdministrator(user);
+  const allowed = administrator || (commercialModules.has(module) && canAccessAdmin(user));
 
-  if (!allowed || (!isAdministrator && administratorModules.has(module))) {
+  if (!allowed || (!administrator && administratorModules.has(module))) {
     redirect("/admin");
   }
 

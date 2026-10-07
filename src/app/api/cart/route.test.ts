@@ -1,10 +1,10 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
-const mocks = vi.hoisted(() => ({ user: vi.fn(), cookie: vi.fn(), sync: vi.fn() }));
+const mocks = vi.hoisted(() => ({ user: vi.fn(), cookie: vi.fn(), sync: vi.fn(), read: vi.fn() }));
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: mocks.cookie }) }));
 vi.mock("@/lib/auth", () => ({ getCurrentUser: mocks.user }));
-vi.mock("@/lib/carts-repository", () => ({ CART_COOKIE: "crv4_cart", synchronizeCart: mocks.sync }));
+vi.mock("@/lib/carts-repository", () => ({ CART_COOKIE: "crv4_cart", synchronizeCart: mocks.sync, readCart: mocks.read }));
 vi.mock("@/lib/products-repository", () => ({ getCartProducts: async (ids: string[]) => ids.map((id) => ({ id })) }));
 beforeEach(() => {
   vi.clearAllMocks();
@@ -53,5 +53,18 @@ it("acepta Host público sin forwarded-host y rechaza dominios ajenos detrás de
   mocks.sync.mockClear();
   headers.Origin = "https://otro.example";
   expect((await POST(new Request("http://localhost:3000/api/cart", { method: "POST", headers: { ...headers, "X-Forwarded-Host": "crv4mayorista.com.ar" }, body: '{"items":[]}' }))).status).toBe(403);
+  expect(mocks.sync).not.toHaveBeenCalled();
+});
+
+it("la lectura periódica responde 304 cuando el carrito no cambió", async () => {
+  mocks.user.mockResolvedValue({ id: "7" });
+  mocks.read.mockResolvedValue({ id: "c", adjustments: [], items: [{ productId: "1", quantity: 2 }], version: 3, status: "activo", lines: null, total: null, stock: { "1": 5 } });
+  const first = await GET(new Request("http://localhost:3000/api/cart"));
+  expect(first.status).toBe(200);
+  expect(await first.json()).toMatchObject({ version: 3, products: [{ id: "1" }] });
+  expect(mocks.read).toHaveBeenCalledWith("7", undefined);
+  const etag = first.headers.get("etag")!;
+  const second = await GET(new Request("http://localhost:3000/api/cart", { headers: { "If-None-Match": etag } }));
+  expect(second.status).toBe(304);
   expect(mocks.sync).not.toHaveBeenCalled();
 });

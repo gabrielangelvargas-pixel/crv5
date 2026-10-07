@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
-import { hasRole } from "@/lib/authorization";
+import { isAdministrator } from "@/lib/authorization";
 import { saveAdminRole } from "@/lib/roles-repository";
 
 const roleSchema = z.object({ id: z.string().optional(), code: z.string().trim().min(2).max(40), name: z.string().trim().min(2).max(100), description: z.string().max(1000), active: z.boolean(), permissionIds: z.array(z.string()) });
 
 async function requireAdministrator() {
   const user = await getCurrentUser();
-  return user && hasRole(user, "admin", "administrador") ? user : null;
+  return user && isAdministrator(user) ? user : null;
 }
 
 export async function POST(request: Request) {

@@ -32,40 +32,14 @@ function getIconKey(slug: string): CategoryIconKey {
   return iconBySlug[slug] ?? "default";
 }
 
-function isMissingDescriptionColumn(error: unknown) {
-  if (typeof error !== "object" || error === null || !("code" in error)) {
-    return false;
-  }
-
-  return (
-    error.code === "ER_BAD_FIELD_ERROR" &&
-    "sqlMessage" in error &&
-    typeof error.sqlMessage === "string" &&
-    error.sqlMessage.includes("descripcion")
-  );
-}
-
 // Cached across requests (invalidated with CATALOG_TAG); errors are thrown so a failed query is never cached.
 const loadCategoryTree = unstable_cache(async (): Promise<CategoryNode[]> => {
-  let rows: CategoryRow[];
-
-  try {
-    [rows] = await getDatabasePool().query<CategoryRow[]>(`
-      SELECT id, parent_id, nombre, descripcion, slug, imagen_url, portada_url, orden
-      FROM categorias
-      WHERE activa = 1
-      ORDER BY parent_id IS NOT NULL, parent_id, orden, id
-    `);
-  } catch (error) {
-    if (!isMissingDescriptionColumn(error)) throw error;
-
-    [rows] = await getDatabasePool().query<CategoryRow[]>(`
-      SELECT id, parent_id, nombre, NULL AS descripcion, slug, imagen_url, portada_url, orden
-      FROM categorias
-      WHERE activa = 1
-      ORDER BY parent_id IS NOT NULL, parent_id, orden, id
-    `);
-  }
+  const [rows] = await getDatabasePool().query<CategoryRow[]>(`
+    SELECT id, parent_id, nombre, descripcion, slug, imagen_url, portada_url, orden
+    FROM categorias
+    WHERE activa = 1
+    ORDER BY parent_id IS NOT NULL, parent_id, orden, id
+  `);
 
   const nodes = new Map<string, CategoryNode>();
 

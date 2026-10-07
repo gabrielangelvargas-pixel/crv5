@@ -75,6 +75,38 @@ export async function synchronizeCart(userId: string | null, token: string | und
   } finally { connection.release(); }
 }
 
+/**
+ * Read-only view of the visitor's cart for periodic polling: no transaction and no row locks.
+ * Writes, merges and imports keep going through synchronizeCart.
+ */
+export async function readCart(userId: string | null, token: string | undefined) {
+  const pool = getDatabasePool();
+  const [rows] = userId
+    ? await pool.query<CartRow[]>("SELECT * FROM carritos WHERE usuario_id = ? AND estado IN ('activo','confirmado','actualizado') LIMIT 1", [userId])
+    : token && /^[a-f0-9]{64}$/.test(token)
+      ? await pool.query<CartRow[]>("SELECT * FROM carritos WHERE token_hash = ? AND usuario_id IS NULL AND estado = 'activo' LIMIT 1", [hash(token)])
+      : [[] as CartRow[]];
+  const cart = rows[0];
+  if (!cart) return { id: "", adjustments: [] as CartAdjustment[], items: [] as CartItem[], version: 0, status: "activo", lines: null, total: null, stock: {} as Record<string, number> };
+  const items = readItems(cart);
+  const ids = items.map((item) => item.productId);
+  const stock: Record<string, number> = {};
+  if (ids.length) {
+    const [products] = await pool.query<RowDataPacket[]>("SELECT p.id, p.stock - COALESCE((SELECT SUM(r.cantidad) FROM carrito_reservas r WHERE r.producto_id = p.id AND r.carrito_id <> ?), 0) AS disponible FROM productos p JOIN categorias c ON c.id = p.categoria_id WHERE p.activo = 1 AND c.activa = 1 AND p.id IN (?)", [cart.id, ids]);
+    for (const product of products) stock[String(product.id)] = Math.max(0, Number(product.disponible));
+  }
+  return {
+    id: String(cart.id),
+    adjustments: (typeof cart.ajustes === "string" ? JSON.parse(cart.ajustes) : cart.ajustes ?? []) as CartAdjustment[],
+    items,
+    version: Number(cart.version),
+    status: cart.estado ?? "activo",
+    lines: (typeof cart.productos_confirmados === "string" ? JSON.parse(cart.productos_confirmados) : cart.productos_confirmados ?? null) as OrderLine[] | null,
+    total: cart.total_estimado == null ? null : Number(cart.total_estimado),
+    stock,
+  };
+}
+
 export async function getAdminCarts(selectedId?: string) {
   const [rows] = await getDatabasePool().query<RowDataPacket[]>(`
     SELECT c.id, c.pedido_id, c.items, c.version, c.entrega, c.productos_confirmados, c.total_estimado, c.ajustes, c.ultima_actividad, u.nombre, u.usuario,

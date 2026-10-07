@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { synchronizeCart } from "./carts-repository";
+import { readCart, synchronizeCart } from "./carts-repository";
 
 const db = vi.hoisted(() => ({ query: vi.fn(), beginTransaction: vi.fn(), commit: vi.fn(), rollback: vi.fn(), release: vi.fn() }));
-vi.mock("./db", () => ({ getDatabasePool: () => ({ getConnection: async () => db }) }));
+vi.mock("./db", () => ({ getDatabasePool: () => ({ getConnection: async () => db, query: db.query }) }));
 beforeEach(() => { vi.clearAllMocks(); });
 
 describe("persistencia del carrito", () => {
@@ -104,4 +104,21 @@ it("conserva el historial agotado cuando el cliente modifica otros productos", a
  const result = await synchronizeCart("7", undefined, { items: [{ productId: "1", quantity: 1 }], version: 2 });
  expect(result.lines).toEqual([history]);
  expect(db.query).toHaveBeenCalledWith(expect.stringContaining("productos_confirmados = ?"), expect.arrayContaining([JSON.stringify([history])]));
+});
+
+it("la consulta periódica lee sin transacción ni bloqueos y descuenta reservas ajenas", async () => {
+  db.query.mockImplementation(async (sql: string) => {
+    if (sql.includes("WHERE usuario_id = ?")) return [[{ id: "cart", estado: "activo", items: [{ productId: "1", quantity: 3 }], version: 4 }]];
+    if (sql.includes("SELECT p.id")) return [[{ id: 1, disponible: 2 }]];
+    return [[]];
+  });
+  const result = await readCart("7", undefined);
+  expect(result).toMatchObject({ id: "cart", items: [{ productId: "1", quantity: 3 }], version: 4, status: "activo", stock: { "1": 2 } });
+  expect(db.beginTransaction).not.toHaveBeenCalled();
+  expect(db.query.mock.calls.some(([sql]) => /FOR UPDATE|^UPDATE|^DELETE|^INSERT/.test(sql))).toBe(false);
+  expect(db.query).toHaveBeenCalledWith(expect.stringContaining("r.carrito_id <> ?"), ["cart", ["1"]]);
+});
+it("sin cuenta ni token válido la consulta devuelve un carrito vacío sin tocar la base", async () => {
+  expect(await readCart(null, "no-es-un-token")).toMatchObject({ id: "", items: [], version: 0 });
+  expect(db.query).not.toHaveBeenCalled();
 });

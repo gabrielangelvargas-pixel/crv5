@@ -19,7 +19,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
+    "db:status": "node --env-file=.env.local scripts/migrate.mjs --status"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

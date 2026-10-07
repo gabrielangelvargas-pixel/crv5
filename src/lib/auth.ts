@@ -118,6 +118,10 @@ export async function authenticateUser(username: string, password: string) {
     "UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = ?",
     [userId],
   );
+  // Expired sessions are useless; prune a bounded batch on each login so the table stays small.
+  await getDatabasePool()
+    .query("DELETE FROM sesiones WHERE expira_en < NOW() - INTERVAL 1 DAY LIMIT 500")
+    .catch((error) => console.error("No se pudieron limpiar las sesiones vencidas", error));
 
   return { token, user };
 }

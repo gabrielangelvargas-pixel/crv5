@@ -95,26 +95,21 @@ const loadCatalog = unstable_cache(
     `);
 
     const tiersByProduct = new Map<string, ProductPriceTier[]>();
+    const [priceRows] = await pool.query<ProductPriceRow[]>(`
+      SELECT producto_id, cantidad_minima, precio_unitario
+      FROM producto_precios
+      WHERE activo = 1
+      ORDER BY producto_id, cantidad_minima
+    `);
 
-    try {
-      const [priceRows] = await pool.query<ProductPriceRow[]>(`
-        SELECT producto_id, cantidad_minima, precio_unitario
-        FROM producto_precios
-        WHERE activo = 1
-        ORDER BY producto_id, cantidad_minima
-      `);
-
-      for (const row of priceRows) {
-        const productId = String(row.producto_id);
-        const tiers = tiersByProduct.get(productId) ?? [];
-        tiers.push({
-          minimumQuantity: Number(row.cantidad_minima),
-          unitPrice: Number(row.precio_unitario),
-        });
-        tiersByProduct.set(productId, tiers);
-      }
-    } catch {
-      // The pricing table is optional while the product migration is in progress.
+    for (const row of priceRows) {
+      const productId = String(row.producto_id);
+      const tiers = tiersByProduct.get(productId) ?? [];
+      tiers.push({
+        minimumQuantity: Number(row.cantidad_minima),
+        unitPrice: Number(row.precio_unitario),
+      });
+      tiersByProduct.set(productId, tiers);
     }
 
     return rows.map((row) => ({

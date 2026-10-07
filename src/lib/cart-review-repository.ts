@@ -42,10 +42,8 @@ export async function respondToCartReview(userId: string, input: { cartId: strin
   const stock = await availableStock(connection, active.map(line => line.productId), cart.id);
   if (active.some(line => (stock.get(line.productId) ?? 0) < line.quantity)) throw new ConfirmedCartError("Cambió la disponibilidad. Administración debe revisar los productos antes de confirmar.");
   await connection.query("DELETE FROM carrito_reservas WHERE carrito_id = ?", [cart.id]);
-  for (const line of active) {
-   line.reserved = true;
-   await connection.query("INSERT INTO carrito_reservas (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)", [cart.id, line.productId, line.quantity]);
-  }
+  for (const line of active) line.reserved = true;
+  if (active.length) await connection.query("INSERT INTO carrito_reservas (carrito_id, producto_id, cantidad) VALUES ?", [active.map(line => [cart.id, line.productId, line.quantity])]);
   const delivery = json<OrderDelivery>(cart.entrega);
   const addressId = await resolveOrderAddress(connection, userId, delivery);
   const detail = await snapshotOrderLines(connection, active);

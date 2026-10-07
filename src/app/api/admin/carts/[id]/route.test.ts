@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { PATCH } from "./route";
 const mocks = vi.hoisted(() => ({ user: vi.fn(), role: vi.fn(), update: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ getCurrentUser: mocks.user }));
-vi.mock("@/lib/authorization", () => ({ hasRole: mocks.role }));
+vi.mock("@/lib/authorization", () => ({ canAccessAdmin: mocks.role }));
 vi.mock("@/lib/confirmed-carts-repository", () => ({ updateConfirmedCart: mocks.update, ConfirmedCartError: class extends Error {} }));
 const context = { params: Promise.resolve({ id: "d608a5d9-72cb-4aa4-8a35-0cbb37e68612" }) };
 const request = (items = [{ productId: "1", quantity: 2 }]) => new Request("https://shop.test/api/orders/id", { method: "PATCH", headers: { origin: "https://shop.test", host: "shop.test", "Content-Type": "application/json" }, body: JSON.stringify({ version: 1, items }) });

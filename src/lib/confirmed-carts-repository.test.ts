@@ -61,7 +61,7 @@ it("guarda reservado verdadero en el detalle, sin alterar el stock ni los items 
 it("crea el bloqueo de unidades al marcar reservado y lo libera al dejar pendiente", async () => {
  state = "confirmado";
  await updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 2, reserved: true }] });
- expect(db.query).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO carrito_reservas"), ["cart", "1", 2]);
+ expect(db.query).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO carrito_reservas"), [[["cart", "1", 2]]]);
  db.query.mockClear();
  await updateConfirmedCart("cart", { version: 1, items: [{ productId: "1", quantity: 2, reserved: false }] });
  expect(db.query).toHaveBeenCalledWith("DELETE FROM carrito_reservas WHERE carrito_id = ?", ["cart"]);

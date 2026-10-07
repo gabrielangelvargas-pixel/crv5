@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
-import { hasRole } from "@/lib/authorization";
+import { canAccessAdmin } from "@/lib/authorization";
 import { hasAllowedOrigin } from "@/lib/request-origin";
 import { OrderError, updateOrder } from "@/lib/orders-repository";
 const line = z.object({ productId: z.string(), code: z.string(), name: z.string(), variant: z.string().nullable(), quantity: z.number(), unitPrice: z.number(), subtotal: z.number() });
@@ -11,7 +11,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Iniciá sesión." }, { status: 401 });
-    if (!hasRole(user, "admin", "administrador", "vendedor", "supervisor")) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    if (!canAccessAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     const { id } = await context.params;
     const input = schema.safeParse(await request.json().catch(() => null));
     if (!z.uuid().safeParse(id).success || !input.success) return NextResponse.json({ error: "Revisá las cantidades. El pedido debe tener al menos un producto." }, { status: 400 });

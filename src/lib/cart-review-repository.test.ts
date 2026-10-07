@@ -20,7 +20,7 @@ it("genera un pedido esperando pago con el precio revisado, ajustes y reserva si
  const result = await respondToCartReview("7", input);
  expect(result.status).toBe("confirmado");
  expect(db.query).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO pedidos"), expect.arrayContaining([200, 1314.9, JSON.stringify(cart.ajustes)]));
- expect(db.query).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO carrito_reservas"), ["cart", "1", 2]);
+ expect(db.query).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO carrito_reservas"), [[["cart", "1", 2]]]);
  expect(db.query.mock.calls.some(([sql]) => sql.startsWith("UPDATE productos"))).toBe(false);
  expect(db.query.mock.calls.some(([sql]) => sql.includes("INSERT INTO notificaciones_carritos") && sql.includes("'pedido'"))).toBe(true);
 });

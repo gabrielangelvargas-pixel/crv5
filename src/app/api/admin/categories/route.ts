@@ -2,7 +2,7 @@ import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
-import { hasRole } from "@/lib/authorization";
+import { isAdministrator } from "@/lib/authorization";
 import { saveAdminCategory } from "@/lib/admin-categories-repository";
 import { CATALOG_TAG } from "@/lib/products-repository";
 
@@ -20,7 +20,7 @@ const categorySchema = z.object({
 
 async function requireAdministrator() {
   const user = await getCurrentUser();
-  return user && hasRole(user, "admin", "administrador") ? user : null;
+  return user && isAdministrator(user) ? user : null;
 }
 
 export async function POST(request: Request) {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { OrderEditor } from "@/components/orders/order-editor";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { hasRole } from "@/lib/authorization";
+import { canAccessAdmin } from "@/lib/authorization";
 import { getAdminCarts } from "@/lib/carts-repository";
 import { getAdminProducts } from "@/lib/admin-products-repository";
 import { getCartUnitPrice } from "@/lib/cart";
@@ -14,7 +14,7 @@ export default async function AdminCartsPage({ searchParams }: { searchParams: P
   const { carrito } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (!hasRole(user, "admin", "administrador", "vendedor", "supervisor")) redirect("/perfil");
+  if (!canAccessAdmin(user)) redirect("/perfil");
   let data;
   try { data = await Promise.all([getAdminCarts(carrito), getAdminProducts()]); }
   catch { return <main className="mx-auto max-w-6xl px-4 py-10"><h1 className="text-3xl font-black">Carritos</h1><p className="mt-4">No se pudieron cargar los carritos. Verificá la conexión y la migración database/carritos.sql.</p></main>; }

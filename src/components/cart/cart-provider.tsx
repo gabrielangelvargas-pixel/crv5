@@ -72,13 +72,16 @@ export function CartProvider({ children, userId = null }: { children: ReactNode;
     catch { setStorageError(true); }
     currentItems.current = local;
     setItems(local);
-    async function request(payload: object) {
+    // A null payload is a read-only poll (GET, no locks on the server); anything else synchronizes (POST).
+    async function request(payload: object | null) {
       const requestController = new AbortController();
       const abort = () => requestController.abort();
       controller.signal.addEventListener("abort", abort);
       const timeout = window.setTimeout(abort, 10000);
       try {
-        const response = await fetch("/api/cart", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: requestController.signal });
+        const response = payload === null
+          ? await fetch("/api/cart", { signal: requestController.signal })
+          : await fetch("/api/cart", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: requestController.signal });
         if (!response.ok && response.status !== 409) throw new Error("sync");
         const data = await response.json();
         if (!Array.isArray(data.items) || !Number.isInteger(data.version)) throw new Error("response");
@@ -90,7 +93,7 @@ export function CartProvider({ children, userId = null }: { children: ReactNode;
         productsRef.current = Object.values(merged);
         setKnownProducts(merged);
         setConfirmedLines(data.lines ?? null); setConfirmedTotal(data.total ?? null);
-        return { items: data.status === "confirmado" || data.status === "actualizado" ? data.items as CartItem[] : normalizeCart(data.items, productsRef.current), version: data.version as number, conflict: response.status === 409 };
+        return { stored: data.items as CartItem[], items: data.status === "confirmado" || data.status === "actualizado" ? data.items as CartItem[] : normalizeCart(data.items, productsRef.current), version: data.version as number, conflict: response.status === 409 };
       } finally { window.clearTimeout(timeout); controller.signal.removeEventListener("abort", abort); }
     }
     async function sync(forceRead = false) {
@@ -100,12 +103,13 @@ export function CartProvider({ children, userId = null }: { children: ReactNode;
       try {
         if (dirty.current && version.current === undefined && cachedVersion !== undefined) version.current = cachedVersion;
         if (version.current === undefined || !dirty.current) {
-          const remote = await request({ items: local });
+          const remote = await request(version.current !== undefined && !dirty.current ? null : { items: local });
           nextReadAt = Date.now() + 15000;
           if (cancelled) return;
           version.current = remote.version;
           if (!dirty.current) {
-            acknowledged.current = JSON.stringify(remote.items);
+            // Compare against what the server stored: if stock shrank, the clamped copy differs and is saved below.
+            acknowledged.current = JSON.stringify(remote.stored);
             currentItems.current = remote.items;
             setItems(remote.items);
             if (userId) {
