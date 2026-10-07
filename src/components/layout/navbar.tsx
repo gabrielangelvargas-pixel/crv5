@@ -3,9 +3,9 @@ import { useCart } from "@/components/cart/cart-provider";
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CategoryNode } from "@/data/categories";
-import type { Product } from "@/data/products";
+import type { ProductSearchResult } from "@/lib/products-repository";
 import { getCategoryIcon } from "@/lib/category-icons";
 import { AuthMenu } from "@/components/auth/auth-menu";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -62,10 +62,9 @@ function normalizeSearchValue(value: string) {
 
 type NavbarProps = {
   categories: CategoryNode[];
-  products: Product[];
 };
 
-export function Navbar({ categories, products }: NavbarProps) {
+export function Navbar({ categories }: NavbarProps) {
   const { items } = useCart();
   const cartCount = items.reduce((total, item) => total + item.quantity, 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -90,19 +89,21 @@ export function Navbar({ categories, products }: NavbarProps) {
       })),
   );
 
-  const productResults = products
-    .filter((product) => {
-      const searchableValue = [
-        product.name,
-        product.code,
-        product.category,
-        product.subcategory,
-        ...product.tags,
-      ].join(" ");
+  const [productSearch, setProductSearch] = useState<{ query: string; products: ProductSearchResult[] }>({ query: "", products: [] });
+  const productResults = productSearch.query === normalizedSearchQuery ? productSearch.products : [];
 
-      return normalizeSearchValue(searchableValue).includes(normalizedSearchQuery);
-    })
-    .slice(0, 6);
+  // The catalog is not shipped to the browser; products are searched on the server after a short pause.
+  useEffect(() => {
+    if (!isSearching) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      fetch(`/api/products/search?q=${encodeURIComponent(normalizedSearchQuery)}`, { signal: controller.signal })
+        .then((response) => (response.ok ? response.json() : { products: [] }))
+        .then((data: { products?: ProductSearchResult[] }) => setProductSearch({ query: normalizedSearchQuery, products: data.products ?? [] }))
+        .catch(() => {});
+    }, 250);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [isSearching, normalizedSearchQuery]);
 
   const hasSearchResults =
     categoryResults.length > 0 ||
@@ -299,7 +300,7 @@ export function Navbar({ categories, products }: NavbarProps) {
                 </div>
               ) : (
                 <p className="border border-black/10 bg-white px-3 py-4 text-sm text-foreground/60 dark:border-white/10 dark:bg-zinc-950">
-                  No encontramos resultados.
+                  {productSearch.query === normalizedSearchQuery ? "No encontramos resultados." : "Buscando…"}
                 </p>
               )}
             </div>

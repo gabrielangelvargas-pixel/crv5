@@ -23,7 +23,7 @@ function getAssetRoot() {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const assetRoot = getAssetRoot();
@@ -41,12 +41,27 @@ export async function GET(
   }
 
   try {
+    const stats = await fs.stat(filePath);
+    const etag = `"${stats.size.toString(16)}-${Math.floor(stats.mtimeMs).toString(16)}"`;
+    // Uploads overwrite the same file name, so only URLs carrying a content version (?v=) are immutable.
+    const headers = {
+      "Cache-Control": new URL(request.url).searchParams.has("v")
+        ? "public, max-age=31536000, immutable"
+        : "public, max-age=0, must-revalidate",
+      ETag: etag,
+      "Last-Modified": stats.mtime.toUTCString(),
+    };
+
+    if (request.headers.get("if-none-match") === etag) {
+      return new Response(null, { status: 304, headers });
+    }
+
     const file = await fs.readFile(filePath);
     const extension = path.extname(filePath).toLowerCase();
 
     return new Response(file, {
       headers: {
-        "Cache-Control": "public, max-age=31536000, immutable",
+        ...headers,
         "Content-Type": contentTypeByExtension[extension] ?? "application/octet-stream",
       },
     });
@@ -54,4 +69,3 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
 }
-

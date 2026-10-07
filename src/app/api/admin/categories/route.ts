@@ -1,8 +1,10 @@
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/lib/authorization";
 import { saveAdminCategory } from "@/lib/admin-categories-repository";
+import { CATALOG_TAG } from "@/lib/products-repository";
 
 const categorySchema = z.object({
   id: z.string().optional(),
@@ -26,6 +28,7 @@ export async function POST(request: Request) {
   try {
     const input = categorySchema.parse(await request.json());
     await saveAdminCategory(input.id, input);
+    revalidateTag(CATALOG_TAG);
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo guardar la categoría";

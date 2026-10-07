@@ -6,9 +6,12 @@ export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   plugins: [react()],
   test: {
-    environment: "jsdom",
     globals: true,
-    include: ["src/**/*.test.{ts,tsx}", "src/**/*.spec.{ts,tsx}"],
     setupFiles: ["./src/test/setup.ts"],
+    // Only component tests pay for jsdom; domain and route tests run in plain Node.
+    projects: [
+      { extends: true, test: { name: "node", environment: "node", include: ["src/**/*.test.ts", "src/**/*.spec.ts"] } },
+      { extends: true, test: { name: "dom", environment: "jsdom", include: ["src/**/*.test.tsx", "src/**/*.spec.tsx"], testTimeout: 15000 } },
+    ],
   },
 });

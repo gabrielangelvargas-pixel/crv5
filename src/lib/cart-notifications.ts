@@ -32,8 +32,10 @@ export async function notifyOrderAccepted(connection: PoolConnection, input: { c
 
 export async function getCartNotifications(userId: string) {
   const pool = getDatabasePool();
-  const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM notificaciones_carritos WHERE usuario_id = ? ORDER BY creado DESC, id DESC LIMIT 50", [userId]);
-  const [counts] = await pool.query<RowDataPacket[]>("SELECT COUNT(*) AS cantidad FROM notificaciones_carritos WHERE usuario_id = ? AND leido_en IS NULL", [userId]);
+  const [[rows], [counts]] = await Promise.all([
+    pool.query<RowDataPacket[]>("SELECT * FROM notificaciones_carritos WHERE usuario_id = ? ORDER BY creado DESC, id DESC LIMIT 50", [userId]),
+    pool.query<RowDataPacket[]>("SELECT COUNT(*) AS cantidad FROM notificaciones_carritos WHERE usuario_id = ? AND leido_en IS NULL", [userId]),
+  ]);
   return { unread: Number(counts[0]?.cantidad ?? 0), notifications: rows.map((row): CartNotification => ({ kind: row.tipo ?? "revision", orderId: row.pedido_id ? String(row.pedido_id) : null, id: String(row.id), cartId: String(row.carrito_id), customer: String(row.cliente), products: Number(row.productos), units: Number(row.unidades), total: Number(row.total_estimado), created: new Date(row.creado).toISOString(), read: row.leido_en !== null })) };
 }
 

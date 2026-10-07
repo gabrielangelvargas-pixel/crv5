@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/lib/authorization";
+import { contentVersion } from "@/lib/asset-url";
 
 export const runtime = "nodejs";
 
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
       .webp({ quality: 82, effort: 4 })
       .toBuffer();
     await fs.writeFile(filePath, buffer);
-    return NextResponse.json({ path: `/${directory}/${slug.data}.webp` });
+    return NextResponse.json({ path: `/${directory}/${slug.data}.webp?v=${contentVersion(buffer)}` });
   } catch (error) {
     console.error("No se pudo procesar la imagen de categoría", error);
     return NextResponse.json({ error: "No se pudo procesar la imagen" }, { status: 500 });

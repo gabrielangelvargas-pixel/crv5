@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/lib/authorization";
+import { contentVersion } from "@/lib/asset-url";
 
 export const runtime = "nodejs";
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
     await fs.mkdir(root, { recursive: true });
     const buffer = await sharp(Buffer.from(await file.arrayBuffer())).rotate().resize({ width: 1200 }).webp({ quality: 82, effort: 4 }).toBuffer();
     await fs.writeFile(filePath, buffer);
-    return NextResponse.json({ path: `/productos/${slug.data}.webp` });
+    return NextResponse.json({ path: `/productos/${slug.data}.webp?v=${contentVersion(buffer)}` });
   } catch (error) {
     console.error("No se pudo procesar la imagen de producto", error);
     return NextResponse.json({ error: "No se pudo procesar la imagen" }, { status: 500 });

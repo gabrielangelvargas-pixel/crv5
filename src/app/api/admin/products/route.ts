@@ -1,8 +1,10 @@
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/lib/authorization";
 import { saveAdminProduct } from "@/lib/admin-products-repository";
+import { CATALOG_TAG } from "@/lib/products-repository";
 
 const productSchema = z.object({
   id: z.string().optional(), groupId: z.string().nullable(), newGroupName: z.string().max(180), newGroupSlug: z.string().max(200), categoryId: z.string(),
@@ -21,6 +23,7 @@ export async function POST(request: Request) {
   try {
     const input = productSchema.parse(await request.json());
     await saveAdminProduct({ ...input, id: input.id });
+    revalidateTag(CATALOG_TAG);
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo guardar el producto";

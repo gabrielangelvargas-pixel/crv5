@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import bcrypt from "bcryptjs";
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import type { AuthUser } from "@/data/auth";
@@ -87,7 +88,7 @@ export async function authenticateUser(username: string, password: string) {
     `
       SELECT id, clave_hash
       FROM usuarios
-      WHERE LOWER(usuario) = LOWER(?) AND activo = 1
+      WHERE usuario = ? AND activo = 1
       LIMIT 1
     `,
     [username.trim()],
@@ -200,7 +201,8 @@ export async function registerCustomer(name: string, username: string, password:
   }
 }
 
-export async function getCurrentUser(): Promise<AuthUser | null> {
+// Memoized per request: the root layout and the page both resolve the session.
+export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
 
   if (!token) {
@@ -221,7 +223,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   const session = rows[0];
 
   return session ? loadUserAccess(String(session.id_usuario)) : null;
-}
+});
 
 export async function revokeSession(token: string | undefined) {
   if (!token) {

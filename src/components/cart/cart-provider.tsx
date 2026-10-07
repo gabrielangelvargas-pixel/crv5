@@ -3,11 +3,11 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { CartAdjustment } from "@/lib/cart-adjustments";
 import type { OrderLine } from "@/lib/orders-repository";
-import type { Product } from "@/data/products";
+import type { CartProduct } from "@/data/products";
 import { normalizeCart, type CartItem } from "@/lib/cart";
 
 type CartContextValue = {
-  cartId: string; adjustments: CartAdjustment[]; status: string; confirmedLines: OrderLine[] | null; confirmedTotal: number | null; items: CartItem[]; products: Product[]; ready: boolean; storageError: boolean; syncError: boolean;
+  cartId: string; adjustments: CartAdjustment[]; status: string; confirmedLines: OrderLine[] | null; confirmedTotal: number | null; items: CartItem[]; products: CartProduct[]; ready: boolean; storageError: boolean; syncError: boolean;
   addItem: (productId: string, quantity: number) => void;
   setQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
@@ -16,10 +16,19 @@ type CartContextValue = {
 };
 const CartContext = createContext<CartContextValue | null>(null);
 
-export function CartProvider({ products, children, userId = null }: { products: Product[]; children: ReactNode; userId?: string | null }) {
+// Product data arrives with each /api/cart response (only the cart's own products) and is kept locally
+// so the cart can still be shown while offline.
+function mergeProducts(current: Record<string, CartProduct>, incoming: unknown, stock: unknown) {
+  const next = { ...current };
+  if (Array.isArray(incoming)) for (const product of incoming as CartProduct[]) if (product && typeof product.id === "string") next[product.id] = product;
+  if (stock && typeof stock === "object") for (const [id, units] of Object.entries(stock as Record<string, number>)) if (next[id] && Number.isFinite(units)) next[id] = { ...next[id]!, stock: units };
+  return next;
+}
+
+export function CartProvider({ children, userId = null }: { children: ReactNode; userId?: string | null }) {
   const storageKey = userId ? `crv4-cart-user-${userId}` : "crv4-cart-v1";
-  const [stock, setStock] = useState<Record<string, number>>({});
-  const availableProducts = products.map(p => stock[p.id] === undefined ? p : { ...p, stock: stock[p.id]! });
+  const [knownProducts, setKnownProducts] = useState<Record<string, CartProduct>>({});
+  const availableProducts = Object.values(knownProducts);
   const [cartId, setCartId] = useState("");
   const [items, setItems] = useState<CartItem[]>([]);
   const [adjustments, setAdjustments] = useState<CartAdjustment[]>([]);
@@ -32,11 +41,13 @@ export function CartProvider({ products, children, userId = null }: { products: 
   const version = useRef<number | undefined>(undefined);
   const acknowledged = useRef("[]");
   const currentItems = useRef(items);
-  const productsRef = useRef(products);
+  const knownProductsRef = useRef(knownProducts);
+  const productsRef = useRef(availableProducts);
   const dirty = useRef(false);
   const syncNow = useRef<() => void>(() => {});
   const checkoutRef = useRef<() => Promise<{ version: number; items: CartItem[] }>>(async () => { throw new Error("El carrito todavía está cargando."); });
   currentItems.current = items;
+  knownProductsRef.current = knownProducts;
   productsRef.current = availableProducts;
 
   useEffect(() => {
@@ -48,6 +59,10 @@ export function CartProvider({ products, children, userId = null }: { products: 
     let local: CartItem[] = [];
     let cachedVersion: number | undefined;
     try {
+      const cachedProducts = mergeProducts({}, JSON.parse(localStorage.getItem(`${storageKey}-products`) ?? "[]"), null);
+      knownProductsRef.current = cachedProducts;
+      productsRef.current = Object.values(cachedProducts);
+      setKnownProducts(cachedProducts);
       local = normalizeCart(JSON.parse(localStorage.getItem(storageKey) ?? (userId ? localStorage.getItem("crv4-cart-v1") : null) ?? "[]"), productsRef.current);
       const metadata = JSON.parse(localStorage.getItem(`${storageKey}-sync`) ?? "{}");
       dirty.current = metadata.pending === true;
@@ -70,9 +85,12 @@ export function CartProvider({ products, children, userId = null }: { products: 
         setCartId(data.id ?? "");
         setAdjustments(data.adjustments ?? []);
         setStatus(data.status ?? "activo");
-        setStock(data.stock ?? {});
+        const merged = mergeProducts(knownProductsRef.current, data.products, data.stock);
+        knownProductsRef.current = merged;
+        productsRef.current = Object.values(merged);
+        setKnownProducts(merged);
         setConfirmedLines(data.lines ?? null); setConfirmedTotal(data.total ?? null);
-        return { items: data.status === "confirmado" || data.status === "actualizado" ? data.items as CartItem[] : normalizeCart(data.items, productsRef.current.map(p => data.stock?.[p.id] === undefined ? p : { ...p, stock: data.stock[p.id] })), version: data.version as number, conflict: response.status === 409 };
+        return { items: data.status === "confirmado" || data.status === "actualizado" ? data.items as CartItem[] : normalizeCart(data.items, productsRef.current), version: data.version as number, conflict: response.status === 409 };
       } finally { window.clearTimeout(timeout); controller.signal.removeEventListener("abort", abort); }
     }
     async function sync(forceRead = false) {
@@ -162,9 +180,10 @@ export function CartProvider({ products, children, userId = null }: { products: 
     try {
       localStorage.setItem(storageKey, JSON.stringify(items));
       localStorage.setItem(`${storageKey}-sync`, JSON.stringify({ pending: dirty.current, version: version.current }));
+      localStorage.setItem(`${storageKey}-products`, JSON.stringify(items.flatMap((item) => knownProducts[item.productId] ?? [])));
     }
     catch { setStorageError(true); }
-  }, [items, ready, storageKey]);
+  }, [items, knownProducts, ready, storageKey]);
 
   function addItem(productId: string, quantity: number) {
     if (!ready || !Number.isSafeInteger(quantity) || quantity < 1) return;

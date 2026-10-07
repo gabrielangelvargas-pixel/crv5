@@ -18,8 +18,11 @@ describe("restauración y cantidades", () => {
   it("suma la misma variante y mantiene otras variantes separadas", () => {
     expect(normalizeCart([{ productId: "a", quantity: 2 }, { productId: "b", quantity: 4 }, { productId: "a", quantity: 1 }], [product, { ...product, id: "b" }])).toEqual([{ productId: "a", quantity: 3 }, { productId: "b", quantity: 4 }]);
   });
-  it("limita stock y descarta productos eliminados, agotados y datos inválidos", () => {
-    expect(normalizeCart([null, { productId: "a", quantity: 20 }, { productId: "b", quantity: 1 }, { productId: "x", quantity: 1 }, { productId: "a", quantity: -1 }, { productId: "a", quantity: 1.5 }], [product, { ...product, id: "b", stock: 0 }])).toEqual([{ productId: "a", quantity: 10 }]);
+  it("limita stock y descarta productos agotados y datos inválidos", () => {
+    expect(normalizeCart([null, { productId: "a", quantity: 20 }, { productId: "b", quantity: 1 }, { productId: "a", quantity: -1 }, { productId: "a", quantity: 1.5 }], [product, { ...product, id: "b", stock: 0 }])).toEqual([{ productId: "a", quantity: 10 }]);
     expect(normalizeCart({}, [product])).toEqual([]);
+  });
+  it("conserva productos todavía desconocidos para que los valide el servidor", () => {
+    expect(normalizeCart([{ productId: "x", quantity: 2 }, { productId: "x", quantity: 1 }], [product])).toEqual([{ productId: "x", quantity: 3 }]);
   });
 });

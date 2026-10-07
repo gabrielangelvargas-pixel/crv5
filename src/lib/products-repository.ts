@@ -1,8 +1,12 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import type { RowDataPacket } from "mysql2";
-import type { Product, ProductPriceTier } from "@/data/products";
+import type { CartProduct, Product, ProductPriceTier } from "@/data/products";
 import { getAssetUrl } from "@/lib/asset-url";
 import { getDatabasePool } from "@/lib/db";
+
+/** Invalidate with revalidateTag(CATALOG_TAG) whenever products or categories change. */
+export const CATALOG_TAG = "catalog";
 
 type ProductRow = RowDataPacket & {
   id: number | string | bigint;
@@ -50,8 +54,9 @@ function parseTags(value: ProductRow["etiquetas"]): string[] {
   }
 }
 
-export const getProducts = cache(async (): Promise<Product[]> => {
-  try {
+// Catalog with physical stock. Cached across requests; errors are thrown so a failed query is never cached.
+const loadCatalog = unstable_cache(
+  async (): Promise<Product[]> => {
     const pool = getDatabasePool();
     const [rows] = await pool.query<ProductRow[]>(`
       SELECT
@@ -78,7 +83,7 @@ export const getProducts = cache(async (): Promise<Product[]> => {
         p.descripcion,
         p.precio_venta,
         p.precio_oferta,
-        GREATEST(p.stock - COALESCE((SELECT SUM(r.cantidad) FROM carrito_reservas r WHERE r.producto_id = p.id), 0), 0) AS stock,
+        p.stock,
         p.imagen_url,
         p.etiquetas
       FROM productos p
@@ -133,7 +138,29 @@ export const getProducts = cache(async (): Promise<Product[]> => {
       imageSrc: getAssetUrl(row.imagen_url, "productos"),
       priceTiers: tiersByProduct.get(String(row.id)) ?? [],
     }));
-  } catch {
+  },
+  ["catalog-products"],
+  { tags: [CATALOG_TAG], revalidate: 300 },
+);
+
+// Reservations change with every cart review, so they are read fresh on each request.
+async function loadReservations() {
+  const [rows] = await getDatabasePool().query<RowDataPacket[]>(
+    "SELECT producto_id, SUM(cantidad) AS reservado FROM carrito_reservas GROUP BY producto_id",
+  );
+  return new Map(rows.map((row) => [String(row.producto_id), Number(row.reservado)]));
+}
+
+/** Active catalog with available stock (physical stock minus reservations). */
+export const getProducts = cache(async (): Promise<Product[]> => {
+  try {
+    const [catalog, reserved] = await Promise.all([loadCatalog(), loadReservations()]);
+    return catalog.map((product) => {
+      const reservedUnits = reserved.get(product.id);
+      return reservedUnits ? { ...product, stock: Math.max(0, product.stock - reservedUnits) } : product;
+    });
+  } catch (error) {
+    console.error("No se pudieron cargar los productos", error);
     return [];
   }
 });
@@ -142,3 +169,33 @@ export const getLatestProducts = cache(async (limit = 8) => {
   const products = await getProducts();
   return products.slice(0, limit);
 });
+
+function normalizeSearchValue(value: string) {
+  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+export type ProductSearchResult = Pick<Product, "id" | "name" | "category" | "categorySlug" | "subcategory" | "subcategorySlug" | "salePrice" | "offerPrice">;
+
+export async function searchProducts(query: string, limit = 6): Promise<ProductSearchResult[]> {
+  const normalizedQuery = normalizeSearchValue(query);
+  if (normalizedQuery.length < 2) return [];
+  const products = await getProducts();
+  return products
+    .filter((product) =>
+      normalizeSearchValue([product.name, product.code, product.category, product.subcategory, ...product.tags].join(" ")).includes(normalizedQuery),
+    )
+    .slice(0, limit)
+    .map(({ id, name, category, categorySlug, subcategory, subcategorySlug, salePrice, offerPrice }) => ({ id, name, category, categorySlug, subcategory, subcategorySlug, salePrice, offerPrice }));
+}
+
+/** Display data for the products in a cart; `stock` overrides the catalog value with the transaction's figures. */
+export async function getCartProducts(ids: string[], stock: Record<string, number> = {}): Promise<CartProduct[]> {
+  if (!ids.length) return [];
+  const wanted = new Set(ids);
+  const products = await getProducts();
+  return products
+    .filter((product) => wanted.has(product.id))
+    .map(({ id, code, name, variantName, imageSrc, salePrice, offerPrice, priceTiers, stock: catalogStock }) => ({
+      id, code, name, variantName, imageSrc, salePrice, offerPrice, priceTiers, stock: stock[id] ?? catalogStock,
+    }));
+}

@@ -1,3 +1,10 @@
+/** Short content hash appended as ?v= so a re-uploaded image gets a new, cacheable URL. */
+export function contentVersion(content: Uint8Array) {
+  let hash = 0x811c9dc5;
+  for (const byte of content) hash = Math.imul(hash ^ byte, 0x01000193);
+  return (hash >>> 0).toString(36);
+}
+
 const configuredAssetBaseUrl = process.env.NEXT_PUBLIC_ASSETS_BASE_URL?.trim();
 const assetBaseUrl = configuredAssetBaseUrl?.replace(/\/+$/, "") || null;
 

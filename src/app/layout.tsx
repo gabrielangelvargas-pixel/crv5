@@ -7,7 +7,6 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { getCategoryTree } from "@/lib/categories-repository";
 import { getCurrentUser } from "@/lib/auth";
-import { getProducts } from "@/lib/products-repository";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -52,9 +51,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const categories = await getCategoryTree();
-  const products = await getProducts();
-  const user = await getCurrentUser();
+  const [categories, user] = await Promise.all([getCategoryTree(), getCurrentUser()]);
 
   return (
     <html
@@ -63,9 +60,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     >
       <body className="flex min-h-full flex-col">
         <AuthProvider initialUser={user}>
-          <CartProvider key={user?.id ?? "guest"} userId={user?.id ?? null} products={products}>
+          <CartProvider key={user?.id ?? "guest"} userId={user?.id ?? null}>
           <PwaRegister />
-          <Navbar categories={categories} products={products} />
+          <Navbar categories={categories} />
           <div className="pt-20">{children}</div>
           </CartProvider>
         </AuthProvider>

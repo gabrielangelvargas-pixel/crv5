@@ -7,14 +7,20 @@ export function getCartUnitPrice(product: Pick<Product, "salePrice" | "offerPric
     ...product.priceTiers.filter((tier) => quantity >= tier.minimumQuantity).map((tier) => tier.unitPrice));
 }
 
-export function normalizeCart(value: unknown, products: Product[]): CartItem[] {
+/**
+ * Merges duplicate lines and clamps to the stock of known products. The browser only knows the
+ * products already in its cart, so unknown ids are kept as-is and validated by the server.
+ */
+export function normalizeCart(value: unknown, products: Pick<Product, "id" | "stock">[]): CartItem[] {
   if (!Array.isArray(value)) return [];
+  const stockById = new Map(products.map((product) => [product.id, product.stock]));
   const quantities = new Map<string, number>();
   for (const item of value) {
     if (!item || typeof item.productId !== "string" || !Number.isSafeInteger(item.quantity) || item.quantity <= 0) continue;
-    const product = products.find((entry) => entry.id === item.productId);
-    if (!product || product.stock < 1) continue;
-    quantities.set(product.id, Math.min(Math.floor(product.stock), (quantities.get(product.id) ?? 0) + item.quantity));
+    const stock = stockById.get(item.productId);
+    if (stock !== undefined && stock < 1) continue;
+    const quantity = (quantities.get(item.productId) ?? 0) + item.quantity;
+    quantities.set(item.productId, stock === undefined ? quantity : Math.min(Math.floor(stock), quantity));
   }
   return Array.from(quantities, ([productId, quantity]) => ({ productId, quantity }));
 }

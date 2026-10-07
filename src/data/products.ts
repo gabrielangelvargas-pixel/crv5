@@ -20,6 +20,9 @@ export type Product = {
   priceTiers: ProductPriceTier[];
 };
 
+/** The subset of a product the cart needs to render and price a line. */
+export type CartProduct = Pick<Product, "id" | "code" | "name" | "variantName" | "imageSrc" | "salePrice" | "offerPrice" | "priceTiers" | "stock">;
+
 export type ProductGroup = {
   id: string;
   product: Product;

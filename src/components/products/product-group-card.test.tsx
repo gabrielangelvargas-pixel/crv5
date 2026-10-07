@@ -13,7 +13,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 it("carga el carrito al abrir, reemplaza cantidades y permite eliminar con cero", async () => {
-  render(<CartProvider products={[product]}><ProductGroupCard productGroup={{ id: "g", product, variants: [product] }} /></CartProvider>);
+  render(<CartProvider><ProductGroupCard productGroup={{ id: "g", product, variants: [product] }} /></CartProvider>);
   await waitFor(() => expect(localStorage.getItem("crv4-cart-v1")).toContain('"quantity":5'));
   fireEvent.click(screen.getByRole("button", { name: "Ver detalles de Aro" }));
   expect(screen.getByLabelText("Cantidad seleccionada")).toHaveTextContent("5");
@@ -30,7 +30,7 @@ it("carga el carrito al abrir, reemplaza cantidades y permite eliminar con cero"
 });
 
 it("carga cada variante y deja el botón deshabilitado al volver a la cantidad guardada", async () => {
-  render(<CartProvider products={[product, variant]}><ProductGroupCard productGroup={{ id: "g", product, variants: [product, variant] }} /></CartProvider>);
+  render(<CartProvider><ProductGroupCard productGroup={{ id: "g", product, variants: [product, variant] }} /></CartProvider>);
   fireEvent.click(screen.getByRole("button", { name: "Ver detalles de Aro" }));
   await waitFor(() => expect(screen.getByRole("button", { name: "Disminuir cantidad" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "Dorado" }));

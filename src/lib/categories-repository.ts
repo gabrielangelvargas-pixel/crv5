@@ -1,8 +1,10 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import type { RowDataPacket } from "mysql2";
 import type { CategoryIconKey, CategoryNode } from "@/data/categories";
 import { getAssetUrl } from "@/lib/asset-url";
 import { getDatabasePool } from "@/lib/db";
+import { CATALOG_TAG } from "@/lib/products-repository";
 
 type CategoryRow = RowDataPacket & {
   id: number | string | bigint;
@@ -43,7 +45,8 @@ function isMissingDescriptionColumn(error: unknown) {
   );
 }
 
-export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
+// Cached across requests (invalidated with CATALOG_TAG); errors are thrown so a failed query is never cached.
+const loadCategoryTree = unstable_cache(async (): Promise<CategoryNode[]> => {
   let rows: CategoryRow[];
 
   try {
@@ -54,22 +57,14 @@ export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
       ORDER BY parent_id IS NOT NULL, parent_id, orden, id
     `);
   } catch (error) {
-    if (!isMissingDescriptionColumn(error)) {
-      console.error("No se pudieron cargar las categorías", error);
-      return [];
-    }
+    if (!isMissingDescriptionColumn(error)) throw error;
 
-    try {
-      [rows] = await getDatabasePool().query<CategoryRow[]>(`
-        SELECT id, parent_id, nombre, NULL AS descripcion, slug, imagen_url, portada_url, orden
-        FROM categorias
-        WHERE activa = 1
-        ORDER BY parent_id IS NOT NULL, parent_id, orden, id
-      `);
-    } catch (fallbackError) {
-      console.error("No se pudieron cargar las categorías sin descripción", fallbackError);
-      return [];
-    }
+    [rows] = await getDatabasePool().query<CategoryRow[]>(`
+      SELECT id, parent_id, nombre, NULL AS descripcion, slug, imagen_url, portada_url, orden
+      FROM categorias
+      WHERE activa = 1
+      ORDER BY parent_id IS NOT NULL, parent_id, orden, id
+    `);
   }
 
   const nodes = new Map<string, CategoryNode>();
@@ -126,22 +121,33 @@ export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
   }
 
   return roots;
+}, ["category-tree"], { tags: [CATALOG_TAG], revalidate: 300 });
+
+export const getCategoryTree = cache(async (): Promise<CategoryNode[]> => {
+  try {
+    return await loadCategoryTree();
+  } catch (error) {
+    console.error("No se pudieron cargar las categorías", error);
+    return [];
+  }
 });
+
+// Visit ranking only needs to be roughly current.
+const loadCategoryPopularity = unstable_cache(async (): Promise<[string, number][]> => {
+  const [rows] = await getDatabasePool().query<RowDataPacket[]>(`
+    SELECT categoria_id, SUM(visitas) AS visitas
+    FROM categoria_visitas
+    WHERE fecha >= (CURRENT_DATE - INTERVAL 30 DAY)
+    GROUP BY categoria_id
+  `);
+  return rows.map((row) => [String(row.categoria_id), Number(row.visitas)]);
+}, ["category-popularity"], { revalidate: 3600 });
 
 export const getMostVisitedCategories = cache(async (limit = 4) => {
   const categories = await getCategoryTree();
 
   try {
-    const [rows] = await getDatabasePool().query<RowDataPacket[]>(`
-      SELECT categoria_id, SUM(visitas) AS visitas
-      FROM categoria_visitas
-      WHERE fecha >= (CURRENT_DATE - INTERVAL 30 DAY)
-      GROUP BY categoria_id
-    `);
-
-    const popularity = new Map(
-      rows.map((row) => [String(row.categoria_id), Number(row.visitas)]),
-    );
+    const popularity = new Map(await loadCategoryPopularity());
 
     return [...categories]
       .sort((first, second) => {
