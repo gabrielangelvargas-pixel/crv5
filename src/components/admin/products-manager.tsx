@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { FaBoxOpen, FaCopy, FaPen, FaPlus, FaXmark } from "react-icons/fa6";
+import { Fragment, useState, type FormEvent } from "react";
+import { FaBoxOpen, FaChevronDown, FaCopy, FaPen, FaPlus, FaXmark } from "react-icons/fa6";
 import type { AdminCategory } from "@/lib/admin-categories-repository";
 import type { AdminProduct, AdminProductGroup } from "@/lib/admin-products-repository";
+import { groupByProductGroup } from "@/lib/product-groups";
 
 type Props = { initialProducts: AdminProduct[]; categories: AdminCategory[]; groups: AdminProductGroup[] };
 type Tier = { minimumQuantity: number; unitPrice: number };
@@ -38,6 +39,24 @@ export function ProductsManager({ initialProducts, categories, groups }: Props) 
   function updateTier(index: number, field: keyof Tier, value: number) { if (!form) return; const priceTiers = form.priceTiers.map((tier, tierIndex) => tierIndex === index ? { ...tier, [field]: value } : tier); setForm({ ...form, priceTiers }); }
   function addTier() { if (!form) return; setForm({ ...form, priceTiers: [...form.priceTiers, { minimumQuantity: form.priceTiers.length ? 3 : 1, unitPrice: form.salePrice }] }); }
 
+  // Same grouping as the storefront cards: one entry per product group, standalone products alone.
+  const productGroups = groupByProductGroup(products);
+  const groupIds = productGroups.filter((group) => group.variants[0]!.groupId).map((group) => group.id);
+  const groupCount = groupIds.length;
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
+  const allOpen = groupCount > 0 && groupIds.every((id) => openGroups.has(id));
+  function toggleGroup(id: string) { setOpenGroups((current) => { const next = new Set(current); if (!next.delete(id)) next.add(id); return next; }); }
+  function toggleAll() { setOpenGroups(allOpen ? new Set() : new Set(groupIds)); }
+
+  function productCells(product: AdminProduct) {
+    return <>
+      <td className="px-4 py-3 font-semibold">{formatPrice(product.offerPrice ?? product.salePrice)}{product.priceTiers.length ? <span className="block text-xs font-normal text-foreground/55">{product.priceTiers.length} precio(s) por cantidad</span> : null}</td>
+      <td className="px-4 py-3 text-foreground/70">{product.stock}</td>
+      <td className="px-4 py-3"><span className={product.active ? "font-bold text-emerald-700" : "font-bold text-red-600"}>{product.active ? "Activo" : "Inactivo"}</span></td>
+      <td className="px-4 py-3 text-right"><div className="flex justify-end gap-2"><button type="button" onClick={() => openEdit(product, true)} aria-label={`Duplicar ${product.name} (${product.code})`} title="Duplicar producto" className="inline-flex size-9 shrink-0 items-center justify-center border border-black/10 hover:bg-black/5 dark:border-white/10"><FaCopy aria-hidden="true" /></button><button type="button" onClick={() => openEdit(product)} aria-label={`Editar ${product.name} (${product.code})`} className="inline-flex size-9 items-center justify-center border border-black/10 hover:bg-black/5 dark:border-white/10"><FaPen /></button></div></td>
+    </>;
+  }
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form) return;
@@ -67,7 +86,30 @@ export function ProductsManager({ initialProducts, categories, groups }: Props) 
 
   return <div className="mt-2">
     <div className="flex flex-wrap items-center justify-between gap-4"><h1 className="text-3xl font-black uppercase tracking-[0.05em]">Productos</h1><button type="button" onClick={openCreate} className="flex items-center gap-2 bg-black px-4 py-3 text-sm font-bold uppercase tracking-[0.06em] text-white"><FaPlus aria-hidden="true" /> Nuevo producto</button></div>
-    <div className="mt-4 overflow-x-auto border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-950"><table className="w-full min-w-[1000px] text-left text-sm"><thead className="border-b border-black/10 bg-black/[0.03] text-xs uppercase tracking-[0.08em] text-foreground/55 dark:border-white/10 dark:bg-white/[0.03]"><tr><th className="px-4 py-3">Producto</th><th className="px-4 py-3">Categoría</th><th className="px-4 py-3">Grupo / variante</th><th className="px-4 py-3">Precio</th><th className="px-4 py-3">Stock</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3 text-right">Acción</th></tr></thead><tbody>{products.map((product) => <tr key={product.id} className="border-b border-black/10 last:border-0 dark:border-white/10"><td className="px-4 py-4"><p className="font-bold">{product.name}</p><p className="font-mono text-xs text-foreground/55">{product.code}</p></td><td className="px-4 py-4 text-foreground/70">{product.categoryName}</td><td className="px-4 py-4 text-foreground/70">{product.groupName ? <><p>{product.groupName}</p><p className="text-xs text-foreground/55">{product.variantName || "Sin variante"}</p></> : "Sin grupo"}</td><td className="px-4 py-4 font-semibold">{formatPrice(product.offerPrice ?? product.salePrice)}{product.priceTiers.length ? <span className="block text-xs font-normal text-foreground/55">{product.priceTiers.length} precio(s) por cantidad</span> : null}</td><td className="px-4 py-4 text-foreground/70">{product.stock}</td><td className="px-4 py-4"><span className={product.active ? "font-bold text-emerald-700" : "font-bold text-red-600"}>{product.active ? "Activo" : "Inactivo"}</span></td><td className="px-4 py-4 text-right"><div className="flex justify-end gap-2"><button type="button" onClick={() => openEdit(product, true)} aria-label={`Duplicar ${product.name} (${product.code})`} title="Duplicar producto" className="inline-flex size-9 shrink-0 items-center justify-center border border-black/10 hover:bg-black/5 dark:border-white/10"><FaCopy aria-hidden="true" /></button><button type="button" onClick={() => openEdit(product)} aria-label={`Editar ${product.name}`} className="inline-flex size-9 items-center justify-center border border-black/10 hover:bg-black/5 dark:border-white/10"><FaPen /></button></div></td></tr>)}</tbody></table></div>
+    {groupCount ? <div className="mt-4 flex justify-end"><button type="button" onClick={toggleAll} className="text-xs font-bold uppercase tracking-[0.08em] text-foreground/60 underline-offset-4 hover:underline">{allOpen ? "Contraer todos" : "Expandir todos"}</button></div> : null}
+    <div className="mt-2 overflow-x-auto border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-950"><table className="w-full min-w-[900px] text-left text-sm"><thead className="border-b border-black/10 bg-black/[0.03] text-xs uppercase tracking-[0.08em] text-foreground/55 dark:border-white/10 dark:bg-white/[0.03]"><tr><th className="px-4 py-3">Producto</th><th className="px-4 py-3">Categoría</th><th className="px-4 py-3">Precio</th><th className="px-4 py-3">Stock</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3 text-right">Acción</th></tr></thead>
+      {productGroups.map((group) => {
+        const first = group.variants[0]!;
+        if (!first.groupId) return <tbody key={group.id} className="border-b border-black/10 last:border-0 dark:border-white/10"><tr><td className="px-4 py-4"><p className="font-bold">{first.name}</p><p className="font-mono text-xs text-foreground/55">{first.code}</p></td><td className="px-4 py-4 text-foreground/70">{first.categoryName}</td>{productCells(first)}</tr></tbody>;
+        const open = openGroups.has(group.id);
+        const panelId = `variantes-${first.groupId}`;
+        const prices = group.variants.map((variant) => variant.offerPrice ?? variant.salePrice);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        const activeCount = group.variants.filter((variant) => variant.active).length;
+        return <Fragment key={group.id}>
+          <tbody className="border-b border-black/10 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.02]"><tr>
+            <td className="px-4 py-4"><button type="button" onClick={() => toggleGroup(group.id)} aria-expanded={open} aria-controls={panelId} className="flex items-center gap-3 text-left"><FaChevronDown aria-hidden="true" className={`size-3 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} /><span><span className="block font-bold">{first.groupName ?? first.name}</span><span className="block text-xs text-foreground/55">{group.variants.length} {group.variants.length === 1 ? "variante" : "variantes"}</span></span></button></td>
+            <td className="px-4 py-4 text-foreground/70">{[...new Set(group.variants.map((variant) => variant.categoryName))].join(", ")}</td>
+            <td className="px-4 py-4 font-semibold">{minPrice === maxPrice ? formatPrice(minPrice) : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`}</td>
+            <td className="px-4 py-4 text-foreground/70">{group.variants.reduce((total, variant) => total + variant.stock, 0)}</td>
+            <td className="px-4 py-4">{activeCount === group.variants.length ? <span className="font-bold text-emerald-700">Activo</span> : activeCount === 0 ? <span className="font-bold text-red-600">Inactivo</span> : <span className="font-bold text-amber-700">{activeCount} de {group.variants.length} activas</span>}</td>
+            <td className="px-4 py-4 text-right"><button type="button" onClick={() => openEdit(first, true)} aria-label={`Agregar variante a ${first.groupName ?? first.name}`} title="Agregar variante (copia la primera)" className="inline-flex size-9 items-center justify-center border border-black/10 hover:bg-black/5 dark:border-white/10"><FaPlus aria-hidden="true" /></button></td>
+          </tr></tbody>
+          <tbody id={panelId} hidden={!open} className="border-b border-black/10 dark:border-white/10">{group.variants.map((variant) => <tr key={variant.id} className="border-t border-black/5 dark:border-white/5"><td className="py-3 pl-12 pr-4"><p className="font-bold">{variant.variantName || "Sin variante"}</p>{variant.name !== (first.groupName ?? first.name) ? <p className="text-xs text-foreground/70">{variant.name}</p> : null}<p className="font-mono text-xs text-foreground/55">{variant.code}</p></td><td className="px-4 py-3 text-foreground/70">{variant.categoryName}</td>{productCells(variant)}</tr>)}</tbody>
+        </Fragment>;
+      })}
+    </table></div>
     {products.length === 0 ? <p className="border-x border-b border-black/10 bg-white p-6 text-sm text-foreground/60 dark:border-white/10 dark:bg-zinc-950">No hay productos cargados.</p> : null}
     {form ? <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/60 p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="product-form-title"><form onSubmit={save} className="box-border max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-zinc-950 sm:max-h-[calc(100dvh-2rem)] sm:p-6"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-foreground/45">Administración</p><h2 id="product-form-title" className="mt-1 text-xl font-black uppercase">{form.id ? "Editar producto" : form.duplicate ? "Duplicar producto" : "Nuevo producto"}</h2></div><button type="button" onClick={() => setForm(null)} aria-label="Cerrar" className="flex size-9 items-center justify-center"><FaXmark /></button></div>
       {form.duplicate ? <p className="mt-4 text-sm text-foreground/70">Completá un código y slug nuevos y seleccioná la imagen de la copia. El producto original no se modifica.</p> : null}

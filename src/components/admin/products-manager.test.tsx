@@ -5,10 +5,37 @@ import type { AdminCategory } from "@/lib/admin-categories-repository";
 import { ProductsManager } from "./products-manager";
 
 const product: AdminProduct = { id: "1", groupId: "g", groupName: "Grupo", categoryId: "c", categoryName: "Aros", code: "ARO-1", name: "Aro plata", variantName: "Plata", slug: "aro-1", description: "Descripción", costPrice: 25, salePrice: 100, offerPrice: 90, stock: 5, availableStock: 5, imageUrl: "/productos/aro-1.webp", order: 2, active: true, priceTiers: [{ minimumQuantity: 3, unitPrice: 80 }] };
-function setup() {
-  render(<ProductsManager initialProducts={[product]} categories={[{ id: "c", name: "Aros", depth: 0 } as AdminCategory]} groups={[{ id: "g", name: "Grupo", slug: "grupo", categoryId: "c" }]} />);
+function setup(products = [product]) {
+  render(<ProductsManager initialProducts={products} categories={[{ id: "c", name: "Aros", depth: 0 } as AdminCategory]} groups={[{ id: "g", name: "Grupo", slug: "grupo", categoryId: "c" }]} />);
+  for (const toggle of screen.queryAllByRole("button", { expanded: false })) fireEvent.click(toggle);
 }
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+
+it("agrupa las variantes como la tienda y las muestra al expandir el grupo", () => {
+  const variant = { ...product, id: "2", code: "ARO-2", variantName: "Dorado", salePrice: 120, offerPrice: null, stock: 3, active: false };
+  const standalone = { ...product, id: "3", groupId: null, groupName: null, code: "SUELTO", name: "Producto suelto" };
+  render(<ProductsManager initialProducts={[product, standalone, variant]} categories={[]} groups={[]} />);
+  const toggle = screen.getByRole("button", { name: /Grupo\s*2 variantes/ });
+  expect(toggle).toHaveAttribute("aria-expanded", "false");
+  expect(screen.getByText("$90 – $120")).toBeInTheDocument();
+  expect(screen.getByText("1 de 2 activas")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Editar Aro plata (ARO-2)" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Editar Producto suelto (SUELTO)" })).toBeInTheDocument();
+  fireEvent.click(toggle);
+  expect(toggle).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByRole("button", { name: "Editar Aro plata (ARO-1)" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Editar Aro plata (ARO-2)" })).toBeInTheDocument();
+  expect(screen.getByText("Dorado")).toBeInTheDocument();
+});
+
+it("agregar variante abre una copia de la primera dentro del mismo grupo", () => {
+  vi.stubGlobal("fetch", vi.fn());
+  setup();
+  fireEvent.click(screen.getByRole("button", { name: "Agregar variante a Grupo" }));
+  expect(screen.getByRole("heading", { name: "Duplicar producto" })).toBeInTheDocument();
+  expect(screen.getByLabelText("Grupo de producto")).toHaveValue("g");
+  expect(screen.getByLabelText("Código")).toHaveValue("");
+});
 
 it("abre una copia editable sin identificadores únicos ni imagen y cancelar no guarda", () => {
   const fetchMock = vi.fn(); vi.stubGlobal("fetch", fetchMock);
