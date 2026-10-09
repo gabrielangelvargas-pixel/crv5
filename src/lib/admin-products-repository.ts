@@ -102,9 +102,12 @@ async function resolveGroup(connection: PoolConnection, input: ProductInput) {
   if (input.groupId === "__new__" && !input.newGroupName.trim()) throw new Error("Completá el nombre del grupo nuevo");
   if (input.newGroupName.trim()) {
     if (!input.newGroupSlug.trim()) throw new Error("El grupo nuevo necesita un slug");
+    // The group is named after the product SKU, so a repeated name means the product already exists.
+    const [existing] = await connection.query<RowDataPacket[]>("SELECT id FROM producto_grupos WHERE nombre = ? LIMIT 1", [input.newGroupName.trim()]);
+    if (existing[0]) throw new Error("Ya existe un producto con ese SKU");
     const [result] = await connection.query<ResultSetHeader>(
-      "INSERT INTO producto_grupos (categoria_id, nombre, slug, activo) VALUES (?, ?, ?, 1)",
-      [input.categoryId, input.newGroupName.trim(), input.newGroupSlug.trim()],
+      "INSERT INTO producto_grupos (categoria_id, nombre, slug, descripcion, activo) VALUES (?, ?, ?, ?, 1)",
+      [input.categoryId, input.newGroupName.trim(), input.newGroupSlug.trim(), input.description.trim() || null],
     );
     return String(result.insertId);
   }
